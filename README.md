@@ -1,59 +1,62 @@
 # 📅 SalePlan — Plan Sal Zajęciowych
 
-Aplikacja webowa do układania i zarządzania planem sal zajęciowych na rok szkolny **2025/2026**. Zastępuje arkusz Excel — działa w przeglądarce, nie wymaga instalacji, nie zbiera żadnych danych.
+Aplikacja webowa do układania i zarządzania planem sal zajęciowych. Zawiera **kreator konfiguracji**, **archiwum lat szkolnych** i eksport do PDF. Działa w całości w przeglądarce — bez serwera, bez instalacji, bez zbierania danych.
 
 ---
 
 ## ✨ Funkcje
 
-- **5 dni tygodnia** — osobny plan dla każdego dnia (Pon–Pt)
-- **Struktura budynku** odwzorowana z oryginału:
-  - Parter 0 → Segment A / B
-  - Piętro I → Segment A / B
-  - Piętro II → Segment A / B
-  - Segment Żywnościowy (sale 16, 18, 21)
-- **Godziny lekcyjne** 0–11
-- **Przypisanie klas** do sal widoczne w nagłówkach
-- **Edycja komórek** — nauczyciel, przedmiot, uwagi
-- **Data „Obowiązuje od"** dla każdego dnia
-- **Eksport do PDF** (druk w orientacji poziomej)
-- **Zapis lokalny** — dane przechowywane w przeglądarce (`localStorage`)
+### 🧙 Kreator nowego roku szkolnego
+- Definiowanie **pięter i stref** budynku (dowolna liczba)
+- Dodawanie **segmentów** i **numerów sal** z opisem
+- Lista **klas** uczestniczących w planie
+- **Przypisanie klas do sal** dla każdego dnia tygodnia osobno
+- Konfiguracja **godzin lekcyjnych** i roku szkolnego
+
+### 📋 Planowanie sal
+- Interaktywna siatka: godziny × sale
+- Każda komórka: **nauczyciel**, **przedmiot**, **uwagi**
+- Kolorowe oznaczenie pięter w nagłówkach
+- Przypisane klasy widoczne w nagłówkach kolumn
+- Data „Obowiązuje od" dla każdego dnia
+- Eksport do **PDF** (orientacja pozioma)
+
+### 📁 Archiwum
+- Każdy nowy rok szkolny **archiwizuje poprzedni**
+- Dostęp do starych planów i ich **przywracanie**
+- Usuwanie zbędnych archiwów
 
 ---
 
 ## 🔒 Prywatność i dane
 
-> **Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych na zewnętrznych serwerach.**
+> **Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych zewnętrznie.**
 
-Wszystkie dane (nauczyciele, przedmioty, uwagi) zapisywane są wyłącznie lokalnie w `localStorage` przeglądarki użytkownika. Jedyne połączenie zewnętrzne to pobranie czcionek z **Google Fonts** przy pierwszym uruchomieniu (może być wyłączone przez edycję pliku `index.html`).
+Wszystkie dane przechowywane są lokalnie w `localStorage` przeglądarki. Jedyne zewnętrzne połączenie to pobranie czcionek z **Google Fonts** (można wyłączyć edytując `index.html`).
 
 ---
 
 ## 🚀 Uruchomienie
 
 ### Lokalnie
-Wystarczy otworzyć plik `index.html` w dowolnej przeglądarce — **żadna instalacja nie jest potrzebna**.
+Otwórz plik `index.html` w przeglądarce — bez żadnej instalacji.
 
 ### GitHub Pages
 1. Wgraj repozytorium na GitHub
-2. Wejdź w **Settings → Pages**
-3. Ustaw źródło: `Deploy from branch` → `main` → `/ (root)`
-4. Aplikacja będzie dostępna pod adresem:
-   ```
-   https://krzjur-oss.github.io/Plan-sal/
-   ```
+2. **Settings → Pages → Deploy from branch → main → / (root)**
+3. Dostępne pod: `https://<twoja-nazwa>.github.io/<repo>/`
 
 ---
 
-## 🗂 Struktura repozytorium
+## 📖 Jak zacząć
 
-```
-/
-├── index.html   ← cała aplikacja (jeden plik)
-└── README.md    ← ten plik
-```
+1. **Pierwsze uruchomienie** → automatycznie otwiera się kreator
+2. Przejdź przez 4 kroki: rok szkolny → budynek → klasy → przypisania
+3. Kliknij **„Zakończ i przejdź do planu"**
+4. Klikaj komórki w tabeli, żeby wpisywać nauczycieli i przedmioty
+5. Naciśnij **💾 Zapisz** — dane zostają w przeglądarce
 
-Aplikacja jest celowo zbudowana jako **pojedynczy plik HTML** — nie wymaga żadnych zależności, bundlerów ani serwera.
+**Nowy rok szkolny:** przycisk **＋ Nowy rok** w górnym pasku → kreator → stary rok trafia do archiwum.
 
 ---
 
@@ -62,20 +65,28 @@ Aplikacja jest celowo zbudowana jako **pojedynczy plik HTML** — nie wymaga ża
 | Skrót | Akcja |
 |-------|-------|
 | `Ctrl + Enter` | Zapisz wpis w oknie edycji |
-| `Escape` | Zamknij okno edycji |
+| `Escape` | Zamknij okno |
 
 ---
 
-## 🛠 Dostosowanie
+## 🗂 Struktura repozytorium
 
-Aby zmienić strukturę sal lub klasy, edytuj w `index.html` sekcje:
+```
+/
+├── index.html   ← cała aplikacja (jeden plik HTML)
+└── README.md    ← ten plik
+```
 
-- **`STRUCTURE`** — definicja pięter, segmentów i numerów sal
-- **`CLASS_ASSIGNMENTS`** — przypisanie klas do kolumn dla każdego dnia
-- **`HOURS`** — lista godzin lekcyjnych
+---
+
+## 🛠 Technologie
+
+- Czysty HTML + CSS + JavaScript (zero zależności)
+- Dane: `localStorage` przeglądarki
+- Czcionki: Google Fonts (Outfit + JetBrains Mono)
 
 ---
 
 ## 📄 Licencja
 
-Do użytku wewnętrznego. Brak licencji open-source — repozytorium może być prywatne.
+Do użytku wewnętrznego szkoły.

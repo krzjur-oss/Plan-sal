@@ -3,849 +3,1683 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plan Sal Zajęciowych 2025/26</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>SalePlan — Plan Sal Zajęciowych</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #22263a;
-    --border: #2e3350;
-    --accent: #4f7cff;
-    --accent2: #ff6b6b;
-    --accent3: #43d9a2;
-    --text: #e8eaf6;
-    --text-muted: #6b7280;
-    --header-bg: #151929;
-    --cell-empty: #1a1d27;
-    --cell-filled: #1e2540;
-  }
+:root {
+  --bg: #080c12;
+  --surface: #0e1420;
+  --surface2: #141b2d;
+  --surface3: #1a2238;
+  --border: #1f2d4a;
+  --border2: #263550;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59,130,246,0.15);
+  --accent2: #f59e0b;
+  --accent3: #10b981;
+  --accent4: #ef4444;
+  --text: #e2e8f8;
+  --text-muted: #4a5a7a;
+  --text-dim: #2a3555;
+  --yellow: #f59e0b;
+  --green: #10b981;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --teal: #06b6d4;
+  --font: 'Outfit', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 
-  body {
-    font-family: 'Syne', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
 
-  /* TOP BAR */
-  .topbar {
-    background: var(--header-bg);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    gap: 16px;
-    flex-wrap: wrap;
-  }
+/* ═══════════════════════════════════════════
+   WIZARD OVERLAY
+═══════════════════════════════════════════ */
+#wizardOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(4,6,12,0.96);
+  z-index: 500;
+  overflow-y: auto;
+  backdrop-filter: blur(6px);
+}
+#wizardOverlay.show { display: block; }
 
-  .topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
+.wizard-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
 
-  .logo {
-    font-size: 1.15rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--accent);
-  }
-  .logo span { color: var(--text); }
+.wizard {
+  width: 780px;
+  max-width: 100%;
+}
 
-  .year-badge {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-  }
+.wizard-header {
+  margin-bottom: 36px;
+}
 
-  .topbar-center {
-    display: flex;
-    gap: 4px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 4px;
-  }
+.wizard-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-glow);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
 
-  .day-btn {
-    padding: 7px 16px;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    font-family: 'Syne', sans-serif;
-    font-weight: 600;
-    font-size: 0.82rem;
-    border-radius: 7px;
-    cursor: pointer;
-    transition: all 0.18s;
-    white-space: nowrap;
-  }
-  .day-btn:hover { background: var(--surface2); color: var(--text); }
-  .day-btn.active {
-    background: var(--accent);
-    color: #fff;
-    box-shadow: 0 2px 12px rgba(79,124,255,0.3);
-  }
+.wizard-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.wizard-title span { color: var(--accent); }
 
-  .topbar-right {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
+.wizard-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
 
-  .valid-from-input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 7px 12px;
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    outline: none;
-    transition: border 0.15s;
-  }
-  .valid-from-input:focus { border-color: var(--accent); }
+/* Steps indicator */
+.wizard-steps {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+}
 
-  .btn {
-    padding: 8px 18px;
-    border-radius: 8px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.82rem;
-    border: none;
-    cursor: pointer;
-    transition: all 0.18s;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #3d6af0; box-shadow: 0 2px 12px rgba(79,124,255,0.3); }
-  .btn-danger { background: #3a1a1a; color: var(--accent2); border: 1px solid #5a2a2a; }
-  .btn-danger:hover { background: #4a2222; }
-  .btn-success { background: #1a3a2a; color: var(--accent3); border: 1px solid #2a5a3a; }
-  .btn-success:hover { background: #1e4530; }
+.wstep {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
 
-  /* MAIN */
-  .main {
-    padding: 20px 20px 60px;
-    max-width: 100%;
-    overflow-x: auto;
-  }
+.wstep-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: all 0.2s;
+  font-family: var(--mono);
+}
+.wstep.active .wstep-num { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 16px rgba(59,130,246,0.4); }
+.wstep.done .wstep-num { background: var(--green); border-color: var(--green); color: #fff; }
 
-  /* SCHEDULE TABLE WRAPPER */
-  .schedule-container {
-    min-width: 900px;
-  }
+.wstep-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+.wstep.active .wstep-label { color: var(--text); }
+.wstep.done .wstep-label { color: var(--green); }
 
-  /* SECTION HEADERS */
-  .section-header-row {
-    display: flex;
-    margin-bottom: 0;
-  }
+.wstep-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  margin: 0 8px;
+}
+.wstep-line.done { background: var(--green); }
 
-  .time-col-header {
-    width: 68px;
-    min-width: 68px;
-    flex-shrink: 0;
-  }
+/* Step panels */
+.wizard-step { display: none; animation: fadeUp 0.22s ease; }
+.wizard-step.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
-  .floor-group {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-  }
+.wcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 16px;
+}
 
-  .floor-label {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
-    padding: 6px 12px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--text-muted);
-    text-align: center;
-    margin-right: 4px;
-  }
-  .floor-label.parter { color: #f6c90e; border-color: #3a3520; background: #1e1d12; }
-  .floor-label.pietro1 { color: var(--accent); border-color: #1e2a50; background: #12192e; }
-  .floor-label.pietro2 { color: var(--accent3); border-color: #1a3528; background: #121e18; }
-  .floor-label.zywn { color: var(--accent2); border-color: #3a1e1e; background: #1e1212; }
+.wcard-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wcard-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; }
 
-  .segment-row {
-    display: flex;
-  }
+/* Year input */
+.year-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
 
-  .segment-group {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-  }
+.big-input {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+  transition: border 0.15s, box-shadow 0.15s;
+  width: 100%;
+}
+.big-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 
-  .segment-label {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-bottom: none;
-    padding: 4px 8px;
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--text-muted);
-    text-align: center;
-    margin-right: 3px;
-  }
+/* Floor builder */
+.floor-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
 
-  /* TABLE */
-  .schedule-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    table-layout: fixed;
-  }
+.floor-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
 
-  .schedule-table th {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 6px 4px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-align: center;
-    color: var(--text-muted);
-    position: relative;
-  }
+.floor-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface3);
+}
 
-  .schedule-table th.time-th {
-    width: 68px;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    background: var(--header-bg);
-    border-color: var(--border);
-  }
+.floor-color-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 
-  .th-room {
-    display: block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--accent);
-    margin-bottom: 2px;
-    font-weight: 500;
-  }
-  .th-class {
-    display: block;
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    font-weight: 600;
-  }
+.floor-name-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 600;
+  outline: none;
+}
+.floor-name-input::placeholder { color: var(--text-dim); }
 
-  .schedule-table td {
-    border: 1px solid var(--border);
-    padding: 0;
-    vertical-align: top;
-    position: relative;
-    min-width: 80px;
-    background: var(--cell-empty);
-  }
+.floor-actions { display: flex; gap: 6px; margin-left: auto; }
 
-  .schedule-table td.time-cell {
-    background: var(--header-bg);
-    text-align: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    vertical-align: middle;
-    padding: 8px 4px;
-    width: 68px;
-    min-width: 68px;
-  }
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+  display: flex; align-items: center;
+}
+.icon-btn:hover { background: var(--surface); color: var(--text); }
+.icon-btn.danger:hover { color: var(--red); background: rgba(239,68,68,0.1); }
 
-  .cell-content {
-    width: 100%;
-    min-height: 52px;
-    padding: 5px 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    cursor: pointer;
-    transition: background 0.12s;
-  }
-  .cell-content:hover { background: var(--surface2); }
+.segments-area { padding: 12px 16px; }
+.segments-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 10px; }
 
-  .cell-content.has-data {
-    background: var(--cell-filled);
-    border-left: 3px solid var(--accent);
-  }
-  .cell-content.has-data:hover { background: #252b48; }
+.segment-list { display: flex; flex-direction: column; gap: 8px; }
 
-  .entry-teacher {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--accent3);
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .entry-subject {
-    font-size: 0.65rem;
-    color: var(--text);
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .entry-note {
-    font-size: 0.6rem;
-    color: var(--text-muted);
-    font-style: italic;
-    line-height: 1.2;
-  }
+.segment-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
 
-  .empty-hint {
-    font-size: 0.6rem;
-    color: #2a2d40;
-    text-align: center;
-    margin-top: 8px;
-    user-select: none;
-    font-style: italic;
-  }
+.segment-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
 
-  /* FLOOR SEPARATORS */
-  .sep-col {
-    width: 4px;
-    min-width: 4px;
-    background: var(--bg);
-    border: none !important;
-    padding: 0 !important;
-  }
+.seg-name-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.82rem;
+  font-weight: 600;
+  outline: none;
+  transition: border 0.15s;
+}
+.seg-name-input:focus { border-color: var(--accent); }
 
-  /* MODAL */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(3px);
-  }
-  .modal-overlay.show { display: flex; }
+.rooms-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 28px 28px 24px;
-    width: 380px;
-    max-width: 96vw;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    animation: modalIn 0.18s ease;
-  }
-  @keyframes modalIn {
-    from { transform: scale(0.94) translateY(10px); opacity: 0; }
-    to { transform: scale(1) translateY(0); opacity: 1; }
-  }
+.room-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 3px 8px 3px 10px;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text);
+  font-weight: 500;
+}
 
-  .modal-title {
-    font-size: 1rem;
-    font-weight: 800;
-    margin-bottom: 4px;
-    color: var(--accent);
-  }
-  .modal-subtitle {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-bottom: 20px;
-    font-family: 'JetBrains Mono', monospace;
-  }
+.room-chip-name {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  outline: none;
+  width: 48px;
+}
 
-  .form-group {
-    margin-bottom: 14px;
-  }
-  .form-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--text-muted);
-    margin-bottom: 6px;
-    display: block;
-  }
-  .form-input, .form-textarea {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 9px 12px;
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-size: 0.85rem;
-    outline: none;
-    transition: border 0.15s;
-  }
-  .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
-  .form-textarea { resize: vertical; min-height: 60px; }
+.room-chip-sub {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 0.68rem;
+  outline: none;
+  width: 90px;
+}
 
-  .modal-footer {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-    justify-content: flex-end;
-  }
-  .btn-sm { padding: 8px 16px; font-size: 0.78rem; }
-  .btn-ghost {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-  }
-  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+.chip-del {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.75rem;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.chip-del:hover { color: var(--red); }
 
-  /* STATUS BAR */
-  .statusbar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--header-bg);
-    border-top: 1px solid var(--border);
-    padding: 6px 24px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    z-index: 90;
-  }
-  .statusbar-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--accent3);
-    display: inline-block;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .status-sep { color: var(--border); }
+.add-room-btn {
+  background: transparent;
+  border: 1px dashed var(--border2);
+  border-radius: 6px;
+  padding: 3px 10px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.add-room-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* PRINT */
-  @media print {
-    .topbar, .statusbar, .modal-overlay { display: none !important; }
-    body { background: white; color: black; }
-    .main { padding: 0; }
-    .schedule-table th, .schedule-table td { border: 1px solid #ccc; }
-    .cell-content.has-data { border-left: 3px solid #333; background: #f5f5f5; }
-    .entry-teacher { color: #006; }
-    .entry-subject { color: #000; }
-    .schedule-table th.time-th, .schedule-table td.time-cell { background: #f0f0f0; }
-    .floor-label { background: #eee; color: #333; border-color: #ccc; }
-    @page { margin: 15mm; size: landscape; }
-  }
+.add-segment-btn, .add-floor-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px dashed var(--border2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+  margin-top: 8px;
+}
+.add-segment-btn:hover, .add-floor-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+.add-floor-btn { margin-top: 0; }
+
+/* Classes step */
+.classes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.class-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.class-color { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink:0; }
+
+.class-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 500;
+  outline: none;
+}
+.class-input::placeholder { color: var(--text-dim); }
+
+.add-class-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px dashed var(--border2);
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.add-class-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+/* Class assignments step */
+.assignments-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+.assignments-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 500px;
+}
+.assignments-table th {
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-muted);
+}
+.assignments-table td {
+  border: 1px solid var(--border);
+  padding: 4px;
+  text-align: center;
+  background: var(--surface2);
+}
+.assign-select {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  outline: none;
+  width: 100%;
+  text-align: center;
+  cursor: pointer;
+  padding: 2px;
+}
+.assign-select option { background: var(--surface); }
+
+/* Wizard footer */
+.wizard-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.wizard-footer-info {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.wizard-btns { display: flex; gap: 10px; }
+
+/* ═══════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════ */
+#appOverlay { display: none; }
+#appOverlay.show { display: block; }
+
+/* TOP BAR */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+
+.logo {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+.logo span { color: var(--text); }
+
+.year-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+}
+.year-pill:hover { border-color: var(--accent); color: var(--accent); }
+
+.topbar-center {
+  display: flex;
+  gap: 3px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.day-btn {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-weight: 600;
+  font-size: 0.8rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.day-btn:hover { background: var(--surface3); color: var(--text); }
+.day-btn.active { background: var(--accent); color: #fff; box-shadow: 0 2px 12px rgba(59,130,246,0.3); }
+
+.topbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.valid-from-wrap { display: flex; align-items: center; gap: 6px; }
+.valid-from-label { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; }
+.valid-from-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  outline: none;
+  transition: border 0.15s;
+}
+.valid-from-input:focus { border-color: var(--accent); }
+
+/* BUTTONS */
+.btn {
+  padding: 7px 15px;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 0.78rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 5px;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #2563eb; box-shadow: 0 2px 12px rgba(59,130,246,0.35); }
+.btn-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); border: 1px solid rgba(245,158,11,0.3); }
+.btn-yellow:hover { background: rgba(245,158,11,0.25); }
+.btn-green { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+.btn-green:hover { background: rgba(16,185,129,0.22); }
+.btn-red { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.25); }
+.btn-red:hover { background: rgba(239,68,68,0.22); }
+.btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--text-muted); }
+.btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+/* MAIN CONTENT */
+.main {
+  padding: 20px 20px 70px;
+  overflow-x: auto;
+}
+
+.schedule-wrap { min-width: 800px; }
+
+/* TABLE */
+.schedule-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.schedule-table th {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 7px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-muted);
+  position: sticky;
+  top: 57px;
+  z-index: 5;
+}
+
+.schedule-table th.time-th {
+  width: 60px;
+  background: var(--surface);
+  font-family: var(--mono);
+  color: var(--text-dim);
+  z-index: 6;
+}
+
+.th-inner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.th-room {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.th-seg {
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.th-class {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  background: var(--surface3);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-top: 1px;
+}
+
+.schedule-table td {
+  border: 1px solid var(--border);
+  padding: 0;
+  vertical-align: top;
+  min-width: 80px;
+  background: var(--surface);
+}
+
+.schedule-table td.time-cell {
+  background: var(--surface2);
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  vertical-align: middle;
+  padding: 8px 4px;
+  width: 60px;
+  min-width: 60px;
+}
+
+.cell-inner {
+  width: 100%;
+  min-height: 54px;
+  padding: 5px 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+}
+.cell-inner:hover { background: var(--surface2); }
+.cell-inner.filled {
+  background: rgba(59,130,246,0.06);
+  border-left: 3px solid var(--accent);
+}
+.cell-inner.filled:hover { background: rgba(59,130,246,0.12); }
+
+.cell-teacher { font-size: 0.68rem; font-weight: 700; color: var(--green); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-subject { font-size: 0.65rem; color: var(--text); line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-note { font-size: 0.58rem; color: var(--text-muted); font-style: italic; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell-plus { font-size: 0.65rem; color: var(--text-dim); text-align: center; margin-top: 14px; user-select: none; }
+
+/* Floor-colored TH top border applied by JS */
+
+/* ═══════════════════════════════════════════
+   EDIT MODAL
+═══════════════════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(4,6,12,0.75);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.show { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 28px;
+  width: 400px;
+  max-width: 95vw;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  animation: mIn 0.18s ease;
+}
+@keyframes mIn { from { opacity:0; transform:scale(0.94) translateY(8px); } to { opacity:1; transform:scale(1); } }
+
+.modal-title { font-size: 1rem; font-weight: 800; color: var(--accent); margin-bottom: 2px; }
+.modal-sub { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 20px; font-family: var(--mono); }
+
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 5px; }
+.form-input, .form-textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border 0.15s, box-shadow 0.15s;
+}
+.form-input:focus, .form-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.form-textarea { resize: vertical; min-height: 64px; }
+
+.modal-hint { font-size: 0.65rem; color: var(--text-dim); margin-top: 16px; font-family: var(--mono); }
+
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* ═══════════════════════════════════════════
+   ARCHIVE PANEL
+═══════════════════════════════════════════ */
+#archivePanel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(4,6,12,0.88);
+  z-index: 400;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#archivePanel.show { display: flex; }
+
+.archive-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  width: 600px;
+  max-width: 95vw;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7);
+  animation: mIn 0.18s ease;
+}
+
+.archive-header {
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.archive-header h2 { font-size: 1rem; font-weight: 800; }
+.archive-body { flex: 1; overflow-y: auto; padding: 16px 24px; }
+.archive-empty { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 40px 0; }
+
+.archive-year-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.archive-year-info h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
+.archive-year-info p { font-size: 0.72rem; color: var(--text-muted); font-family: var(--mono); }
+
+.archive-year-actions { display: flex; gap: 8px; }
+
+/* STATUS BAR */
+.statusbar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 5px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  z-index: 90;
+  flex-wrap: wrap;
+}
+.sb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.sb-sep { color: var(--border2); }
+
+/* PRINT */
+@media print {
+  .topbar, .statusbar, .modal-overlay, #wizardOverlay, #archivePanel { display: none !important; }
+  body { background: #fff; color: #000; }
+  .main { padding: 0; }
+  .schedule-table th, .schedule-table td { border: 1px solid #ccc; }
+  .cell-inner.filled { border-left: 3px solid #333; background: #f0f4ff; }
+  .cell-teacher { color: #006; }
+  .cell-subject { color: #000; }
+  .schedule-table th { background: #f0f0f0; color: #333; position: static; }
+  .schedule-table td.time-cell { background: #f5f5f5; }
+  @page { margin: 12mm; size: landscape; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Notifications */
+.notif {
+  position: fixed;
+  bottom: 42px;
+  right: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  z-index: 999;
+  animation: notifIn 0.2s ease, notifOut 0.3s ease 2.5s forwards;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  display: flex; align-items: center; gap: 8px;
+}
+@keyframes notifIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes notifOut { to { opacity:0; transform:translateY(8px); } }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-left">
-    <div class="logo">Sale<span>Plan</span></div>
-    <div class="year-badge">2025/26</div>
+<!-- ═══════════════════════════════════════════
+     WIZARD
+═══════════════════════════════════════════ -->
+<div id="wizardOverlay">
+<div class="wizard-wrap">
+<div class="wizard">
+
+  <div class="wizard-header">
+    <div class="wizard-badge">✦ Kreator konfiguracji</div>
+    <div class="wizard-title">Nowy rok szkolny<br><span id="wTitleYear">2025/2026</span></div>
+    <div class="wizard-subtitle">Skonfiguruj strukturę budynku, sale i klasy — zajmie to tylko chwilę.</div>
   </div>
-  <div class="topbar-center" id="dayTabs">
-    <button class="day-btn active" onclick="switchDay(0)">Poniedziałek</button>
-    <button class="day-btn" onclick="switchDay(1)">Wtorek</button>
-    <button class="day-btn" onclick="switchDay(2)">Środa</button>
-    <button class="day-btn" onclick="switchDay(3)">Czwartek</button>
-    <button class="day-btn" onclick="switchDay(4)">Piątek</button>
-  </div>
-  <div class="topbar-right">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="font-size:0.72rem;color:var(--text-muted)">Obowiązuje od:</span>
-      <input type="date" class="valid-from-input" id="validFrom">
+
+  <!-- Steps indicator -->
+  <div class="wizard-steps" id="wizardSteps">
+    <div class="wstep active" id="ws0">
+      <div class="wstep-num">1</div>
+      <div class="wstep-label">Rok szkolny</div>
     </div>
-    <button class="btn btn-success btn-sm" onclick="exportPDF()">⬇ PDF</button>
-    <button class="btn btn-primary btn-sm" onclick="saveData()">💾 Zapisz</button>
-    <button class="btn btn-danger btn-sm" onclick="clearDay()">🗑 Wyczyść dzień</button>
+    <div class="wstep-line" id="wl0"></div>
+    <div class="wstep" id="ws1">
+      <div class="wstep-num">2</div>
+      <div class="wstep-label">Budynek</div>
+    </div>
+    <div class="wstep-line" id="wl1"></div>
+    <div class="wstep" id="ws2">
+      <div class="wstep-num">3</div>
+      <div class="wstep-label">Klasy</div>
+    </div>
+    <div class="wstep-line" id="wl2"></div>
+    <div class="wstep" id="ws3">
+      <div class="wstep-num">4</div>
+      <div class="wstep-label">Przypisania</div>
+    </div>
   </div>
+
+  <!-- STEP 1: Year -->
+  <div class="wizard-step active" id="wStep0">
+    <div class="wcard">
+      <div class="wcard-title">🗓 Rok szkolny</div>
+      <div class="wcard-desc">Podaj rok szkolny dla nowego planu.</div>
+      <div class="year-input-row">
+        <input type="text" class="big-input" id="wYear" placeholder="np. 2025/2026" value="2025/2026">
+      </div>
+    </div>
+    <div class="wcard">
+      <div class="wcard-title">⏱ Godziny lekcyjne</div>
+      <div class="wcard-desc">Podaj numery godzin lekcyjnych (oddzielone przecinkami).</div>
+      <input type="text" class="big-input" id="wHours" placeholder="np. 0,1,2,3,4,5,6,7,8,9,10" value="0,1,2,3,4,5,6,7,8,9,10">
+    </div>
+  </div>
+
+  <!-- STEP 2: Building structure -->
+  <div class="wizard-step" id="wStep1">
+    <div class="wcard">
+      <div class="wcard-title">🏫 Struktura budynku</div>
+      <div class="wcard-desc">Dodaj piętra, segmenty i numery sal. Nazwa segmentu może być pusta.</div>
+      <div class="floor-list" id="floorList"></div>
+      <button class="add-floor-btn" onclick="addFloor()">＋ Dodaj piętro / strefę</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Classes -->
+  <div class="wizard-step" id="wStep2">
+    <div class="wcard">
+      <div class="wcard-title">🎓 Lista klas</div>
+      <div class="wcard-desc">Wpisz wszystkie klasy, które będą uwzględnione w planie.</div>
+      <div class="classes-grid" id="classGrid"></div>
+      <button class="add-class-btn" onclick="addClass()">＋ Dodaj klasę</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Assignments -->
+  <div class="wizard-step" id="wStep3">
+    <div class="wcard">
+      <div class="wcard-title">📌 Przypisanie klas do sal</div>
+      <div class="wcard-desc">Dla każdego dnia tygodnia i każdej sali wybierz domyślnie przypisaną klasę (opcjonalnie).</div>
+      <div id="assignmentsTabs" style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap;"></div>
+      <div class="assignments-table-wrap">
+        <table class="assignments-table" id="assignmentsTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="wizard-footer">
+    <div class="wizard-footer-info" id="wFooterInfo">Krok 1 z 4</div>
+    <div class="wizard-btns">
+      <button class="btn btn-ghost" id="wBtnBack" onclick="wizardBack()" style="display:none">← Wstecz</button>
+      <button class="btn btn-primary" id="wBtnNext" onclick="wizardNext()">Dalej →</button>
+    </div>
+  </div>
+
+</div>
+</div>
 </div>
 
-<!-- MAIN -->
-<div class="main">
-  <div class="schedule-container" id="scheduleContainer"></div>
+<!-- ═══════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════ -->
+<div id="appOverlay">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo">Sale<span>Plan</span></div>
+      <div class="year-pill" id="yearPill" onclick="showArchive()">
+        <span id="currentYearLabel">—</span>
+        <span style="font-size:0.6rem;opacity:0.5">▼</span>
+      </div>
+    </div>
+    <div class="topbar-center" id="dayTabs"></div>
+    <div class="topbar-right">
+      <div class="valid-from-wrap">
+        <span class="valid-from-label">Od:</span>
+        <input type="date" class="valid-from-input" id="validFrom">
+      </div>
+      <button class="btn btn-green" onclick="exportPDF()">⬇ PDF</button>
+      <button class="btn btn-primary" onclick="saveData()">💾 Zapisz</button>
+      <button class="btn btn-yellow" onclick="openWizardNewYear()">＋ Nowy rok</button>
+      <button class="btn btn-red" onclick="clearDay()">🗑 Dzień</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="schedule-wrap" id="scheduleWrap"></div>
+  </div>
+
+  <div class="statusbar">
+    <span><span class="sb-dot"></span> aktywny</span>
+    <span class="sb-sep">|</span>
+    <span id="sbText">Gotowy</span>
+    <span class="sb-sep">|</span>
+    <span id="sbCount">0 wpisów</span>
+    <span class="sb-sep">|</span>
+    <span id="sbYear" style="color:var(--accent)"></span>
+  </div>
+
 </div>
 
-<!-- EDIT MODAL -->
-<div class="modal-overlay" id="modalOverlay">
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
   <div class="modal">
-    <div class="modal-title" id="modalTitle">Edytuj komórkę</div>
-    <div class="modal-subtitle" id="modalSubtitle"></div>
+    <div class="modal-title" id="modalTitle">Edytuj</div>
+    <div class="modal-sub" id="modalSub"></div>
     <div class="form-group">
       <label class="form-label">Nauczyciel</label>
-      <input type="text" class="form-input" id="inputTeacher" placeholder="np. Jan Kowalski">
+      <input type="text" class="form-input" id="inpTeacher" placeholder="Imię i nazwisko nauczyciela" autocomplete="off">
     </div>
     <div class="form-group">
       <label class="form-label">Przedmiot / Zajęcia</label>
-      <input type="text" class="form-input" id="inputSubject" placeholder="np. Matematyka">
+      <input type="text" class="form-input" id="inpSubject" placeholder="Nazwa przedmiotu lub zajęć" autocomplete="off">
     </div>
     <div class="form-group">
       <label class="form-label">Uwagi</label>
-      <textarea class="form-textarea" id="inputNote" placeholder="opcjonalne uwagi..."></textarea>
+      <textarea class="form-textarea" id="inpNote" placeholder="Dodatkowe uwagi (opcjonalnie)..."></textarea>
     </div>
+    <div class="modal-hint">Ctrl+Enter — zapisz &nbsp;·&nbsp; Escape — zamknij</div>
     <div class="modal-footer">
-      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Anuluj</button>
-      <button class="btn btn-danger btn-sm" onclick="clearCell()">Wyczyść</button>
-      <button class="btn btn-primary btn-sm" onclick="saveCell()">Zapisz</button>
+      <button class="btn btn-ghost" onclick="closeEditModal()">Anuluj</button>
+      <button class="btn btn-red" onclick="clearCellData()">Wyczyść</button>
+      <button class="btn btn-primary" onclick="saveCellData()">Zapisz</button>
     </div>
   </div>
 </div>
 
-<!-- STATUS BAR -->
-<div class="statusbar">
-  <span><span class="statusbar-dot"></span> aktywny</span>
-  <span class="status-sep">|</span>
-  <span id="statusText">Kliknij komórkę, aby edytować</span>
-  <span class="status-sep">|</span>
-  <span id="statusCount">0 wpisów w tym dniu</span>
+<!-- Archive Panel -->
+<div id="archivePanel">
+  <div class="archive-modal">
+    <div class="archive-header">
+      <h2>📁 Archiwum planów</h2>
+      <button class="btn btn-ghost" onclick="closeArchive()">✕ Zamknij</button>
+    </div>
+    <div class="archive-body" id="archiveBody"></div>
+  </div>
 </div>
 
 <script>
-// ============================================================
-// DATA STRUCTURE
-// ============================================================
+// ================================================================
+//  STATE
+// ================================================================
+const DAYS_DEFAULT = ['Poniedziałek','Wtorek','Środa','Czwartek','Piątek'];
+const FLOOR_COLORS = ['#f59e0b','#3b82f6','#10b981','#ef4444','#8b5cf6','#06b6d4','#f97316'];
 
-const DAYS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek'];
-const HOURS = ['0','1','2','3','4','5','6','7','8','9','10','11'];
+let appState = null;   // active year config
+let schedData = {};    // schedData[yearKey][dayIdx][hour][colKey] = {teacher,subject,note}
+let validFromDates = {};
+let archive = [];      // [{yearKey, config, label}]
+let currentDay = 0;
+let currentAssignDay = 0;
 
-// Struktura: Piętro > Segment > Sala
-const STRUCTURE = [
+// wizard temp
+let wFloors = [];
+let wClasses = [];
+let wAssignments = {}; // dayIdx -> colKey -> className
+let wStep = 0;
+
+// modal context
+let _mDay, _mHour, _mKey;
+
+// ================================================================
+//  STORAGE
+// ================================================================
+function loadAll() {
+  try { schedData = JSON.parse(localStorage.getItem('sp_sched') || '{}'); } catch(e) { schedData = {}; }
+  try { validFromDates = JSON.parse(localStorage.getItem('sp_vfdates') || '{}'); } catch(e) {}
+  try { archive = JSON.parse(localStorage.getItem('sp_archive') || '[]'); } catch(e) { archive = []; }
+  try { appState = JSON.parse(localStorage.getItem('sp_active') || 'null'); } catch(e) { appState = null; }
+}
+
+function persistAll() {
+  localStorage.setItem('sp_sched', JSON.stringify(schedData));
+  localStorage.setItem('sp_vfdates', JSON.stringify(validFromDates));
+  localStorage.setItem('sp_archive', JSON.stringify(archive));
+  if (appState) localStorage.setItem('sp_active', JSON.stringify(appState));
+}
+
+function saveData() {
+  validFromDates[appState.yearKey] = validFromDates[appState.yearKey] || {};
+  validFromDates[appState.yearKey][currentDay] = document.getElementById('validFrom').value;
+  persistAll();
+  notify('✓ Zapisano');
+  sbSet('Dane zapisane lokalnie');
+}
+
+// ================================================================
+//  WIZARD
+// ================================================================
+const SAMPLE_FLOORS = [
   {
-    id: 'parter',
-    label: 'Parter 0',
-    cls: 'parter',
+    name: 'Parter 0', color: FLOOR_COLORS[0],
     segments: [
-      { label: 'Segment A', rooms: [
-        { room: '1', cls: '' },
-        { room: '2', cls: '' },
-        { room: '5', cls: '' },
-        { room: '6', cls: '' },
-        { room: '7', cls: '' },
-      ]},
-      { label: 'Segment B', rooms: [
-        { room: '1', cls: '' },
-        { room: '3', cls: '' },
-        { room: '4', cls: '' },
-      ]},
+      { name: 'Segment A', rooms: [{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'6',sub:''},{num:'7',sub:''}] },
+      { name: 'Segment B', rooms: [{num:'1',sub:''},{num:'3',sub:''},{num:'4',sub:''}] },
     ]
   },
   {
-    id: 'pietro1',
-    label: 'Piętro I',
-    cls: 'pietro1',
+    name: 'Piętro I', color: FLOOR_COLORS[1],
     segments: [
-      { label: 'Segment A', rooms: [
-        { room: '1', cls: '' },
-        { room: '2', cls: '' },
-        { room: '5', cls: '' },
-        { room: '7', cls: '' },
-      ]},
-      { label: 'Segment B', rooms: [
-        { room: '1', cls: '' },
-        { room: '2', cls: '' },
-        { room: '3', cls: '' },
-      ]},
+      { name: 'Segment A', rooms: [{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'7',sub:''}] },
+      { name: 'Segment B', rooms: [{num:'1',sub:''},{num:'2',sub:''},{num:'3',sub:''}] },
     ]
   },
   {
-    id: 'pietro2',
-    label: 'Piętro II',
-    cls: 'pietro2',
+    name: 'Piętro II', color: FLOOR_COLORS[2],
     segments: [
-      { label: 'Segment A', rooms: [
-        { room: '1', cls: '' },
-        { room: '2', cls: '' },
-        { room: '5', cls: '' },
-        { room: '6', cls: '' },
-        { room: '7', cls: '' },
-      ]},
-      { label: 'Segment B', rooms: [
-        { room: '1', cls: '' },
-        { room: '3', cls: '' },
-        { room: '5', cls: '' },
-      ]},
+      { name: 'Segment A', rooms: [{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'6',sub:''},{num:'7',sub:''}] },
+      { name: 'Segment B', rooms: [{num:'1',sub:''},{num:'3',sub:''},{num:'5',sub:''}] },
     ]
   },
   {
-    id: 'zywn',
-    label: 'Segment Żywnościowy',
-    cls: 'zywn',
+    name: 'Segment Żywnościowy', color: FLOOR_COLORS[3],
     segments: [
-      { label: '', rooms: [
-        { room: '16', sub: 'D. Informatyczna' },
-        { room: '18', sub: 'M. Informatyczna' },
-        { room: '21', sub: '' },
-      ]},
+      { name: '', rooms: [{num:'16',sub:'D. Informatyczna'},{num:'18',sub:'M. Informatyczna'},{num:'21',sub:''}] },
     ]
   },
 ];
 
-// Flatten columns list for indexing
-const COLUMNS = [];
-STRUCTURE.forEach((floor, fi) => {
-  floor.segments.forEach((seg, si) => {
-    seg.rooms.forEach((r, ri) => {
-      COLUMNS.push({ floorIdx: fi, segIdx: si, roomIdx: ri, floor, seg, room: r,
-        key: `${floor.id}_seg${si}_${r.room}` });
-    });
-  });
-});
+const SAMPLE_CLASSES = ['I A','I B','I C','II A','II B','II C','III A','III B','III C','IV A','IV B','IV C','V A','V B','V C','VI A','VI B','VI C','VII A','VII B','VII C','VIII A','VIII B'];
 
-// Schedule data: data[day][hour][colKey] = { teacher, subject, note }
-let data = {};
-let validFromDates = {};
-let currentDay = 0;
-
-// Classes per day (row 6 in Excel = class assignments per column)
-// These are pre-populated from the Excel structure
-const CLASS_ASSIGNMENTS = {
-  0: ['II A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
-  1: ['I A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
-  2: ['I A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
-  3: ['I A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
-  4: ['I A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
-};
-
-function initData() {
-  const saved = localStorage.getItem('salePlanData');
-  if (saved) {
-    try { data = JSON.parse(saved); } catch(e) { data = {}; }
+function openWizardNewYear(preload) {
+  wStep = 0;
+  if (preload) {
+    wFloors = JSON.parse(JSON.stringify(SAMPLE_FLOORS));
+    wClasses = [...SAMPLE_CLASSES];
+  } else if (appState) {
+    // carry over structure from active year
+    wFloors = JSON.parse(JSON.stringify(appState.floors));
+    wClasses = [...appState.classes];
+  } else {
+    wFloors = JSON.parse(JSON.stringify(SAMPLE_FLOORS));
+    wClasses = [...SAMPLE_CLASSES];
   }
-  const savedDates = localStorage.getItem('salePlanDates');
-  if (savedDates) {
-    try { validFromDates = JSON.parse(savedDates); } catch(e) {}
+  wAssignments = {};
+
+  // Suggest next year
+  const now = new Date();
+  const y = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear()-1;
+  document.getElementById('wYear').value = `${y}/${y+1}`;
+  document.getElementById('wTitleYear').textContent = `${y}/${y+1}`;
+  document.getElementById('wHours').value = appState?.hours?.join(',') || '0,1,2,3,4,5,6,7,8,9,10';
+
+  renderFloorList();
+  renderClassGrid();
+  updateWizardStep();
+  document.getElementById('wizardOverlay').classList.add('show');
+}
+
+function openWizardFirst() {
+  openWizardNewYear(true);
+}
+
+function wizardNext() {
+  if (wStep === 0) {
+    const yr = document.getElementById('wYear').value.trim();
+    if (!yr) { notify('⚠ Podaj rok szkolny', true); return; }
+    document.getElementById('wTitleYear').textContent = yr;
   }
-  DAYS.forEach((d,i) => {
-    if (!data[i]) data[i] = {};
-    HOURS.forEach(h => {
-      if (!data[i][h]) data[i][h] = {};
+  if (wStep === 1) {
+    if (wFloors.length === 0) { notify('⚠ Dodaj przynajmniej jedno piętro', true); return; }
+  }
+  if (wStep === 2) {
+    wClasses = getClassesFromDOM();
+    if (wClasses.filter(c=>c.trim()).length === 0) { notify('⚠ Dodaj przynajmniej jedną klasę', true); return; }
+  }
+  if (wStep === 3) {
+    finishWizard();
+    return;
+  }
+  wStep++;
+  if (wStep === 3) {
+    renderAssignmentsStep();
+  }
+  updateWizardStep();
+}
+
+function wizardBack() {
+  if (wStep > 0) { wStep--; updateWizardStep(); }
+}
+
+function updateWizardStep() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById(`wStep${i}`).classList.toggle('active', i === wStep);
+    const ws = document.getElementById(`ws${i}`);
+    ws.className = 'wstep' + (i === wStep ? ' active' : '') + (i < wStep ? ' done' : '');
+    ws.querySelector('.wstep-num').textContent = i < wStep ? '✓' : i+1;
+    if (i < 3) {
+      const wl = document.getElementById(`wl${i}`);
+      wl.className = 'wstep-line' + (i < wStep ? ' done' : '');
+    }
+  }
+  document.getElementById('wFooterInfo').textContent = `Krok ${wStep+1} z 4`;
+  document.getElementById('wBtnBack').style.display = wStep > 0 ? 'flex' : 'none';
+  document.getElementById('wBtnNext').textContent = wStep === 3 ? '✓ Zakończ i przejdź do planu' : 'Dalej →';
+}
+
+function finishWizard() {
+  const yearLabel = document.getElementById('wYear').value.trim();
+  const hours = document.getElementById('wHours').value.split(',').map(h=>h.trim()).filter(Boolean);
+  const classes = getClassesFromDOM().filter(c=>c.trim());
+  const yearKey = 'y_' + yearLabel.replace(/\//g,'_');
+
+  // Archive current year if exists
+  if (appState) {
+    const existing = archive.find(a => a.yearKey === appState.yearKey);
+    if (!existing) {
+      archive.push({ yearKey: appState.yearKey, label: appState.yearLabel, savedAt: new Date().toISOString(), config: JSON.parse(JSON.stringify(appState)) });
+    }
+  }
+
+  // Gather assignments from DOM
+  const assignments = getAssignmentsFromDOM();
+
+  appState = {
+    yearKey, yearLabel, hours, floors: wFloors, classes, assignments,
+    days: DAYS_DEFAULT
+  };
+
+  // Init sched for new year
+  if (!schedData[yearKey]) {
+    schedData[yearKey] = {};
+    DAYS_DEFAULT.forEach((d,i) => {
+      schedData[yearKey][i] = {};
+      hours.forEach(h => { schedData[yearKey][i][h] = {}; });
     });
+  }
+
+  persistAll();
+  document.getElementById('wizardOverlay').classList.remove('show');
+  currentDay = 0;
+  mountApp();
+  notify('🎉 Rok szkolny ' + yearLabel + ' utworzony!');
+}
+
+// ── Floor builder ──
+function renderFloorList() {
+  const container = document.getElementById('floorList');
+  container.innerHTML = '';
+  wFloors.forEach((floor, fi) => {
+    container.appendChild(buildFloorEl(floor, fi));
   });
 }
 
-// ============================================================
-// RENDER
-// ============================================================
+function buildFloorEl(floor, fi) {
+  const div = document.createElement('div');
+  div.className = 'floor-item';
+  div.dataset.fi = fi;
 
-function render() {
-  const container = document.getElementById('scheduleContainer');
+  const segsHtml = floor.segments.map((seg, si) => `
+    <div class="segment-item" data-fi="${fi}" data-si="${si}">
+      <div class="segment-header">
+        <span style="font-size:0.65rem;color:var(--text-dim);font-family:var(--mono);flex-shrink:0">SEG</span>
+        <input class="seg-name-input" value="${esc(seg.name)}" placeholder="Nazwa segmentu (opcjonalnie)"
+          onchange="wFloors[${fi}].segments[${si}].name=this.value">
+        <button class="icon-btn danger" onclick="removeSeg(${fi},${si})">✕</button>
+      </div>
+      <div class="rooms-row" id="rooms_${fi}_${si}">
+        ${seg.rooms.map((r,ri) => buildRoomChip(fi,si,ri,r)).join('')}
+        <button class="add-room-btn" onclick="addRoom(${fi},${si})">＋ sala</button>
+      </div>
+    </div>`).join('');
 
-  // Update day tabs
-  document.querySelectorAll('.day-btn').forEach((b,i) => {
-    b.classList.toggle('active', i === currentDay);
+  div.innerHTML = `
+    <div class="floor-item-header">
+      <div class="floor-color-dot" style="background:${floor.color}"></div>
+      <input class="floor-name-input" value="${esc(floor.name)}" placeholder="Nazwa piętra / strefy"
+        onchange="wFloors[${fi}].name=this.value">
+      <div class="floor-actions">
+        <button class="icon-btn danger" title="Usuń piętro" onclick="removeFloor(${fi})">🗑</button>
+      </div>
+    </div>
+    <div class="segments-area">
+      <div class="segments-label">Segmenty</div>
+      <div class="segment-list" id="segList_${fi}">${segsHtml}</div>
+      <button class="add-segment-btn" onclick="addSegment(${fi})">＋ Dodaj segment</button>
+    </div>`;
+  return div;
+}
+
+function buildRoomChip(fi, si, ri, r) {
+  return `<div class="room-chip">
+    Sala <input class="room-chip-name" value="${esc(r.num)}" placeholder="nr"
+      onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].num=this.value">
+    <input class="room-chip-sub" value="${esc(r.sub||'')}" placeholder="opis…"
+      onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].sub=this.value">
+    <button class="chip-del" onclick="removeRoom(${fi},${si},${ri})">✕</button>
+  </div>`;
+}
+
+function addFloor() {
+  const ci = wFloors.length % FLOOR_COLORS.length;
+  wFloors.push({ name: `Piętro ${wFloors.length}`, color: FLOOR_COLORS[ci], segments: [{ name: 'Segment A', rooms: [{num:'1',sub:''}] }] });
+  renderFloorList();
+}
+function removeFloor(fi) { wFloors.splice(fi, 1); renderFloorList(); }
+function addSegment(fi) { wFloors[fi].segments.push({ name: '', rooms: [{num:'1',sub:''}] }); renderFloorList(); }
+function removeSeg(fi, si) { wFloors[fi].segments.splice(si, 1); renderFloorList(); }
+function addRoom(fi, si) { wFloors[fi].segments[si].rooms.push({num:'', sub:''}); renderFloorList(); }
+function removeRoom(fi, si, ri) { wFloors[fi].segments[si].rooms.splice(ri, 1); renderFloorList(); }
+
+// ── Classes ──
+function renderClassGrid() {
+  const g = document.getElementById('classGrid');
+  g.innerHTML = wClasses.map((c,i) => `
+    <div class="class-item">
+      <div class="class-color"></div>
+      <input class="class-input" value="${esc(c)}" placeholder="np. I A" data-ci="${i}">
+      <button class="icon-btn danger" onclick="removeClassAt(${i})">✕</button>
+    </div>`).join('');
+}
+
+function addClass() {
+  wClasses.push('');
+  renderClassGrid();
+  const inputs = document.querySelectorAll('.class-input');
+  inputs[inputs.length-1]?.focus();
+}
+function removeClassAt(i) { wClasses.splice(i,1); renderClassGrid(); }
+function getClassesFromDOM() {
+  return [...document.querySelectorAll('.class-input')].map(el => el.value.trim());
+}
+
+// ── Assignments ──
+function renderAssignmentsStep() {
+  const tabsEl = document.getElementById('assignmentsTabs');
+  const tbl = document.getElementById('assignmentsTable');
+  currentAssignDay = 0;
+  wClasses = getClassesFromDOM().filter(c=>c.trim());
+
+  tabsEl.innerHTML = DAYS_DEFAULT.map((d,i) =>
+    `<button class="btn ${i===0?'btn-primary':'btn-ghost'} btn-sm" style="padding:5px 12px;font-size:0.75rem"
+      onclick="switchAssignDay(${i})">${d}</button>`).join('');
+
+  renderAssignTable();
+}
+
+function switchAssignDay(idx) {
+  currentAssignDay = idx;
+  document.querySelectorAll('#assignmentsTabs button').forEach((b,i) => {
+    b.className = `btn ${i===idx?'btn-primary':'btn-ghost'}`;
+    b.style.cssText = 'padding:5px 12px;font-size:0.75rem';
   });
+  renderAssignTable();
+}
 
-  // Valid from date
-  const vf = document.getElementById('validFrom');
-  vf.value = validFromDates[currentDay] || '';
+function renderAssignTable() {
+  const tbl = document.getElementById('assignmentsTable');
+  const cols = flattenColumns(wFloors);
+  const classOptions = ['<option value="">—</option>', ...wClasses.filter(c=>c).map(c => `<option value="${esc(c)}">${esc(c)}</option>`)].join('');
 
-  // Build table
+  if (cols.length === 0) { tbl.innerHTML = '<tr><td style="padding:20px;color:var(--text-muted)">Brak sal do wyświetlenia</td></tr>'; return; }
+
+  const header = '<tr><th>Piętro</th><th>Segment</th><th>Sala</th><th>Klasa</th></tr>';
+  const rows = cols.map(col => {
+    const key = colKey(col);
+    const saved = (wAssignments[currentAssignDay] || {})[key] || '';
+    return `<tr>
+      <td style="font-size:0.7rem;color:${col.floor.color};font-weight:700;padding:5px 8px">${esc(col.floor.name)}</td>
+      <td style="font-size:0.68rem;color:var(--text-muted);padding:5px 8px">${esc(col.seg.name)}</td>
+      <td style="font-family:var(--mono);font-size:0.72rem;padding:5px 8px;color:var(--accent)">Sala ${esc(col.room.num)}</td>
+      <td><select class="assign-select" onchange="setAssign(${currentAssignDay},'${key}',this.value)">${classOptions.replace(`value="${esc(saved)}"`,`value="${esc(saved)}" selected`)}</select></td>
+    </tr>`;
+  }).join('');
+  tbl.innerHTML = header + rows;
+}
+
+function setAssign(dayIdx, key, val) {
+  if (!wAssignments[dayIdx]) wAssignments[dayIdx] = {};
+  wAssignments[dayIdx][key] = val;
+}
+
+function getAssignmentsFromDOM() {
+  // Sync current tab
+  document.querySelectorAll('#assignmentsTable select').forEach(sel => {
+    const key = sel.closest('tr').querySelector('td:nth-child(3)').textContent.replace('Sala ','').trim();
+    // already handled by onchange
+  });
+  return wAssignments;
+}
+
+// ================================================================
+//  COLUMN UTILS
+// ================================================================
+function colKey(col) {
+  return `f${col.floorIdx}_s${col.segIdx}_${col.room.num}`;
+}
+
+function flattenColumns(floors) {
+  const cols = [];
+  floors.forEach((floor, fi) => {
+    floor.segments.forEach((seg, si) => {
+      seg.rooms.forEach((room, ri) => {
+        cols.push({ floorIdx: fi, segIdx: si, roomIdx: ri, floor, seg, room });
+      });
+    });
+  });
+  return cols;
+}
+
+// ================================================================
+//  MAIN APP
+// ================================================================
+function mountApp() {
+  if (!appState) return;
+  document.getElementById('appOverlay').classList.add('show');
+  document.getElementById('currentYearLabel').textContent = appState.yearLabel;
+  document.getElementById('sbYear').textContent = appState.yearLabel;
+
+  // Day tabs
+  const tabsEl = document.getElementById('dayTabs');
+  tabsEl.innerHTML = appState.days.map((d,i) =>
+    `<button class="day-btn ${i===0?'active':''}" onclick="switchDay(${i})">${d}</button>`).join('');
+
+  // Valid from
+  const vfDates = (validFromDates[appState.yearKey] || {});
+  document.getElementById('validFrom').value = vfDates[currentDay] || '';
+
+  renderSchedule();
+}
+
+function switchDay(idx) {
+  currentDay = idx;
+  document.querySelectorAll('.day-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+  const vfDates = (validFromDates[appState.yearKey] || {});
+  document.getElementById('validFrom').value = vfDates[currentDay] || '';
+  renderSchedule();
+}
+
+function renderSchedule() {
+  if (!appState) return;
+  const cols = flattenColumns(appState.floors);
+  const hours = appState.hours;
+  const dayData = schedData[appState.yearKey]?.[currentDay] || {};
+  const assignments = (appState.assignments[currentDay] || {});
+
   let html = '<table class="schedule-table"><thead><tr>';
   html += '<th class="time-th">Godz.</th>';
-
-  COLUMNS.forEach((col, ci) => {
-    const cls = col.floor.cls;
-    const clsAssign = (CLASS_ASSIGNMENTS[currentDay] || [])[ci] || '';
-    html += `<th class="col-${cls}">
-      <span class="th-room">Sala ${col.room.room}</span>
-      ${col.room.sub ? `<span class="th-class" style="color:var(--text-muted);font-size:0.6rem">${col.room.sub}</span>` : ''}
-      ${clsAssign ? `<span class="th-class">${clsAssign}</span>` : ''}
+  cols.forEach(col => {
+    const key = colKey(col);
+    const cls = assignments[key] || '';
+    html += `<th>
+      <div class="th-inner">
+        <span class="th-room">Sala ${esc(col.room.num)}</span>
+        ${col.room.sub ? `<span class="th-seg">${esc(col.room.sub)}</span>` : `<span class="th-seg">${esc(col.seg.name)}</span>`}
+        ${cls ? `<span class="th-class">${esc(cls)}</span>` : ''}
+      </div>
     </th>`;
   });
-
   html += '</tr></thead><tbody>';
 
-  // Floor / segment header row (visual only, above thead would be ideal but table doesn't allow it)
-  // We'll embed it as a colored top-border trick on TH
-
-  HOURS.forEach(h => {
+  hours.forEach(h => {
     html += `<tr><td class="time-cell">${h}</td>`;
-    COLUMNS.forEach((col, ci) => {
-      const key = col.key;
-      const entry = (data[currentDay]?.[h]?.[key]) || {};
-      const hasData = entry.teacher || entry.subject;
-      html += `<td>
-        <div class="cell-content ${hasData ? 'has-data' : ''}" onclick="openModal(${currentDay}, '${h}', '${key}', ${ci})">
-          ${hasData
-            ? `${entry.teacher ? `<div class="entry-teacher">${entry.teacher}</div>` : ''}
-               ${entry.subject ? `<div class="entry-subject">${entry.subject}</div>` : ''}
-               ${entry.note ? `<div class="entry-note">${entry.note}</div>` : ''}`
-            : `<div class="empty-hint">+</div>`
-          }
-        </div>
-      </td>`;
+    cols.forEach(col => {
+      const key = colKey(col);
+      const entry = dayData[h]?.[key] || {};
+      const filled = !!(entry.teacher || entry.subject);
+      html += `<td><div class="cell-inner ${filled?'filled':''}" onclick="openEditModal(${currentDay},'${h}','${key}')">
+        ${filled
+          ? `${entry.teacher?`<div class="cell-teacher">${esc(entry.teacher)}</div>`:''}
+             ${entry.subject?`<div class="cell-subject">${esc(entry.subject)}</div>`:''}
+             ${entry.note?`<div class="cell-note">${esc(entry.note)}</div>`:''}`
+          : `<div class="cell-plus">＋</div>`}
+      </div></td>`;
     });
     html += '</tr>';
   });
 
   html += '</tbody></table>';
-  container.innerHTML = html;
+  document.getElementById('scheduleWrap').innerHTML = html;
 
-  // Color-code TH borders by floor
-  const ths = container.querySelectorAll('thead th');
-  const floorColors = { parter:'#f6c90e', pietro1:'#4f7cff', pietro2:'#43d9a2', zywn:'#ff6b6b' };
+  // Color top borders by floor
+  const ths = document.querySelectorAll('.schedule-table thead th');
   ths.forEach((th, i) => {
     if (i === 0) return;
-    const col = COLUMNS[i-1];
-    if (col) {
-      th.style.borderTop = `3px solid ${floorColors[col.floor.cls] || '#666'}`;
-    }
+    const col = cols[i-1];
+    if (col) th.style.borderTop = `3px solid ${col.floor.color}`;
   });
 
-  updateStatus();
+  updateStatusBar();
 }
 
-function updateStatus() {
-  const dayData = data[currentDay] || {};
+function updateStatusBar() {
+  const dayData = schedData[appState.yearKey]?.[currentDay] || {};
   let count = 0;
-  HOURS.forEach(h => {
-    COLUMNS.forEach(col => {
-      const e = dayData[h]?.[col.key];
+  const cols = flattenColumns(appState.floors);
+  appState.hours.forEach(h => {
+    cols.forEach(col => {
+      const e = dayData[h]?.[colKey(col)];
       if (e && (e.teacher || e.subject)) count++;
     });
   });
-  document.getElementById('statusCount').textContent = `${count} wpisów w tym dniu`;
+  document.getElementById('sbCount').textContent = `${count} wpisów w tym dniu`;
 }
 
-// ============================================================
-// NAVIGATION
-// ============================================================
+// ================================================================
+//  EDIT MODAL
+// ================================================================
+function openEditModal(day, hour, key) {
+  _mDay = day; _mHour = hour; _mKey = key;
+  const cols = flattenColumns(appState.floors);
+  const col = cols.find(c => colKey(c) === key);
+  const entry = schedData[appState.yearKey]?.[day]?.[hour]?.[key] || {};
+  const cls = (appState.assignments[day] || {})[key] || '';
 
-function switchDay(idx) {
-  currentDay = idx;
-  render();
+  document.getElementById('modalTitle').textContent = `Sala ${col?.room.num || '?'} — Godz. ${hour}`;
+  document.getElementById('modalSub').textContent = `${col?.floor.name} › ${col?.seg.name}${cls?' › '+cls:''} · ${appState.days[day]}`;
+  document.getElementById('inpTeacher').value = entry.teacher || '';
+  document.getElementById('inpSubject').value = entry.subject || '';
+  document.getElementById('inpNote').value = entry.note || '';
+
+  document.getElementById('editModal').classList.add('show');
+  document.getElementById('inpTeacher').focus();
 }
 
-// ============================================================
-// MODAL
-// ============================================================
+function closeEditModal() { document.getElementById('editModal').classList.remove('show'); }
 
-let _modalDay, _modalHour, _modalKey, _modalColIdx;
-
-function openModal(day, hour, key, colIdx) {
-  _modalDay = day; _modalHour = hour; _modalKey = key; _modalColIdx = colIdx;
-  const entry = (data[day]?.[hour]?.[key]) || {};
-  const col = COLUMNS[colIdx];
-  const clsAssign = (CLASS_ASSIGNMENTS[day] || [])[colIdx] || '';
-
-  document.getElementById('modalTitle').textContent =
-    `Sala ${col.room.room} — Godz. ${hour}`;
-  document.getElementById('modalSubtitle').textContent =
-    `${col.floor.label} › ${col.seg.label}${clsAssign ? ` › Klasa: ${clsAssign}` : ''} — ${DAYS[day]}`;
-
-  document.getElementById('inputTeacher').value = entry.teacher || '';
-  document.getElementById('inputSubject').value = entry.subject || '';
-  document.getElementById('inputNote').value = entry.note || '';
-
-  document.getElementById('modalOverlay').classList.add('show');
-  document.getElementById('inputTeacher').focus();
-}
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('show');
-}
-
-function saveCell() {
-  if (!data[_modalDay]) data[_modalDay] = {};
-  if (!data[_modalDay][_modalHour]) data[_modalDay][_modalHour] = {};
-  data[_modalDay][_modalHour][_modalKey] = {
-    teacher: document.getElementById('inputTeacher').value.trim(),
-    subject: document.getElementById('inputSubject').value.trim(),
-    note: document.getElementById('inputNote').value.trim(),
+function saveCellData() {
+  const yk = appState.yearKey;
+  if (!schedData[yk]) schedData[yk] = {};
+  if (!schedData[yk][_mDay]) schedData[yk][_mDay] = {};
+  if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour] = {};
+  schedData[yk][_mDay][_mHour][_mKey] = {
+    teacher: document.getElementById('inpTeacher').value.trim(),
+    subject: document.getElementById('inpSubject').value.trim(),
+    note: document.getElementById('inpNote').value.trim(),
   };
-  closeModal();
-  render();
-  document.getElementById('statusText').textContent = 'Zapisano wpis';
+  closeEditModal();
+  renderSchedule();
+  sbSet('Wpis zaktualizowany');
 }
 
-function clearCell() {
-  if (data[_modalDay]?.[_modalHour]?.[_modalKey]) {
-    data[_modalDay][_modalHour][_modalKey] = {};
-  }
-  closeModal();
-  render();
+function clearCellData() {
+  const yk = appState.yearKey;
+  if (schedData[yk]?.[_mDay]?.[_mHour]) schedData[yk][_mDay][_mHour][_mKey] = {};
+  closeEditModal();
+  renderSchedule();
 }
 
-document.getElementById('modalOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
+document.getElementById('editModal').addEventListener('click', e => { if (e.target === document.getElementById('editModal')) closeEditModal(); });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
-  if (e.key === 'Enter' && e.ctrlKey && document.getElementById('modalOverlay').classList.contains('show')) {
-    saveCell();
-  }
+  if (e.key === 'Escape') closeEditModal();
+  if (e.key === 'Enter' && e.ctrlKey && document.getElementById('editModal').classList.contains('show')) saveCellData();
 });
 
-// ============================================================
-// ACTIONS
-// ============================================================
+// ================================================================
+//  ARCHIVE
+// ================================================================
+function showArchive() {
+  renderArchiveBody();
+  document.getElementById('archivePanel').classList.add('show');
+}
+function closeArchive() { document.getElementById('archivePanel').classList.remove('show'); }
 
-function saveData() {
-  // Save valid-from date
-  validFromDates[currentDay] = document.getElementById('validFrom').value;
-  localStorage.setItem('salePlanData', JSON.stringify(data));
-  localStorage.setItem('salePlanDates', JSON.stringify(validFromDates));
-  document.getElementById('statusText').textContent = '✓ Dane zapisane lokalnie';
-  setTimeout(() => {
-    document.getElementById('statusText').textContent = 'Kliknij komórkę, aby edytować';
-  }, 2000);
+function renderArchiveBody() {
+  const body = document.getElementById('archiveBody');
+  if (archive.length === 0 && !appState) { body.innerHTML = '<div class="archive-empty">Brak zarchiwizowanych planów.</div>'; return; }
+
+  let html = '';
+  // Current year first
+  if (appState) {
+    html += `<div class="archive-year-card" style="border-color:var(--accent);background:rgba(59,130,246,0.06)">
+      <div class="archive-year-info">
+        <h3>📌 ${esc(appState.yearLabel)} <span style="font-size:0.68rem;color:var(--green);font-weight:600">aktywny</span></h3>
+        <p>${flattenColumns(appState.floors).length} sal · ${appState.classes.length} klas · ${appState.hours.length} godzin</p>
+      </div>
+      <div class="archive-year-actions">
+        <button class="btn btn-ghost" onclick="closeArchive()">Otwórz</button>
+      </div>
+    </div>`;
+  }
+
+  archive.slice().reverse().forEach(item => {
+    const saved = item.savedAt ? new Date(item.savedAt).toLocaleDateString('pl-PL') : '';
+    html += `<div class="archive-year-card">
+      <div class="archive-year-info">
+        <h3>📁 ${esc(item.label)}</h3>
+        <p>Zarchiwizowany${saved ? ': '+saved : ''}</p>
+      </div>
+      <div class="archive-year-actions">
+        <button class="btn btn-yellow" onclick="restoreYear('${item.yearKey}')">Przywróć</button>
+        <button class="btn btn-red" onclick="deleteArchive('${item.yearKey}')">Usuń</button>
+      </div>
+    </div>`;
+  });
+
+  body.innerHTML = html;
 }
 
+function restoreYear(yearKey) {
+  const item = archive.find(a => a.yearKey === yearKey);
+  if (!item) return;
+  if (!confirm(`Przywrócić rok ${item.label} jako aktywny? Bieżący rok zostanie zarchiwizowany.`)) return;
+
+  // Try to restore config — we stored a snapshot if available
+  if (item.config) {
+    if (appState) {
+      const ex = archive.find(a=>a.yearKey===appState.yearKey);
+      if (!ex) archive.push({ yearKey: appState.yearKey, label: appState.yearLabel, savedAt: new Date().toISOString(), config: appState });
+    }
+    appState = item.config;
+    archive = archive.filter(a => a.yearKey !== yearKey);
+    persistAll();
+    closeArchive();
+    currentDay = 0;
+    mountApp();
+    notify('📁 Przywrócono rok ' + item.label);
+  } else {
+    notify('⚠ Brak danych konfiguracji. Utwórz rok ponownie przez kreator.', true);
+  }
+}
+
+function deleteArchive(yearKey) {
+  const item = archive.find(a => a.yearKey === yearKey);
+  if (!confirm(`Trwale usunąć archiwum: ${item?.label}?`)) return;
+  archive = archive.filter(a => a.yearKey !== yearKey);
+  delete schedData[yearKey];
+  persistAll();
+  renderArchiveBody();
+  notify('🗑 Usunięto archiwum');
+}
+
+document.getElementById('archivePanel').addEventListener('click', e => { if (e.target === document.getElementById('archivePanel')) closeArchive(); });
+
+// ================================================================
+//  OTHER ACTIONS
+// ================================================================
 function clearDay() {
-  if (!confirm(`Wyczyścić wszystkie wpisy dla: ${DAYS[currentDay]}?`)) return;
-  data[currentDay] = {};
-  HOURS.forEach(h => { data[currentDay][h] = {}; });
-  render();
-  document.getElementById('statusText').textContent = 'Dzień wyczyszczony';
+  if (!confirm(`Wyczyścić wszystkie wpisy: ${appState.days[currentDay]}?`)) return;
+  const yk = appState.yearKey;
+  schedData[yk][currentDay] = {};
+  appState.hours.forEach(h => { schedData[yk][currentDay][h] = {}; });
+  renderSchedule();
+  notify('🗑 Dzień wyczyszczony');
 }
 
 function exportPDF() {
-  // Save valid-from date first
-  validFromDates[currentDay] = document.getElementById('validFrom').value;
-  const dayName = DAYS[currentDay];
-  const date = validFromDates[currentDay] ? ` (od ${validFromDates[currentDay]})` : '';
-  document.title = `Plan Sal - ${dayName}${date}`;
+  const vf = document.getElementById('validFrom').value;
+  if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey] = {};
+  validFromDates[appState.yearKey][currentDay] = vf;
+  const dayName = appState.days[currentDay];
+  const date = vf ? ` (od ${vf})` : '';
+  document.title = `Plan Sal ${appState.yearLabel} — ${dayName}${date}`;
   window.print();
-  document.title = 'Plan Sal Zajęciowych 2025/26';
+  document.title = 'SalePlan — Plan Sal Zajęciowych';
 }
 
 document.getElementById('validFrom').addEventListener('change', () => {
-  validFromDates[currentDay] = document.getElementById('validFrom').value;
+  if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey] = {};
+  validFromDates[appState.yearKey][currentDay] = document.getElementById('validFrom').value;
 });
 
-// ============================================================
-// INIT
-// ============================================================
-initData();
-render();
+// ================================================================
+//  HELPERS
+// ================================================================
+function esc(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function sbSet(msg) { document.getElementById('sbText').textContent = msg; setTimeout(()=>document.getElementById('sbText').textContent='Gotowy',2500); }
+
+function notify(msg, warn) {
+  const el = document.createElement('div');
+  el.className = 'notif';
+  el.style.borderColor = warn ? 'rgba(245,158,11,0.4)' : 'var(--border2)';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2900);
+}
+
+// ================================================================
+//  INIT
+// ================================================================
+loadAll();
+if (!appState) {
+  openWizardFirst();
+} else {
+  // Ensure schedule data has all hours
+  const yk = appState.yearKey;
+  if (!schedData[yk]) schedData[yk] = {};
+  appState.days.forEach((d,i) => {
+    if (!schedData[yk][i]) schedData[yk][i] = {};
+    appState.hours.forEach(h => { if (!schedData[yk][i][h]) schedData[yk][i][h] = {}; });
+  });
+  mountApp();
+}
 </script>
 </body>
 </html>
