@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan Sal Zajęciowych 2025/26</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #4f7cff;
+    --accent2: #ff6b6b;
+    --accent3: #43d9a2;
+    --text: #e8eaf6;
+    --text-muted: #6b7280;
+    --header-bg: #151929;
+    --cell-empty: #1a1d27;
+    --cell-filled: #1e2540;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text); }
+
+  .year-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .topbar-center {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .day-btn {
+    padding: 7px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.82rem;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+  .day-btn:hover { background: var(--surface2); color: var(--text); }
+  .day-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(79,124,255,0.3);
+  }
+
+  .topbar-right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .valid-from-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+    transition: border 0.15s;
+  }
+  .valid-from-input:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3d6af0; box-shadow: 0 2px 12px rgba(79,124,255,0.3); }
+  .btn-danger { background: #3a1a1a; color: var(--accent2); border: 1px solid #5a2a2a; }
+  .btn-danger:hover { background: #4a2222; }
+  .btn-success { background: #1a3a2a; color: var(--accent3); border: 1px solid #2a5a3a; }
+  .btn-success:hover { background: #1e4530; }
+
+  /* MAIN */
+  .main {
+    padding: 20px 20px 60px;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* SCHEDULE TABLE WRAPPER */
+  .schedule-container {
+    min-width: 900px;
+  }
+
+  /* SECTION HEADERS */
+  .section-header-row {
+    display: flex;
+    margin-bottom: 0;
+  }
+
+  .time-col-header {
+    width: 68px;
+    min-width: 68px;
+    flex-shrink: 0;
+  }
+
+  .floor-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .floor-label {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 6px 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-right: 4px;
+  }
+  .floor-label.parter { color: #f6c90e; border-color: #3a3520; background: #1e1d12; }
+  .floor-label.pietro1 { color: var(--accent); border-color: #1e2a50; background: #12192e; }
+  .floor-label.pietro2 { color: var(--accent3); border-color: #1a3528; background: #121e18; }
+  .floor-label.zywn { color: var(--accent2); border-color: #3a1e1e; background: #1e1212; }
+
+  .segment-row {
+    display: flex;
+  }
+
+  .segment-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .segment-label {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-right: 3px;
+  }
+
+  /* TABLE */
+  .schedule-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+  }
+
+  .schedule-table th {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-muted);
+    position: relative;
+  }
+
+  .schedule-table th.time-th {
+    width: 68px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--header-bg);
+    border-color: var(--border);
+  }
+
+  .th-room {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent);
+    margin-bottom: 2px;
+    font-weight: 500;
+  }
+  .th-class {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .schedule-table td {
+    border: 1px solid var(--border);
+    padding: 0;
+    vertical-align: top;
+    position: relative;
+    min-width: 80px;
+    background: var(--cell-empty);
+  }
+
+  .schedule-table td.time-cell {
+    background: var(--header-bg);
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    vertical-align: middle;
+    padding: 8px 4px;
+    width: 68px;
+    min-width: 68px;
+  }
+
+  .cell-content {
+    width: 100%;
+    min-height: 52px;
+    padding: 5px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .cell-content:hover { background: var(--surface2); }
+
+  .cell-content.has-data {
+    background: var(--cell-filled);
+    border-left: 3px solid var(--accent);
+  }
+  .cell-content.has-data:hover { background: #252b48; }
+
+  .entry-teacher {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent3);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .entry-subject {
+    font-size: 0.65rem;
+    color: var(--text);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .entry-note {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    font-style: italic;
+    line-height: 1.2;
+  }
+
+  .empty-hint {
+    font-size: 0.6rem;
+    color: #2a2d40;
+    text-align: center;
+    margin-top: 8px;
+    user-select: none;
+    font-style: italic;
+  }
+
+  /* FLOOR SEPARATORS */
+  .sep-col {
+    width: 4px;
+    min-width: 4px;
+    background: var(--bg);
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 28px 24px;
+    width: 380px;
+    max-width: 96vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    animation: modalIn 0.18s ease;
+  }
+  @keyframes modalIn {
+    from { transform: scale(0.94) translateY(10px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+  }
+
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+    color: var(--accent);
+  }
+  .modal-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+  .form-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .form-input, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border 0.15s;
+  }
+  .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { resize: vertical; min-height: 60px; }
+
+  .modal-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+  }
+  .btn-sm { padding: 8px 16px; font-size: 0.78rem; }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  /* STATUS BAR */
+  .statusbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--header-bg);
+    border-top: 1px solid var(--border);
+    padding: 6px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    z-index: 90;
+  }
+  .statusbar-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent3);
+    display: inline-block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .status-sep { color: var(--border); }
+
+  /* PRINT */
+  @media print {
+    .topbar, .statusbar, .modal-overlay { display: none !important; }
+    body { background: white; color: black; }
+    .main { padding: 0; }
+    .schedule-table th, .schedule-table td { border: 1px solid #ccc; }
+    .cell-content.has-data { border-left: 3px solid #333; background: #f5f5f5; }
+    .entry-teacher { color: #006; }
+    .entry-subject { color: #000; }
+    .schedule-table th.time-th, .schedule-table td.time-cell { background: #f0f0f0; }
+    .floor-label { background: #eee; color: #333; border-color: #ccc; }
+    @page { margin: 15mm; size: landscape; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">Sale<span>Plan</span></div>
+    <div class="year-badge">2025/26</div>
+  </div>
+  <div class="topbar-center" id="dayTabs">
+    <button class="day-btn active" onclick="switchDay(0)">Poniedziałek</button>
+    <button class="day-btn" onclick="switchDay(1)">Wtorek</button>
+    <button class="day-btn" onclick="switchDay(2)">Środa</button>
+    <button class="day-btn" onclick="switchDay(3)">Czwartek</button>
+    <button class="day-btn" onclick="switchDay(4)">Piątek</button>
+  </div>
+  <div class="topbar-right">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:0.72rem;color:var(--text-muted)">Obowiązuje od:</span>
+      <input type="date" class="valid-from-input" id="validFrom">
+    </div>
+    <button class="btn btn-success btn-sm" onclick="exportPDF()">⬇ PDF</button>
+    <button class="btn btn-primary btn-sm" onclick="saveData()">💾 Zapisz</button>
+    <button class="btn btn-danger btn-sm" onclick="clearDay()">🗑 Wyczyść dzień</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="schedule-container" id="scheduleContainer"></div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Edytuj komórkę</div>
+    <div class="modal-subtitle" id="modalSubtitle"></div>
+    <div class="form-group">
+      <label class="form-label">Nauczyciel</label>
+      <input type="text" class="form-input" id="inputTeacher" placeholder="np. Jan Kowalski">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Przedmiot / Zajęcia</label>
+      <input type="text" class="form-input" id="inputSubject" placeholder="np. Matematyka">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Uwagi</label>
+      <textarea class="form-textarea" id="inputNote" placeholder="opcjonalne uwagi..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Anuluj</button>
+      <button class="btn btn-danger btn-sm" onclick="clearCell()">Wyczyść</button>
+      <button class="btn btn-primary btn-sm" onclick="saveCell()">Zapisz</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+  <span><span class="statusbar-dot"></span> aktywny</span>
+  <span class="status-sep">|</span>
+  <span id="statusText">Kliknij komórkę, aby edytować</span>
+  <span class="status-sep">|</span>
+  <span id="statusCount">0 wpisów w tym dniu</span>
+</div>
+
+<script>
+// ============================================================
+// DATA STRUCTURE
+// ============================================================
+
+const DAYS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek'];
+const HOURS = ['0','1','2','3','4','5','6','7','8','9','10','11'];
+
+// Struktura: Piętro > Segment > Sala
+const STRUCTURE = [
+  {
+    id: 'parter',
+    label: 'Parter 0',
+    cls: 'parter',
+    segments: [
+      { label: 'Segment A', rooms: [
+        { room: '1', cls: '' },
+        { room: '2', cls: '' },
+        { room: '5', cls: '' },
+        { room: '6', cls: '' },
+        { room: '7', cls: '' },
+      ]},
+      { label: 'Segment B', rooms: [
+        { room: '1', cls: '' },
+        { room: '3', cls: '' },
+        { room: '4', cls: '' },
+      ]},
+    ]
+  },
+  {
+    id: 'pietro1',
+    label: 'Piętro I',
+    cls: 'pietro1',
+    segments: [
+      { label: 'Segment A', rooms: [
+        { room: '1', cls: '' },
+        { room: '2', cls: '' },
+        { room: '5', cls: '' },
+        { room: '7', cls: '' },
+      ]},
+      { label: 'Segment B', rooms: [
+        { room: '1', cls: '' },
+        { room: '2', cls: '' },
+        { room: '3', cls: '' },
+      ]},
+    ]
+  },
+  {
+    id: 'pietro2',
+    label: 'Piętro II',
+    cls: 'pietro2',
+    segments: [
+      { label: 'Segment A', rooms: [
+        { room: '1', cls: '' },
+        { room: '2', cls: '' },
+        { room: '5', cls: '' },
+        { room: '6', cls: '' },
+        { room: '7', cls: '' },
+      ]},
+      { label: 'Segment B', rooms: [
+        { room: '1', cls: '' },
+        { room: '3', cls: '' },
+        { room: '5', cls: '' },
+      ]},
+    ]
+  },
+  {
+    id: 'zywn',
+    label: 'Segment Żywnościowy',
+    cls: 'zywn',
+    segments: [
+      { label: '', rooms: [
+        { room: '16', sub: 'D. Informatyczna' },
+        { room: '18', sub: 'M. Informatyczna' },
+        { room: '21', sub: '' },
+      ]},
+    ]
+  },
+];
+
+// Flatten columns list for indexing
+const COLUMNS = [];
+STRUCTURE.forEach((floor, fi) => {
+  floor.segments.forEach((seg, si) => {
+    seg.rooms.forEach((r, ri) => {
+      COLUMNS.push({ floorIdx: fi, segIdx: si, roomIdx: ri, floor, seg, room: r,
+        key: `${floor.id}_seg${si}_${r.room}` });
+    });
+  });
+});
+
+// Schedule data: data[day][hour][colKey] = { teacher, subject, note }
+let data = {};
+let validFromDates = {};
+let currentDay = 0;
+
+// Classes per day (row 6 in Excel = class assignments per column)
+// These are pre-populated from the Excel structure
+const CLASS_ASSIGNMENTS = {
+  0: ['II A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
+  1: ['I A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
+  2: ['I A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
+  3: ['I A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
+  4: ['I A','III A','II B','III B','I B','III C','II A','I C','IV C','II C','IV B','VI A','VI B','V A','VII B','VII C','VI C','VIII A','V C','VII A','V B','VIII B','IV A','','',''],
+};
+
+function initData() {
+  const saved = localStorage.getItem('salePlanData');
+  if (saved) {
+    try { data = JSON.parse(saved); } catch(e) { data = {}; }
+  }
+  const savedDates = localStorage.getItem('salePlanDates');
+  if (savedDates) {
+    try { validFromDates = JSON.parse(savedDates); } catch(e) {}
+  }
+  DAYS.forEach((d,i) => {
+    if (!data[i]) data[i] = {};
+    HOURS.forEach(h => {
+      if (!data[i][h]) data[i][h] = {};
+    });
+  });
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+
+function render() {
+  const container = document.getElementById('scheduleContainer');
+
+  // Update day tabs
+  document.querySelectorAll('.day-btn').forEach((b,i) => {
+    b.classList.toggle('active', i === currentDay);
+  });
+
+  // Valid from date
+  const vf = document.getElementById('validFrom');
+  vf.value = validFromDates[currentDay] || '';
+
+  // Build table
+  let html = '<table class="schedule-table"><thead><tr>';
+  html += '<th class="time-th">Godz.</th>';
+
+  COLUMNS.forEach((col, ci) => {
+    const cls = col.floor.cls;
+    const clsAssign = (CLASS_ASSIGNMENTS[currentDay] || [])[ci] || '';
+    html += `<th class="col-${cls}">
+      <span class="th-room">Sala ${col.room.room}</span>
+      ${col.room.sub ? `<span class="th-class" style="color:var(--text-muted);font-size:0.6rem">${col.room.sub}</span>` : ''}
+      ${clsAssign ? `<span class="th-class">${clsAssign}</span>` : ''}
+    </th>`;
+  });
+
+  html += '</tr></thead><tbody>';
+
+  // Floor / segment header row (visual only, above thead would be ideal but table doesn't allow it)
+  // We'll embed it as a colored top-border trick on TH
+
+  HOURS.forEach(h => {
+    html += `<tr><td class="time-cell">${h}</td>`;
+    COLUMNS.forEach((col, ci) => {
+      const key = col.key;
+      const entry = (data[currentDay]?.[h]?.[key]) || {};
+      const hasData = entry.teacher || entry.subject;
+      html += `<td>
+        <div class="cell-content ${hasData ? 'has-data' : ''}" onclick="openModal(${currentDay}, '${h}', '${key}', ${ci})">
+          ${hasData
+            ? `${entry.teacher ? `<div class="entry-teacher">${entry.teacher}</div>` : ''}
+               ${entry.subject ? `<div class="entry-subject">${entry.subject}</div>` : ''}
+               ${entry.note ? `<div class="entry-note">${entry.note}</div>` : ''}`
+            : `<div class="empty-hint">+</div>`
+          }
+        </div>
+      </td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+
+  // Color-code TH borders by floor
+  const ths = container.querySelectorAll('thead th');
+  const floorColors = { parter:'#f6c90e', pietro1:'#4f7cff', pietro2:'#43d9a2', zywn:'#ff6b6b' };
+  ths.forEach((th, i) => {
+    if (i === 0) return;
+    const col = COLUMNS[i-1];
+    if (col) {
+      th.style.borderTop = `3px solid ${floorColors[col.floor.cls] || '#666'}`;
+    }
+  });
+
+  updateStatus();
+}
+
+function updateStatus() {
+  const dayData = data[currentDay] || {};
+  let count = 0;
+  HOURS.forEach(h => {
+    COLUMNS.forEach(col => {
+      const e = dayData[h]?.[col.key];
+      if (e && (e.teacher || e.subject)) count++;
+    });
+  });
+  document.getElementById('statusCount').textContent = `${count} wpisów w tym dniu`;
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+function switchDay(idx) {
+  currentDay = idx;
+  render();
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+
+let _modalDay, _modalHour, _modalKey, _modalColIdx;
+
+function openModal(day, hour, key, colIdx) {
+  _modalDay = day; _modalHour = hour; _modalKey = key; _modalColIdx = colIdx;
+  const entry = (data[day]?.[hour]?.[key]) || {};
+  const col = COLUMNS[colIdx];
+  const clsAssign = (CLASS_ASSIGNMENTS[day] || [])[colIdx] || '';
+
+  document.getElementById('modalTitle').textContent =
+    `Sala ${col.room.room} — Godz. ${hour}`;
+  document.getElementById('modalSubtitle').textContent =
+    `${col.floor.label} › ${col.seg.label}${clsAssign ? ` › Klasa: ${clsAssign}` : ''} — ${DAYS[day]}`;
+
+  document.getElementById('inputTeacher').value = entry.teacher || '';
+  document.getElementById('inputSubject').value = entry.subject || '';
+  document.getElementById('inputNote').value = entry.note || '';
+
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('inputTeacher').focus();
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function saveCell() {
+  if (!data[_modalDay]) data[_modalDay] = {};
+  if (!data[_modalDay][_modalHour]) data[_modalDay][_modalHour] = {};
+  data[_modalDay][_modalHour][_modalKey] = {
+    teacher: document.getElementById('inputTeacher').value.trim(),
+    subject: document.getElementById('inputSubject').value.trim(),
+    note: document.getElementById('inputNote').value.trim(),
+  };
+  closeModal();
+  render();
+  document.getElementById('statusText').textContent = 'Zapisano wpis';
+}
+
+function clearCell() {
+  if (data[_modalDay]?.[_modalHour]?.[_modalKey]) {
+    data[_modalDay][_modalHour][_modalKey] = {};
+  }
+  closeModal();
+  render();
+}
+
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && e.ctrlKey && document.getElementById('modalOverlay').classList.contains('show')) {
+    saveCell();
+  }
+});
+
+// ============================================================
+// ACTIONS
+// ============================================================
+
+function saveData() {
+  // Save valid-from date
+  validFromDates[currentDay] = document.getElementById('validFrom').value;
+  localStorage.setItem('salePlanData', JSON.stringify(data));
+  localStorage.setItem('salePlanDates', JSON.stringify(validFromDates));
+  document.getElementById('statusText').textContent = '✓ Dane zapisane lokalnie';
+  setTimeout(() => {
+    document.getElementById('statusText').textContent = 'Kliknij komórkę, aby edytować';
+  }, 2000);
+}
+
+function clearDay() {
+  if (!confirm(`Wyczyścić wszystkie wpisy dla: ${DAYS[currentDay]}?`)) return;
+  data[currentDay] = {};
+  HOURS.forEach(h => { data[currentDay][h] = {}; });
+  render();
+  document.getElementById('statusText').textContent = 'Dzień wyczyszczony';
+}
+
+function exportPDF() {
+  // Save valid-from date first
+  validFromDates[currentDay] = document.getElementById('validFrom').value;
+  const dayName = DAYS[currentDay];
+  const date = validFromDates[currentDay] ? ` (od ${validFromDates[currentDay]})` : '';
+  document.title = `Plan Sal - ${dayName}${date}`;
+  window.print();
+  document.title = 'Plan Sal Zajęciowych 2025/26';
+}
+
+document.getElementById('validFrom').addEventListener('change', () => {
+  validFromDates[currentDay] = document.getElementById('validFrom').value;
+});
+
+// ============================================================
+// INIT
+// ============================================================
+initData();
+render();
+</script>
+</body>
+</html>
