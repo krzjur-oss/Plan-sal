@@ -40,7 +40,7 @@ Wystarczy otworzyć plik `index.html` w dowolnej przeglądarce — **żadna inst
 3. Ustaw źródło: `Deploy from branch` → `main` → `/ (root)`
 4. Aplikacja będzie dostępna pod adresem:
    ```
-   https://<twoja-nazwa>.github.io/<nazwa-repo>/
+   https://krzjur-oss.github.io/Plan-sal/
    ```
 
 ---
