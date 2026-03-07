@@ -61,6 +61,21 @@ body.light {
   --yellow: #d97706;
   --teal: #0891b2;
 }
+body.light #wizardOverlay {
+  background: rgba(220,227,240,0.97);
+}
+body.light .modal-overlay {
+  background: rgba(180,196,224,0.7);
+}
+body.light #archivePanel {
+  background: rgba(180,196,224,0.85);
+}
+body.light .wcard {
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+}
+body.light .wizard-title {
+  color: var(--text);
+}
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
@@ -84,6 +99,7 @@ body {
   z-index: 500;
   overflow-y: auto;
   backdrop-filter: blur(6px);
+  transition: background 0.2s;
 }
 #wizardOverlay.show { display: block; }
 
@@ -792,7 +808,7 @@ body {
 .schedule-table th {
   background: var(--surface2);
   border: 1px solid var(--border);
-  padding: 7px 4px;
+  padding: 4px 4px;
   font-size: 0.68rem;
   font-weight: 700;
   text-align: center;
@@ -800,6 +816,7 @@ body {
   position: sticky;
   top: 57px;
   z-index: 5;
+  vertical-align: middle;
 }
 
 .schedule-table th.time-th {
@@ -810,28 +827,44 @@ body {
   z-index: 6;
 }
 
-.th-inner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.th-room {
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--accent);
+/* Multi-row merged header */
+.th-building {
+  font-size: 0.6rem; font-weight: 800; font-family: var(--mono);
+  letter-spacing: 0.5px; padding: 3px 2px;
+  border-bottom: 1px solid var(--border);
 }
-.th-seg {
-  font-size: 0.58rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.th-floor {
+  font-size: 0.62rem; font-weight: 700; padding: 2px 2px;
+  border-bottom: 1px solid var(--border);
 }
-.th-class {
-  font-size: 0.68rem;
+.th-seg-row {
+  font-size: 0.58rem; color: var(--text-dim); padding: 2px 2px;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  border-bottom: 1px solid var(--border);
+}
+.th-room-row {
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+  color: var(--accent); padding: 3px 2px;
+  border-bottom: 1px solid var(--border);
+}
+.th-homeroom {
+  font-size: 0.58rem; padding: 3px 2px; line-height: 1.3;
   color: var(--text-muted);
-  font-weight: 700;
-  background: var(--surface3);
-  border-radius: 4px;
-  padding: 1px 5px;
-  margin-top: 1px;
 }
+.th-homeroom .hr-class {
+  font-weight: 700; color: var(--text);
+  background: var(--surface3); border-radius: 3px;
+  padding: 1px 4px; display: inline-block; margin-bottom: 1px;
+}
+.th-homeroom .hr-teacher {
+  color: var(--green); font-size: 0.56rem; font-family: var(--mono);
+}
+
+/* Legacy - keep for backward compat */
+.th-inner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.th-room { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--accent); }
+.th-seg { font-size: 0.58rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.th-class { font-size: 0.68rem; color: var(--text-muted); font-weight: 700; background: var(--surface3); border-radius: 4px; padding: 1px 5px; margin-top: 1px; }
 
 .schedule-table td {
   border: 1px solid var(--border);
@@ -887,6 +920,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(4,6,12,0.75);
+  transition: background 0.2s;
   z-index: 300;
   align-items: center;
   justify-content: center;
@@ -993,6 +1027,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(4,6,12,0.88);
+  transition: background 0.2s;
   z-index: 400;
   align-items: center;
   justify-content: center;
@@ -1442,6 +1477,28 @@ body {
   </div>
 </div>
 
+<!-- Homeroom Modal -->
+<div class="modal-overlay" id="homeroomModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">🏠 Gospodarz sali</div>
+    <div class="modal-sub" id="hrModalSub"></div>
+    <div class="form-group">
+      <label class="form-label">Klasa gospodarz</label>
+      <select class="teacher-select" id="hrClass"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nauczyciel wychowawca</label>
+      <select class="teacher-select" id="hrTeacher"></select>
+    </div>
+    <div class="modal-hint">Gospodarz widoczny w nagłówku tabeli dla każdej sali</div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeHomeroomModal()">Anuluj</button>
+      <button class="btn btn-red" onclick="clearHomeroom()">Wyczyść</button>
+      <button class="btn btn-primary" onclick="saveHomeroom()">Zapisz</button>
+    </div>
+  </div>
+</div>
+
 <!-- PWA Install Banner -->
 <div id="pwaInstallBanner">
   <div class="pwa-banner-icon">📲</div>
@@ -1528,6 +1585,11 @@ function loadAll() {
   try { validFromDates = JSON.parse(localStorage.getItem('sp_vfdates') || '{}'); } catch(e) {}
   try { archive = JSON.parse(localStorage.getItem('sp_archive') || '[]'); } catch(e) { archive = []; }
   try { appState = JSON.parse(localStorage.getItem('sp_active') || 'null'); } catch(e) { appState = null; }
+  // ensure optional fields exist
+  if (appState && !appState.homerooms) appState.homerooms = {};
+  if (appState && !appState.teachers)  appState.teachers  = [];
+  if (appState && !appState.classes)   appState.classes   = [];
+  if (appState && !appState.buildings) appState.buildings = [];
 }
 
 function persistAll() {
@@ -1690,7 +1752,7 @@ function finishWizard() {
     }
   }
 
-  appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, days: DAYS_DEFAULT, school };
+  appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, days: DAYS_DEFAULT, school, homerooms: (appState?.homerooms||{}) };
 
   if (!schedData[yearKey]) {
     schedData[yearKey] = {};
@@ -2211,37 +2273,131 @@ function switchDay(idx) {
 
 function renderSchedule() {
   if (!appState) return;
-  const cols = flattenColumns(appState.floors);
-  const hours = appState.hours;
-  const dayData = schedData[appState.yearKey]?.[currentDay]||{};
-  const assignments = appState.assignments[currentDay]||{};
-  const buildings = appState.buildings||[];
+  const cols       = flattenColumns(appState.floors);
+  const hours      = appState.hours;
+  const dayData    = schedData[appState.yearKey]?.[currentDay]||{};
+  const assignments= appState.assignments[currentDay]||{};
+  const buildings  = appState.buildings||[];
+  const homerooms  = appState.homerooms||{};  // colKey -> {className, teacherAbbr}
 
-  let html = '<table class="schedule-table"><thead><tr><th class="time-th">Godz.</th>';
-  cols.forEach(col => {
-    const key = colKey(col);
-    const cls = assignments[key]||'';
-    const bld = buildings[col.floor.buildingIdx||0];
-    const bldColor = BUILDING_COLORS[(col.floor.buildingIdx||0) % BUILDING_COLORS.length];
-    html += `<th>
-      <div class="th-inner">
-        ${bld ? `<span style="font-size:0.55rem;color:${bldColor};font-weight:700;font-family:var(--mono);letter-spacing:0.5px">${esc(bld.name)}</span>` : ''}
-        <span class="th-room">Sala ${esc(col.room.num)}</span>
-        ${col.room.sub ? `<span class="th-seg">${esc(col.room.sub)}</span>` : `<span class="th-seg">${esc(col.seg.name)}</span>`}
-        ${cls ? `<span class="th-class">${esc(cls)}</span>` : ''}
-      </div>
-    </th>`;
-  });
-  html += '</tr></thead><tbody>';
+  // ── Detect if multi-building / multi-floor / multi-segment ──
+  const uniqueBuildings = [...new Set(appState.floors.map(f=>f.buildingIdx||0))];
+  const uniqueFloors    = [...new Set(cols.map(c=>c.floorIdx))];
+  const uniqueSegs      = [...new Set(cols.map(c=>c.floorIdx+'-'+c.segIdx))];
+  const showBuilding = uniqueBuildings.length > 1;
+  const showFloor    = uniqueFloors.length > 1;
+  const showSeg      = uniqueSegs.length > 1;
 
-  hours.forEach(h => {
-    html += `<tr><td class="time-cell">${h}</td>`;
+  const numHeaderRows = 1 // always: room row
+    + (showBuilding ? 1 : 0)
+    + (showFloor    ? 1 : 0)
+    + (showSeg      ? 1 : 0)
+    + 1; // homeroom row always shown
+
+  // ── Build merged header rows ──
+  // Row 1 (optional): Buildings — merged across all cols of same building
+  // Row 2 (optional): Floors — merged across all cols of same floor
+  // Row 3 (optional): Segments — merged across all cols of same segment
+  // Row 4: Room numbers (always)
+  // Row 5: Homeroom class + teacher (always)
+
+  // helper: build merged cells for a given key extractor
+  function buildMergedRow(keyFn, labelFn, stylesFn, extraClass='', timeCell='') {
+    let row = `<tr><th class="time-th" rowspan="1" style="background:var(--surface)">${timeCell}</th>`;
+    let i = 0;
+    while (i < cols.length) {
+      const key = keyFn(cols[i]);
+      let span = 1;
+      while (i+span < cols.length && keyFn(cols[i+span]) === key) span++;
+      const styles = stylesFn ? stylesFn(cols[i]) : '';
+      row += `<th colspan="${span}" class="${extraClass}" style="${styles}">${labelFn(cols[i])}</th>`;
+      i += span;
+    }
+    return row + '</tr>';
+  }
+
+  let thead = '<thead>';
+
+  // Row: Buildings
+  if (showBuilding) {
+    thead += buildMergedRow(
+      c => c.floor.buildingIdx||0,
+      c => {
+        const bld = buildings[c.floor.buildingIdx||0];
+        return esc(bld?.name||'—');
+      },
+      c => {
+        const color = BUILDING_COLORS[(c.floor.buildingIdx||0) % BUILDING_COLORS.length];
+        return `color:${color};border-top:3px solid ${color};border-bottom:2px solid ${color}`;
+      },
+      'th-building'
+    );
+  }
+
+  // Row: Floors
+  if (showFloor) {
+    thead += buildMergedRow(
+      c => c.floorIdx,
+      c => esc(c.floor.name),
+      c => `color:${c.floor.color};border-bottom:1px solid ${c.floor.color}40`,
+      'th-floor'
+    );
+  }
+
+  // Row: Segments
+  if (showSeg) {
+    thead += buildMergedRow(
+      c => c.floorIdx+'-'+c.segIdx,
+      c => esc(c.seg.name||'—'),
+      c => `border-top:2px solid ${c.floor.color}60`,
+      'th-seg-row'
+    );
+  }
+
+  // Row: Room numbers (always, not merged)
+  {
+    let row = `<tr><th class="time-th" style="background:var(--surface)">Godz.</th>`;
+    cols.forEach(col => {
+      const label = col.room.sub
+        ? `Sala ${esc(col.room.num)}<br><span style="font-size:0.55rem;color:var(--text-dim)">${esc(col.room.sub)}</span>`
+        : `Sala ${esc(col.room.num)}`;
+      const floorColor = col.floor.color;
+      const topBorder = !showBuilding && !showFloor && !showSeg
+        ? `border-top:3px solid ${floorColor}` : '';
+      row += `<th class="th-room-row" style="${topBorder}">${label}</th>`;
+    });
+    thead += row + '</tr>';
+  }
+
+  // Row: Homeroom (class + teacher wychowawca)
+  {
+    let row = `<tr><th class="time-th" style="background:var(--surface);font-size:0.55rem;color:var(--text-dim)">Gospod.</th>`;
     cols.forEach(col => {
       const key = colKey(col);
+      const hr  = homerooms[key]||{};
+      const assignedCls = assignments[key]||'';
+      const displayCls  = hr.className || assignedCls || '';
+      const hrTeacher   = hr.teacherAbbr ? getTeacherByAbbr(hr.teacherAbbr) : null;
+      row += `<th class="th-homeroom" onclick="openHomeroomModal('${key}')" style="cursor:pointer" title="Kliknij aby ustawić gospodarza">
+        ${displayCls ? `<div class="hr-class">${esc(displayCls)}</div>` : '<div style="color:var(--text-dim);font-size:0.55rem">—</div>'}
+        ${hrTeacher ? `<div class="hr-teacher">${esc(hrTeacher.abbr)}</div>` : ''}
+      </th>`;
+    });
+    thead += row + '</tr>';
+  }
+
+  thead += '</thead>';
+
+  // ── Body ──
+  let tbody = '<tbody>';
+  hours.forEach(h => {
+    tbody += `<tr><td class="time-cell">${h}</td>`;
+    cols.forEach(col => {
+      const key   = colKey(col);
       const entry = dayData[h]?.[key]||{};
       const filled = !!(entry.teacherAbbr || entry.subject || entry.className);
       const teacher = entry.teacherAbbr ? getTeacherByAbbr(entry.teacherAbbr) : null;
-      html += `<td><div class="cell-inner ${filled?'filled':''}" onclick="openEditModal(${currentDay},'${h}','${key}')">
+      tbody += `<td><div class="cell-inner ${filled?'filled':''}" onclick="openEditModal(${currentDay},'${h}','${key}')">
         ${filled
           ? `<div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap">
                ${entry.teacherAbbr ? `<span class="cell-abbr" title="${esc(teacherDisplayName(teacher))}">${esc(entry.teacherAbbr)}</span>` : ''}
@@ -2253,16 +2409,12 @@ function renderSchedule() {
           : '<div class="cell-plus">＋</div>'}
       </div></td>`;
     });
-    html += '</tr>';
+    tbody += '</tr>';
   });
-  html += '</tbody></table>';
-  document.getElementById('scheduleWrap').innerHTML = html;
+  tbody += '</tbody>';
 
-  document.querySelectorAll('.schedule-table thead th').forEach((th,i) => {
-    if (i===0) return;
-    const col = cols[i-1];
-    if (col) th.style.borderTop = `3px solid ${col.floor.color}`;
-  });
+  document.getElementById('scheduleWrap').innerHTML =
+    `<table class="schedule-table">${thead}${tbody}</table>`;
 
   updateStatusBar();
 }
@@ -2385,7 +2537,7 @@ function restoreYear(yearKey) {
     const ex = archive.find(a=>a.yearKey===appState.yearKey);
     if (!ex) archive.push({yearKey:appState.yearKey,label:appState.yearLabel,savedAt:new Date().toISOString(),config:appState});
   }
-  appState=item.config; archive=archive.filter(a=>a.yearKey!==yearKey);
+  appState={homerooms:{}, ...item.config}; archive=archive.filter(a=>a.yearKey!==yearKey);
   persistAll(); closeArchive(); currentDay=0; mountApp();
   notify('📁 Przywrócono rok '+item.label);
 }
@@ -2468,6 +2620,72 @@ if (!appState) {
   });
   mountApp();
 }
+
+// ================================================================
+//  HOMEROOM (gospodarz sali)
+// ================================================================
+let _hrKey = null;
+
+function openHomeroomModal(key) {
+  _hrKey = key;
+  const cols = flattenColumns(appState.floors);
+  const col  = cols.find(c => colKey(c) === key);
+  const bld  = (appState.buildings||[])[col?.floor?.buildingIdx||0];
+  const hr   = (appState.homerooms||{})[key]||{};
+
+  document.getElementById('hrModalSub').textContent =
+    `${bld ? bld.name+' · ' : ''}${col?.floor.name||''} › Sala ${col?.room.num||'?'}`;
+
+  // Build class options — only "cała klasa" or whole-class entries
+  const classes = (appState.classes||[]);
+  let clsOpts = '<option value="">— brak —</option>';
+  const seen = new Set();
+  classes.filter(c=>c.name).forEach(c => {
+    const val = c.abbr||c.name;
+    if (!seen.has(val)) {
+      seen.add(val);
+      const lbl = c.group && c.group.toLowerCase() !== 'cała klasa'
+        ? `${c.name} — ${c.group}` : c.name;
+      clsOpts += `<option value="${esc(val)}"${val===(hr.className||'')?  ' selected':''}>${esc(lbl)}</option>`;
+    }
+  });
+  document.getElementById('hrClass').innerHTML = clsOpts;
+  document.getElementById('hrTeacher').innerHTML = buildTeacherSelectOptions(hr.teacherAbbr||'');
+
+  document.getElementById('homeroomModal').classList.add('show');
+  document.getElementById('hrClass').focus();
+}
+
+function closeHomeroomModal() {
+  document.getElementById('homeroomModal').classList.remove('show');
+  _hrKey = null;
+}
+
+function saveHomeroom() {
+  if (!_hrKey) return;
+  if (!appState.homerooms) appState.homerooms = {};
+  appState.homerooms[_hrKey] = {
+    className:   document.getElementById('hrClass').value,
+    teacherAbbr: document.getElementById('hrTeacher').value,
+  };
+  persistAll();
+  closeHomeroomModal();
+  renderSchedule();
+  notify('✓ Gospodarz sali zapisany');
+}
+
+function clearHomeroom() {
+  if (!_hrKey) return;
+  if (appState.homerooms) delete appState.homerooms[_hrKey];
+  persistAll();
+  closeHomeroomModal();
+  renderSchedule();
+  notify('🗑 Gospodarz sali usunięty');
+}
+
+document.getElementById('homeroomModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('homeroomModal')) closeHomeroomModal();
+});
 
 // ================================================================
 //  QUICK-ADD (from edit modal)

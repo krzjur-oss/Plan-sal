@@ -2,6 +2,8 @@
 
 Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w całości w przeglądarce — **bez serwera, bez instalacji, bez zbierania danych**. Można ją zainstalować na komputerze lub telefonie jak aplikację natywną.
 
+🔗 **Demo:** https://krzjur-oss.github.io/Plan-sal/
+
 ---
 
 ## ✨ Funkcje
@@ -18,9 +20,9 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 | 6 — Przypisania | Domyślne przypisanie klas do sal dla każdego dnia tygodnia |
 
 ### 🏫 Obsługa wielu budynków
-- Szkoła może mieć dowolną liczbę budynków (każdy z nazwą i adresem)
+- Szkoła może mieć dowolną liczbę budynków, każdy z nazwą i adresem
 - Każde piętro/strefa przypisane do konkretnego budynku
-- Nazwa budynku widoczna w nagłówkach tabeli i oknie edycji
+- Nazwy budynków widoczne w scalonych nagłówkach tabeli
 
 ### 👨‍🏫 Nauczyciele
 - Lista z imieniem, nazwiskiem i **automatycznie generowanym skrótem**
@@ -28,25 +30,44 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
   - Nazwisko dwuczłonowe: `Anna Nowak-Wiśniewska` → `ANoW`
 - Skróty edytowalne ręcznie, automatyczna obsługa duplikatów (`JKow2`)
 - **Import z pliku `.txt`** — format: `Imię Nazwisko` (jeden na linię)
+- **Dodawanie w locie** — bezpośrednio z okna edycji komórki, bez wchodzenia do kreatora
 
 ### 🎓 Klasy i grupy
-- Każda klasa może mieć wiele grup (np. `1A gr1`, `1A gr2`, `1A cała klasa`)
+- Każda klasa może mieć dowolną liczbę grup, np. `4A gr ez`, `4A WF gr1`, `4A cała klasa`
+- Obsługa grup zajęć nieobowiązkowych i międzyklasowych
 - **Import z pliku `.txt`** — format: `klasa;skrót;nazwa grupy`
   - Obsługuje `;` i `,` jako separator
   - Przykład całej klasy: `1A;1A;cała klasa`
-  - Przykład grupy: `1A;1Agr1;gr1`
+  - Przykład grupy: `1A;1Agr1;gr1`, `4A;4Aez;gr ez`
+- **Dodawanie w locie** — bezpośrednio z okna edycji komórki
 
 ### 📋 Planowanie sal
 - Interaktywna siatka: godziny lekcyjne × sale
 - W każdej komórce: **nauczyciel** (lista rozwijalna), **klasa/grupa** (lista rozwijalna), **przedmiot**, **uwagi**
-- Skrót nauczyciela i klasy widoczny bezpośrednio w komórce
-- Kolorowe oznaczenie pięter i budynków w nagłówkach
+- Skrót nauczyciela i klasy/grupy widoczny bezpośrednio w komórce
 - Data „Obowiązuje od" dla każdego dnia tygodnia
 - Eksport do **PDF** (orientacja pozioma, czysty druk)
+- Tryb **jasny i ciemny** — przełącznik 🌙/☀️ w górnym pasku, wybór zapamiętywany
+
+### 🗂 Scalony nagłówek tabeli
+Nagłówek tabeli podzielony jest na do 5 wierszy z automatycznym scalaniem komórek:
+
+| Wiersz | Zawartość | Kiedy widoczny |
+|--------|-----------|----------------|
+| 1 — Budynek | Scalony na wszystkie sale budynku | Tylko gdy ≥ 2 budynki |
+| 2 — Piętro | Scalony na wszystkie sale piętra | Tylko gdy ≥ 2 piętra |
+| 3 — Segment | Scalony na sale segmentu | Tylko gdy ≥ 2 segmenty |
+| 4 — Sala | Numer i opis sali | Zawsze |
+| 5 — Gospodarz | Klasa gospodarz + wychowawca | Zawsze |
+
+### 🏠 Gospodarz sali
+- Każdej sali można przypisać **klasę gospodarza** i **nauczyciela wychowawcę**
+- Ustawienie przez kliknięcie wiersza „Gospod." w nagłówku tabeli
+- Widoczny przez cały rok szkolny niezależnie od dnia tygodnia
 
 ### 📁 Archiwum
-- Każdy nowy rok szkolny automatycznie **archiwizuje poprzedni**
-- Dostęp do starych planów, ich **przywracanie** i usuwanie
+- Każdy nowy rok szkolny automatycznie archiwizuje poprzedni
+- Dostęp do starych planów, ich przywracanie i usuwanie
 
 ---
 
@@ -65,7 +86,7 @@ SalePlan jest w pełni zgodny ze standardem **Progressive Web App**.
 
 ### Co zyskujesz po instalacji
 - Uruchamia się bez paska adresu, jak aplikacja natywna
-- **Działa w pełni offline** — Service Worker cache'uje wszystkie pliki
+- **Działa w pełni offline** — Service Worker cache'uje wszystkie pliki przy pierwszym uruchomieniu
 - Skrót na pulpicie / ekranie głównym
 - Automatyczna aktualizacja przy kolejnym otwarciu online
 
@@ -75,7 +96,7 @@ SalePlan jest w pełni zgodny ze standardem **Progressive Web App**.
 
 > **Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych zewnętrznie.**
 
-Wszystkie dane przechowywane lokalnie w `localStorage` przeglądarki. Jedyne zewnętrzne połączenie to pobranie czcionek z **Google Fonts** (tylko przy pierwszym uruchomieniu online — potem są cache'owane przez Service Worker).
+Wszystkie dane przechowywane lokalnie w `localStorage` przeglądarki. Jedyne zewnętrzne połączenie to pobranie czcionek z **Google Fonts** (tylko przy pierwszym uruchomieniu online — potem cache'owane przez Service Worker).
 
 ---
 
@@ -96,10 +117,12 @@ Otwórz `index.html` w przeglądarce. Funkcje offline i instalacja PWA wymagają
 ## 📖 Jak zacząć
 
 1. Pierwsze uruchomienie → automatycznie otwiera się **kreator** (6 kroków)
-2. Uzupełnij dane szkoły, budynki, piętra, klasy, nauczycieli i przypisania
+2. Uzupełnij dane szkoły, budynki, piętra, klasy z grupami, nauczycieli i przypisania
 3. Kliknij **„Zakończ i przejdź do planu"**
-4. Klikaj komórki w tabeli — wybieraj nauczyciela i klasę z listy, wpisz przedmiot
-5. Naciśnij **💾 Zapisz** — dane zostają w przeglądarce
+4. Kliknij wiersz **„Gospod."** w nagłówku tabeli aby ustawić klasę i wychowawcę każdej sali
+5. Klikaj komórki w tabeli — wybieraj nauczyciela i klasę/grupę z listy, wpisz przedmiot
+6. Przycisk **＋** pod listą w oknie edycji pozwala dodać nowego nauczyciela lub grupę w locie
+7. Naciśnij **💾 Zapisz** — dane zostają w przeglądarce
 
 **Nowy rok szkolny:** przycisk **＋ Nowy rok** → kreator → stary rok trafia do archiwum.
 
