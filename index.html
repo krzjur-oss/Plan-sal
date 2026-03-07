@@ -455,6 +455,29 @@ body {
 }
 .assign-select option { background: var(--surface); }
 
+/* School & buildings step */
+.school-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media(max-width:600px){ .school-info-grid { grid-template-columns: 1fr; } }
+.form-group-w { display: flex; flex-direction: column; gap: 5px; }
+.form-label-w { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); }
+
+.building-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.building-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.building-card-header { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: var(--surface3); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.building-letter { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; font-family: var(--mono); flex-shrink: 0; }
+.building-name-inp { flex: 1; min-width: 120px; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; color: var(--text); font-family: var(--font); font-size: 0.85rem; font-weight: 600; outline: none; transition: border 0.15s; }
+.building-name-inp:focus { border-color: var(--accent); }
+.building-name-inp::placeholder { color: var(--text-dim); }
+.building-addr-inp { flex: 2; min-width: 160px; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 6px 10px; color: var(--text); font-family: var(--font); font-size: 0.8rem; outline: none; transition: border 0.15s; }
+.building-addr-inp:focus { border-color: var(--accent); }
+.building-addr-inp::placeholder { color: var(--text-dim); }
+.building-floor-count { padding: 7px 14px; font-size: 0.68rem; color: var(--text-muted); font-family: var(--mono); }
+.add-building-btn { display: flex; align-items: center; gap: 6px; background: transparent; border: 1px dashed var(--border2); border-radius: 10px; padding: 10px 16px; color: var(--text-muted); font-family: var(--font); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; width: 100%; justify-content: center; }
+.add-building-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+.floor-building-select { background: var(--surface3); border: 1px solid var(--border2); border-radius: 6px; padding: 3px 8px; color: var(--text); font-family: var(--mono); font-size: 0.72rem; outline: none; cursor: pointer; margin-right: 4px; }
+.school-name-topbar { font-size: 0.68rem; color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* Wizard footer */
 .wizard-footer {
   display: flex;
@@ -869,40 +892,75 @@ body {
   <div class="wizard-header">
     <div class="wizard-badge">✦ Kreator konfiguracji</div>
     <div class="wizard-title">Nowy rok szkolny<br><span id="wTitleYear">2025/2026</span></div>
-    <div class="wizard-subtitle">Skonfiguruj strukturę budynku, sale i klasy — zajmie to tylko chwilę.</div>
+    <div class="wizard-subtitle">Skonfiguruj szkołę, budynki, sale i klasy — zajmie to tylko chwilę.</div>
   </div>
 
   <!-- Steps indicator -->
   <div class="wizard-steps" id="wizardSteps">
     <div class="wstep active" id="ws0">
       <div class="wstep-num">1</div>
-      <div class="wstep-label">Rok szkolny</div>
+      <div class="wstep-label">Szkoła</div>
     </div>
     <div class="wstep-line" id="wl0"></div>
     <div class="wstep" id="ws1">
       <div class="wstep-num">2</div>
-      <div class="wstep-label">Budynek</div>
+      <div class="wstep-label">Rok szkolny</div>
     </div>
     <div class="wstep-line" id="wl1"></div>
     <div class="wstep" id="ws2">
       <div class="wstep-num">3</div>
-      <div class="wstep-label">Klasy</div>
+      <div class="wstep-label">Budynek</div>
     </div>
     <div class="wstep-line" id="wl2"></div>
     <div class="wstep" id="ws3">
       <div class="wstep-num">4</div>
+      <div class="wstep-label">Klasy</div>
+    </div>
+    <div class="wstep-line" id="wl3"></div>
+    <div class="wstep" id="ws4">
+      <div class="wstep-num">5</div>
       <div class="wstep-label">Przypisania</div>
     </div>
   </div>
 
-  <!-- STEP 1: Year -->
+  <!-- STEP 1: School & Buildings -->
   <div class="wizard-step active" id="wStep0">
+    <div class="wcard">
+      <div class="wcard-title">🏫 Informacje o szkole</div>
+      <div class="wcard-desc">Podaj nazwę szkoły i dane kontaktowe.</div>
+      <div class="school-info-grid">
+        <div class="form-group-w" style="grid-column:1/-1">
+          <label class="form-label-w">Pełna nazwa szkoły</label>
+          <input type="text" class="big-input" id="wSchoolName" placeholder="np. Zespół Szkół Gastronomicznych nr 1">
+        </div>
+        <div class="form-group-w">
+          <label class="form-label-w">Skrót / Nazwa skrócona</label>
+          <input type="text" class="big-input" id="wSchoolShort" placeholder="np. ZSG nr 1">
+        </div>
+        <div class="form-group-w">
+          <label class="form-label-w">Telefon kontaktowy</label>
+          <input type="text" class="big-input" id="wSchoolPhone" placeholder="np. +48 12 345 67 89">
+        </div>
+        <div class="form-group-w" style="grid-column:1/-1">
+          <label class="form-label-w">Strona www / e-mail</label>
+          <input type="text" class="big-input" id="wSchoolWeb" placeholder="np. www.szkola.pl lub sekretariat@szkola.pl">
+        </div>
+      </div>
+    </div>
+    <div class="wcard">
+      <div class="wcard-title">🏢 Budynki szkoły</div>
+      <div class="wcard-desc">Dodaj jeden lub więcej budynków. Każdy budynek ma własną nazwę i adres.</div>
+      <div class="building-list" id="buildingList"></div>
+      <button class="add-building-btn" onclick="addBuilding()">＋ Dodaj budynek</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Year -->
+  <div class="wizard-step" id="wStep1">
     <div class="wcard">
       <div class="wcard-title">🗓 Rok szkolny</div>
       <div class="wcard-desc">Podaj rok szkolny dla nowego planu.</div>
-      <div class="year-input-row">
-        <input type="text" class="big-input" id="wYear" placeholder="np. 2025/2026" value="2025/2026">
-      </div>
+      <input type="text" class="big-input" id="wYear" placeholder="np. 2025/2026" value="2025/2026">
     </div>
     <div class="wcard">
       <div class="wcard-title">⏱ Godziny lekcyjne</div>
@@ -911,18 +969,18 @@ body {
     </div>
   </div>
 
-  <!-- STEP 2: Building structure -->
-  <div class="wizard-step" id="wStep1">
+  <!-- STEP 3: Building structure (floors) -->
+  <div class="wizard-step" id="wStep2">
     <div class="wcard">
-      <div class="wcard-title">🏫 Struktura budynku</div>
-      <div class="wcard-desc">Dodaj piętra, segmenty i numery sal. Nazwa segmentu może być pusta.</div>
+      <div class="wcard-title">🏗 Piętra i sale</div>
+      <div class="wcard-desc">Dodaj piętra, segmenty i numery sal. Każde piętro przypisz do odpowiedniego budynku.</div>
       <div class="floor-list" id="floorList"></div>
       <button class="add-floor-btn" onclick="addFloor()">＋ Dodaj piętro / strefę</button>
     </div>
   </div>
 
-  <!-- STEP 3: Classes -->
-  <div class="wizard-step" id="wStep2">
+  <!-- STEP 4: Classes -->
+  <div class="wizard-step" id="wStep3">
     <div class="wcard">
       <div class="wcard-title">🎓 Lista klas</div>
       <div class="wcard-desc">Wpisz wszystkie klasy, które będą uwzględnione w planie.</div>
@@ -931,8 +989,8 @@ body {
     </div>
   </div>
 
-  <!-- STEP 4: Assignments -->
-  <div class="wizard-step" id="wStep3">
+  <!-- STEP 5: Assignments -->
+  <div class="wizard-step" id="wStep4">
     <div class="wcard">
       <div class="wcard-title">📌 Przypisanie klas do sal</div>
       <div class="wcard-desc">Dla każdego dnia tygodnia i każdej sali wybierz domyślnie przypisaną klasę (opcjonalnie).</div>
@@ -945,7 +1003,7 @@ body {
 
   <!-- Footer -->
   <div class="wizard-footer">
-    <div class="wizard-footer-info" id="wFooterInfo">Krok 1 z 4</div>
+    <div class="wizard-footer-info" id="wFooterInfo">Krok 1 z 5</div>
     <div class="wizard-btns">
       <button class="btn btn-ghost" id="wBtnBack" onclick="wizardBack()" style="display:none">← Wstecz</button>
       <button class="btn btn-primary" id="wBtnNext" onclick="wizardNext()">Dalej →</button>
@@ -964,6 +1022,7 @@ body {
   <div class="topbar">
     <div class="topbar-left">
       <div class="logo">Sale<span>Plan</span></div>
+      <div class="school-name-topbar" id="schoolNameTopbar"></div>
       <div class="year-pill" id="yearPill" onclick="showArchive()">
         <span id="currentYearLabel">—</span>
         <span style="font-size:0.6rem;opacity:0.5">▼</span>
@@ -1040,22 +1099,24 @@ body {
 //  STATE
 // ================================================================
 const DAYS_DEFAULT = ['Poniedziałek','Wtorek','Środa','Czwartek','Piątek'];
-const FLOOR_COLORS = ['#f59e0b','#3b82f6','#10b981','#ef4444','#8b5cf6','#06b6d4','#f97316'];
+const FLOOR_COLORS = ['#f59e0b','#3b82f6','#10b981','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
+const BUILDING_COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
+const BUILDING_LETTERS = ['A','B','C','D','E','F','G','H'];
 
-let appState = null;   // active year config
-let schedData = {};    // schedData[yearKey][dayIdx][hour][colKey] = {teacher,subject,note}
+let appState = null;
+let schedData = {};
 let validFromDates = {};
-let archive = [];      // [{yearKey, config, label}]
+let archive = [];
 let currentDay = 0;
 let currentAssignDay = 0;
 
 // wizard temp
-let wFloors = [];
+let wBuildings = [];  // [{name, address}]
+let wFloors = [];     // [{name, color, buildingIdx, segments:[{name, rooms:[{num,sub}]}]}]
 let wClasses = [];
-let wAssignments = {}; // dayIdx -> colKey -> className
+let wAssignments = {};
 let wStep = 0;
 
-// modal context
 let _mDay, _mHour, _mKey;
 
 // ================================================================
@@ -1084,123 +1145,133 @@ function saveData() {
 }
 
 // ================================================================
-//  WIZARD
+//  SAMPLE DATA
 // ================================================================
+const SAMPLE_BUILDINGS = [
+  { name: 'Budynek Główny', address: '' }
+];
+
 const SAMPLE_FLOORS = [
-  {
-    name: 'Parter 0', color: FLOOR_COLORS[0],
-    segments: [
-      { name: 'Segment A', rooms: [{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'6',sub:''},{num:'7',sub:''}] },
-      { name: 'Segment B', rooms: [{num:'1',sub:''},{num:'3',sub:''},{num:'4',sub:''}] },
-    ]
-  },
-  {
-    name: 'Piętro I', color: FLOOR_COLORS[1],
-    segments: [
-      { name: 'Segment A', rooms: [{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'7',sub:''}] },
-      { name: 'Segment B', rooms: [{num:'1',sub:''},{num:'2',sub:''},{num:'3',sub:''}] },
-    ]
-  },
-  {
-    name: 'Piętro II', color: FLOOR_COLORS[2],
-    segments: [
-      { name: 'Segment A', rooms: [{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'6',sub:''},{num:'7',sub:''}] },
-      { name: 'Segment B', rooms: [{num:'1',sub:''},{num:'3',sub:''},{num:'5',sub:''}] },
-    ]
-  },
-  {
-    name: 'Segment Żywnościowy', color: FLOOR_COLORS[3],
-    segments: [
-      { name: '', rooms: [{num:'16',sub:'D. Informatyczna'},{num:'18',sub:'M. Informatyczna'},{num:'21',sub:''}] },
-    ]
-  },
+  { name:'Parter 0', color:FLOOR_COLORS[0], buildingIdx:0, segments:[
+    { name:'Segment A', rooms:[{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'6',sub:''},{num:'7',sub:''}] },
+    { name:'Segment B', rooms:[{num:'1',sub:''},{num:'3',sub:''},{num:'4',sub:''}] },
+  ]},
+  { name:'Piętro I', color:FLOOR_COLORS[1], buildingIdx:0, segments:[
+    { name:'Segment A', rooms:[{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'7',sub:''}] },
+    { name:'Segment B', rooms:[{num:'1',sub:''},{num:'2',sub:''},{num:'3',sub:''}] },
+  ]},
+  { name:'Piętro II', color:FLOOR_COLORS[2], buildingIdx:0, segments:[
+    { name:'Segment A', rooms:[{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'6',sub:''},{num:'7',sub:''}] },
+    { name:'Segment B', rooms:[{num:'1',sub:''},{num:'3',sub:''},{num:'5',sub:''}] },
+  ]},
+  { name:'Segment Żywnościowy', color:FLOOR_COLORS[3], buildingIdx:0, segments:[
+    { name:'', rooms:[{num:'16',sub:'D. Informatyczna'},{num:'18',sub:'M. Informatyczna'},{num:'21',sub:''}] },
+  ]},
 ];
 
 const SAMPLE_CLASSES = ['I A','I B','I C','II A','II B','II C','III A','III B','III C','IV A','IV B','IV C','V A','V B','V C','VI A','VI B','VI C','VII A','VII B','VII C','VIII A','VIII B'];
 
+// ================================================================
+//  WIZARD
+// ================================================================
 function openWizardNewYear(preload) {
   wStep = 0;
+  wAssignments = {};
+
   if (preload) {
+    wBuildings = JSON.parse(JSON.stringify(SAMPLE_BUILDINGS));
     wFloors = JSON.parse(JSON.stringify(SAMPLE_FLOORS));
     wClasses = [...SAMPLE_CLASSES];
   } else if (appState) {
-    // carry over structure from active year
+    wBuildings = JSON.parse(JSON.stringify(appState.buildings || SAMPLE_BUILDINGS));
     wFloors = JSON.parse(JSON.stringify(appState.floors));
     wClasses = [...appState.classes];
+    // Pre-fill school info
+    document.getElementById('wSchoolName').value = appState.school?.name || '';
+    document.getElementById('wSchoolShort').value = appState.school?.short || '';
+    document.getElementById('wSchoolPhone').value = appState.school?.phone || '';
+    document.getElementById('wSchoolWeb').value = appState.school?.web || '';
   } else {
+    wBuildings = JSON.parse(JSON.stringify(SAMPLE_BUILDINGS));
     wFloors = JSON.parse(JSON.stringify(SAMPLE_FLOORS));
     wClasses = [...SAMPLE_CLASSES];
   }
-  wAssignments = {};
 
-  // Suggest next year
   const now = new Date();
   const y = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear()-1;
   document.getElementById('wYear').value = `${y}/${y+1}`;
   document.getElementById('wTitleYear').textContent = `${y}/${y+1}`;
   document.getElementById('wHours').value = appState?.hours?.join(',') || '0,1,2,3,4,5,6,7,8,9,10';
 
+  renderBuildingList();
   renderFloorList();
   renderClassGrid();
   updateWizardStep();
   document.getElementById('wizardOverlay').classList.add('show');
 }
 
-function openWizardFirst() {
-  openWizardNewYear(true);
-}
+function openWizardFirst() { openWizardNewYear(true); }
+
+const TOTAL_STEPS = 5;
 
 function wizardNext() {
   if (wStep === 0) {
+    const name = document.getElementById('wSchoolName').value.trim();
+    if (!name) { notify('⚠ Podaj nazwę szkoły', true); return; }
+    if (wBuildings.length === 0) { notify('⚠ Dodaj przynajmniej jeden budynek', true); return; }
+    // sync buildings from DOM
+    syncBuildingsFromDOM();
+  }
+  if (wStep === 1) {
     const yr = document.getElementById('wYear').value.trim();
     if (!yr) { notify('⚠ Podaj rok szkolny', true); return; }
     document.getElementById('wTitleYear').textContent = yr;
   }
-  if (wStep === 1) {
+  if (wStep === 2) {
     if (wFloors.length === 0) { notify('⚠ Dodaj przynajmniej jedno piętro', true); return; }
   }
-  if (wStep === 2) {
+  if (wStep === 3) {
     wClasses = getClassesFromDOM();
     if (wClasses.filter(c=>c.trim()).length === 0) { notify('⚠ Dodaj przynajmniej jedną klasę', true); return; }
   }
-  if (wStep === 3) {
-    finishWizard();
-    return;
-  }
+  if (wStep === 4) { finishWizard(); return; }
   wStep++;
-  if (wStep === 3) {
-    renderAssignmentsStep();
-  }
+  if (wStep === 4) renderAssignmentsStep();
   updateWizardStep();
 }
 
-function wizardBack() {
-  if (wStep > 0) { wStep--; updateWizardStep(); }
-}
+function wizardBack() { if (wStep > 0) { wStep--; updateWizardStep(); } }
 
 function updateWizardStep() {
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < TOTAL_STEPS; i++) {
     document.getElementById(`wStep${i}`).classList.toggle('active', i === wStep);
     const ws = document.getElementById(`ws${i}`);
     ws.className = 'wstep' + (i === wStep ? ' active' : '') + (i < wStep ? ' done' : '');
     ws.querySelector('.wstep-num').textContent = i < wStep ? '✓' : i+1;
-    if (i < 3) {
+    if (i < TOTAL_STEPS-1) {
       const wl = document.getElementById(`wl${i}`);
-      wl.className = 'wstep-line' + (i < wStep ? ' done' : '');
+      if (wl) wl.className = 'wstep-line' + (i < wStep ? ' done' : '');
     }
   }
-  document.getElementById('wFooterInfo').textContent = `Krok ${wStep+1} z 4`;
+  document.getElementById('wFooterInfo').textContent = `Krok ${wStep+1} z ${TOTAL_STEPS}`;
   document.getElementById('wBtnBack').style.display = wStep > 0 ? 'flex' : 'none';
-  document.getElementById('wBtnNext').textContent = wStep === 3 ? '✓ Zakończ i przejdź do planu' : 'Dalej →';
+  document.getElementById('wBtnNext').textContent = wStep === TOTAL_STEPS-1 ? '✓ Zakończ i przejdź do planu' : 'Dalej →';
 }
 
 function finishWizard() {
+  syncBuildingsFromDOM();
   const yearLabel = document.getElementById('wYear').value.trim();
   const hours = document.getElementById('wHours').value.split(',').map(h=>h.trim()).filter(Boolean);
   const classes = getClassesFromDOM().filter(c=>c.trim());
   const yearKey = 'y_' + yearLabel.replace(/\//g,'_');
 
-  // Archive current year if exists
+  const school = {
+    name: document.getElementById('wSchoolName').value.trim(),
+    short: document.getElementById('wSchoolShort').value.trim(),
+    phone: document.getElementById('wSchoolPhone').value.trim(),
+    web: document.getElementById('wSchoolWeb').value.trim(),
+  };
+
   if (appState) {
     const existing = archive.find(a => a.yearKey === appState.yearKey);
     if (!existing) {
@@ -1208,15 +1279,10 @@ function finishWizard() {
     }
   }
 
-  // Gather assignments from DOM
   const assignments = getAssignmentsFromDOM();
 
-  appState = {
-    yearKey, yearLabel, hours, floors: wFloors, classes, assignments,
-    days: DAYS_DEFAULT
-  };
+  appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, assignments, days: DAYS_DEFAULT, school };
 
-  // Init sched for new year
   if (!schedData[yearKey]) {
     schedData[yearKey] = {};
     DAYS_DEFAULT.forEach((d,i) => {
@@ -1232,29 +1298,94 @@ function finishWizard() {
   notify('🎉 Rok szkolny ' + yearLabel + ' utworzony!');
 }
 
+// ── Building builder ──
+function renderBuildingList() {
+  const container = document.getElementById('buildingList');
+  container.innerHTML = '';
+  wBuildings.forEach((b, bi) => container.appendChild(buildBuildingEl(b, bi)));
+}
+
+function buildBuildingEl(b, bi) {
+  const div = document.createElement('div');
+  div.className = 'building-card';
+  const color = BUILDING_COLORS[bi % BUILDING_COLORS.length];
+  const letter = BUILDING_LETTERS[bi] || String(bi+1);
+  const floorsInBuilding = wFloors.filter(f => f.buildingIdx === bi).length;
+  div.innerHTML = `
+    <div class="building-card-header">
+      <div class="building-letter" style="background:${color}22;color:${color};border:1px solid ${color}55">${letter}</div>
+      <div style="display:flex;flex:1;gap:8px;flex-wrap:wrap">
+        <input class="building-name-inp" data-bi="${bi}" value="${esc(b.name)}" placeholder="Nazwa budynku (np. Budynek Główny)"
+          oninput="wBuildings[${bi}].name=this.value; updateFloorBuildingSelects()">
+        <input class="building-addr-inp" data-bi="${bi}" value="${esc(b.address||'')}" placeholder="Adres (np. ul. Szkolna 1, 30-001 Kraków)"
+          oninput="wBuildings[${bi}].address=this.value">
+      </div>
+      ${wBuildings.length > 1 ? `<button class="icon-btn danger" onclick="removeBuilding(${bi})">🗑</button>` : ''}
+    </div>
+    <div class="building-floor-count">Przypisane piętra/strefy: <strong style="color:${color}">${floorsInBuilding}</strong></div>`;
+  return div;
+}
+
+function addBuilding() {
+  wBuildings.push({ name: '', address: '' });
+  renderBuildingList();
+  updateFloorBuildingSelects();
+}
+
+function removeBuilding(bi) {
+  if (wBuildings.length <= 1) { notify('⚠ Musi pozostać przynajmniej jeden budynek', true); return; }
+  // reassign floors from this building to building 0
+  wFloors.forEach(f => { if (f.buildingIdx === bi) f.buildingIdx = 0; else if (f.buildingIdx > bi) f.buildingIdx--; });
+  wBuildings.splice(bi, 1);
+  renderBuildingList();
+  renderFloorList();
+}
+
+function syncBuildingsFromDOM() {
+  document.querySelectorAll('.building-name-inp').forEach(el => {
+    const bi = +el.dataset.bi;
+    if (wBuildings[bi]) wBuildings[bi].name = el.value;
+  });
+  document.querySelectorAll('.building-addr-inp').forEach(el => {
+    const bi = +el.dataset.bi;
+    if (wBuildings[bi]) wBuildings[bi].address = el.value;
+  });
+}
+
+function updateFloorBuildingSelects() {
+  document.querySelectorAll('.floor-building-select').forEach(sel => {
+    const fi = +sel.dataset.fi;
+    const cur = wFloors[fi]?.buildingIdx || 0;
+    sel.innerHTML = wBuildings.map((b,bi) =>
+      `<option value="${bi}" ${bi===cur?'selected':''}>${BUILDING_LETTERS[bi]||bi+1}: ${b.name||'Budynek '+(bi+1)}</option>`
+    ).join('');
+  });
+  renderBuildingList();
+}
+
 // ── Floor builder ──
 function renderFloorList() {
   const container = document.getElementById('floorList');
   container.innerHTML = '';
-  wFloors.forEach((floor, fi) => {
-    container.appendChild(buildFloorEl(floor, fi));
-  });
+  wFloors.forEach((floor, fi) => container.appendChild(buildFloorEl(floor, fi)));
 }
 
 function buildFloorEl(floor, fi) {
   const div = document.createElement('div');
   div.className = 'floor-item';
-  div.dataset.fi = fi;
+  const buildingOptions = wBuildings.map((b, bi) =>
+    `<option value="${bi}" ${bi===(floor.buildingIdx||0)?'selected':''}>${BUILDING_LETTERS[bi]||bi+1}: ${b.name||'Budynek '+(bi+1)}</option>`
+  ).join('');
 
   const segsHtml = floor.segments.map((seg, si) => `
-    <div class="segment-item" data-fi="${fi}" data-si="${si}">
+    <div class="segment-item">
       <div class="segment-header">
         <span style="font-size:0.65rem;color:var(--text-dim);font-family:var(--mono);flex-shrink:0">SEG</span>
         <input class="seg-name-input" value="${esc(seg.name)}" placeholder="Nazwa segmentu (opcjonalnie)"
           onchange="wFloors[${fi}].segments[${si}].name=this.value">
         <button class="icon-btn danger" onclick="removeSeg(${fi},${si})">✕</button>
       </div>
-      <div class="rooms-row" id="rooms_${fi}_${si}">
+      <div class="rooms-row">
         ${seg.rooms.map((r,ri) => buildRoomChip(fi,si,ri,r)).join('')}
         <button class="add-room-btn" onclick="addRoom(${fi},${si})">＋ sala</button>
       </div>
@@ -1265,13 +1396,15 @@ function buildFloorEl(floor, fi) {
       <div class="floor-color-dot" style="background:${floor.color}"></div>
       <input class="floor-name-input" value="${esc(floor.name)}" placeholder="Nazwa piętra / strefy"
         onchange="wFloors[${fi}].name=this.value">
+      <select class="floor-building-select" data-fi="${fi}"
+        onchange="wFloors[${fi}].buildingIdx=+this.value; renderBuildingList()">${buildingOptions}</select>
       <div class="floor-actions">
-        <button class="icon-btn danger" title="Usuń piętro" onclick="removeFloor(${fi})">🗑</button>
+        <button class="icon-btn danger" onclick="removeFloor(${fi})">🗑</button>
       </div>
     </div>
     <div class="segments-area">
       <div class="segments-label">Segmenty</div>
-      <div class="segment-list" id="segList_${fi}">${segsHtml}</div>
+      <div class="segment-list">${segsHtml}</div>
       <button class="add-segment-btn" onclick="addSegment(${fi})">＋ Dodaj segment</button>
     </div>`;
   return div;
@@ -1289,51 +1422,37 @@ function buildRoomChip(fi, si, ri, r) {
 
 function addFloor() {
   const ci = wFloors.length % FLOOR_COLORS.length;
-  wFloors.push({ name: `Piętro ${wFloors.length}`, color: FLOOR_COLORS[ci], segments: [{ name: 'Segment A', rooms: [{num:'1',sub:''}] }] });
+  wFloors.push({ name:`Piętro ${wFloors.length}`, color:FLOOR_COLORS[ci], buildingIdx:0, segments:[{name:'Segment A',rooms:[{num:'1',sub:''}]}] });
   renderFloorList();
 }
-function removeFloor(fi) { wFloors.splice(fi, 1); renderFloorList(); }
-function addSegment(fi) { wFloors[fi].segments.push({ name: '', rooms: [{num:'1',sub:''}] }); renderFloorList(); }
-function removeSeg(fi, si) { wFloors[fi].segments.splice(si, 1); renderFloorList(); }
-function addRoom(fi, si) { wFloors[fi].segments[si].rooms.push({num:'', sub:''}); renderFloorList(); }
-function removeRoom(fi, si, ri) { wFloors[fi].segments[si].rooms.splice(ri, 1); renderFloorList(); }
+function removeFloor(fi) { wFloors.splice(fi,1); renderFloorList(); renderBuildingList(); }
+function addSegment(fi) { wFloors[fi].segments.push({name:'',rooms:[{num:'1',sub:''}]}); renderFloorList(); }
+function removeSeg(fi,si) { wFloors[fi].segments.splice(si,1); renderFloorList(); }
+function addRoom(fi,si) { wFloors[fi].segments[si].rooms.push({num:'',sub:''}); renderFloorList(); }
+function removeRoom(fi,si,ri) { wFloors[fi].segments[si].rooms.splice(ri,1); renderFloorList(); }
 
 // ── Classes ──
 function renderClassGrid() {
-  const g = document.getElementById('classGrid');
-  g.innerHTML = wClasses.map((c,i) => `
+  document.getElementById('classGrid').innerHTML = wClasses.map((c,i) => `
     <div class="class-item">
       <div class="class-color"></div>
       <input class="class-input" value="${esc(c)}" placeholder="np. I A" data-ci="${i}">
       <button class="icon-btn danger" onclick="removeClassAt(${i})">✕</button>
     </div>`).join('');
 }
-
-function addClass() {
-  wClasses.push('');
-  renderClassGrid();
-  const inputs = document.querySelectorAll('.class-input');
-  inputs[inputs.length-1]?.focus();
-}
+function addClass() { wClasses.push(''); renderClassGrid(); document.querySelectorAll('.class-input')[wClasses.length-1]?.focus(); }
 function removeClassAt(i) { wClasses.splice(i,1); renderClassGrid(); }
-function getClassesFromDOM() {
-  return [...document.querySelectorAll('.class-input')].map(el => el.value.trim());
-}
+function getClassesFromDOM() { return [...document.querySelectorAll('.class-input')].map(el=>el.value.trim()); }
 
 // ── Assignments ──
 function renderAssignmentsStep() {
-  const tabsEl = document.getElementById('assignmentsTabs');
-  const tbl = document.getElementById('assignmentsTable');
   currentAssignDay = 0;
   wClasses = getClassesFromDOM().filter(c=>c.trim());
-
+  const tabsEl = document.getElementById('assignmentsTabs');
   tabsEl.innerHTML = DAYS_DEFAULT.map((d,i) =>
-    `<button class="btn ${i===0?'btn-primary':'btn-ghost'} btn-sm" style="padding:5px 12px;font-size:0.75rem"
-      onclick="switchAssignDay(${i})">${d}</button>`).join('');
-
+    `<button class="btn ${i===0?'btn-primary':'btn-ghost'}" style="padding:5px 12px;font-size:0.75rem" onclick="switchAssignDay(${i})">${d}</button>`).join('');
   renderAssignTable();
 }
-
 function switchAssignDay(idx) {
   currentAssignDay = idx;
   document.querySelectorAll('#assignmentsTabs button').forEach((b,i) => {
@@ -1342,58 +1461,39 @@ function switchAssignDay(idx) {
   });
   renderAssignTable();
 }
-
 function renderAssignTable() {
   const tbl = document.getElementById('assignmentsTable');
   const cols = flattenColumns(wFloors);
-  const classOptions = ['<option value="">—</option>', ...wClasses.filter(c=>c).map(c => `<option value="${esc(c)}">${esc(c)}</option>`)].join('');
-
-  if (cols.length === 0) { tbl.innerHTML = '<tr><td style="padding:20px;color:var(--text-muted)">Brak sal do wyświetlenia</td></tr>'; return; }
-
-  const header = '<tr><th>Piętro</th><th>Segment</th><th>Sala</th><th>Klasa</th></tr>';
-  const rows = cols.map(col => {
-    const key = colKey(col);
-    const saved = (wAssignments[currentAssignDay] || {})[key] || '';
-    return `<tr>
-      <td style="font-size:0.7rem;color:${col.floor.color};font-weight:700;padding:5px 8px">${esc(col.floor.name)}</td>
-      <td style="font-size:0.68rem;color:var(--text-muted);padding:5px 8px">${esc(col.seg.name)}</td>
-      <td style="font-family:var(--mono);font-size:0.72rem;padding:5px 8px;color:var(--accent)">Sala ${esc(col.room.num)}</td>
-      <td><select class="assign-select" onchange="setAssign(${currentAssignDay},'${key}',this.value)">${classOptions.replace(`value="${esc(saved)}"`,`value="${esc(saved)}" selected`)}</select></td>
-    </tr>`;
-  }).join('');
-  tbl.innerHTML = header + rows;
+  const classOptions = ['<option value="">—</option>', ...wClasses.filter(c=>c).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`)].join('');
+  if (!cols.length) { tbl.innerHTML='<tr><td style="padding:20px;color:var(--text-muted)">Brak sal</td></tr>'; return; }
+  tbl.innerHTML = '<tr><th>Budynek</th><th>Piętro</th><th>Segment</th><th>Sala</th><th>Klasa</th></tr>' +
+    cols.map(col => {
+      const key = colKey(col);
+      const saved = (wAssignments[currentAssignDay]||{})[key]||'';
+      const bld = wBuildings[col.floor.buildingIdx||0];
+      const bldColor = BUILDING_COLORS[(col.floor.buildingIdx||0) % BUILDING_COLORS.length];
+      return `<tr>
+        <td style="font-size:0.68rem;font-weight:700;color:${bldColor};padding:5px 8px">${esc(bld?.name||'—')}</td>
+        <td style="font-size:0.68rem;color:${col.floor.color};font-weight:700;padding:5px 8px">${esc(col.floor.name)}</td>
+        <td style="font-size:0.68rem;color:var(--text-muted);padding:5px 8px">${esc(col.seg.name)}</td>
+        <td style="font-family:var(--mono);font-size:0.72rem;color:var(--accent);padding:5px 8px">Sala ${esc(col.room.num)}</td>
+        <td><select class="assign-select" onchange="setAssign(${currentAssignDay},'${key}',this.value)">${classOptions.replace(`value="${esc(saved)}"`,`value="${esc(saved)}" selected`)}</select></td>
+      </tr>`;
+    }).join('');
 }
-
 function setAssign(dayIdx, key, val) {
-  if (!wAssignments[dayIdx]) wAssignments[dayIdx] = {};
-  wAssignments[dayIdx][key] = val;
+  if (!wAssignments[dayIdx]) wAssignments[dayIdx]={};
+  wAssignments[dayIdx][key]=val;
 }
-
-function getAssignmentsFromDOM() {
-  // Sync current tab
-  document.querySelectorAll('#assignmentsTable select').forEach(sel => {
-    const key = sel.closest('tr').querySelector('td:nth-child(3)').textContent.replace('Sala ','').trim();
-    // already handled by onchange
-  });
-  return wAssignments;
-}
+function getAssignmentsFromDOM() { return wAssignments; }
 
 // ================================================================
 //  COLUMN UTILS
 // ================================================================
-function colKey(col) {
-  return `f${col.floorIdx}_s${col.segIdx}_${col.room.num}`;
-}
-
+function colKey(col) { return `f${col.floorIdx}_s${col.segIdx}_${col.room.num}`; }
 function flattenColumns(floors) {
   const cols = [];
-  floors.forEach((floor, fi) => {
-    floor.segments.forEach((seg, si) => {
-      seg.rooms.forEach((room, ri) => {
-        cols.push({ floorIdx: fi, segIdx: si, roomIdx: ri, floor, seg, room });
-      });
-    });
-  });
+  floors.forEach((floor,fi) => floor.segments.forEach((seg,si) => seg.rooms.forEach((room,ri) => cols.push({floorIdx:fi,segIdx:si,roomIdx:ri,floor,seg,room}))));
   return cols;
 }
 
@@ -1405,15 +1505,24 @@ function mountApp() {
   document.getElementById('appOverlay').classList.add('show');
   document.getElementById('currentYearLabel').textContent = appState.yearLabel;
   document.getElementById('sbYear').textContent = appState.yearLabel;
+  const schoolName = appState.school?.short || appState.school?.name || '';
+  document.getElementById('schoolNameTopbar').textContent = schoolName;
+  document.title = `SalePlan — ${schoolName || 'Plan Sal'}`;
 
-  // Day tabs
   const tabsEl = document.getElementById('dayTabs');
   tabsEl.innerHTML = appState.days.map((d,i) =>
     `<button class="day-btn ${i===0?'active':''}" onclick="switchDay(${i})">${d}</button>`).join('');
 
-  // Valid from
-  const vfDates = (validFromDates[appState.yearKey] || {});
+  const vfDates = validFromDates[appState.yearKey] || {};
   document.getElementById('validFrom').value = vfDates[currentDay] || '';
+
+  // ensure sched initialized
+  const yk = appState.yearKey;
+  if (!schedData[yk]) schedData[yk]={};
+  appState.days.forEach((_,i) => {
+    if (!schedData[yk][i]) schedData[yk][i]={};
+    appState.hours.forEach(h => { if(!schedData[yk][i][h]) schedData[yk][i][h]={}; });
+  });
 
   renderSchedule();
 }
@@ -1421,8 +1530,8 @@ function mountApp() {
 function switchDay(idx) {
   currentDay = idx;
   document.querySelectorAll('.day-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
-  const vfDates = (validFromDates[appState.yearKey] || {});
-  document.getElementById('validFrom').value = vfDates[currentDay] || '';
+  const vfDates = validFromDates[appState.yearKey]||{};
+  document.getElementById('validFrom').value = vfDates[currentDay]||'';
   renderSchedule();
 }
 
@@ -1430,16 +1539,19 @@ function renderSchedule() {
   if (!appState) return;
   const cols = flattenColumns(appState.floors);
   const hours = appState.hours;
-  const dayData = schedData[appState.yearKey]?.[currentDay] || {};
-  const assignments = (appState.assignments[currentDay] || {});
+  const dayData = schedData[appState.yearKey]?.[currentDay]||{};
+  const assignments = appState.assignments[currentDay]||{};
+  const buildings = appState.buildings||[];
 
-  let html = '<table class="schedule-table"><thead><tr>';
-  html += '<th class="time-th">Godz.</th>';
+  let html = '<table class="schedule-table"><thead><tr><th class="time-th">Godz.</th>';
   cols.forEach(col => {
     const key = colKey(col);
-    const cls = assignments[key] || '';
+    const cls = assignments[key]||'';
+    const bld = buildings[col.floor.buildingIdx||0];
+    const bldColor = BUILDING_COLORS[(col.floor.buildingIdx||0) % BUILDING_COLORS.length];
     html += `<th>
       <div class="th-inner">
+        ${bld ? `<span style="font-size:0.55rem;color:${bldColor};font-weight:700;font-family:var(--mono);letter-spacing:0.5px">${esc(bld.name)}</span>` : ''}
         <span class="th-room">Sala ${esc(col.room.num)}</span>
         ${col.room.sub ? `<span class="th-seg">${esc(col.room.sub)}</span>` : `<span class="th-seg">${esc(col.seg.name)}</span>`}
         ${cls ? `<span class="th-class">${esc(cls)}</span>` : ''}
@@ -1452,26 +1564,24 @@ function renderSchedule() {
     html += `<tr><td class="time-cell">${h}</td>`;
     cols.forEach(col => {
       const key = colKey(col);
-      const entry = dayData[h]?.[key] || {};
-      const filled = !!(entry.teacher || entry.subject);
+      const entry = dayData[h]?.[key]||{};
+      const filled = !!(entry.teacher||entry.subject);
       html += `<td><div class="cell-inner ${filled?'filled':''}" onclick="openEditModal(${currentDay},'${h}','${key}')">
         ${filled
           ? `${entry.teacher?`<div class="cell-teacher">${esc(entry.teacher)}</div>`:''}
              ${entry.subject?`<div class="cell-subject">${esc(entry.subject)}</div>`:''}
              ${entry.note?`<div class="cell-note">${esc(entry.note)}</div>`:''}`
-          : `<div class="cell-plus">＋</div>`}
+          : '<div class="cell-plus">＋</div>'}
       </div></td>`;
     });
     html += '</tr>';
   });
-
   html += '</tbody></table>';
   document.getElementById('scheduleWrap').innerHTML = html;
 
-  // Color top borders by floor
-  const ths = document.querySelectorAll('.schedule-table thead th');
-  ths.forEach((th, i) => {
-    if (i === 0) return;
+  // Color top borders by floor color
+  document.querySelectorAll('.schedule-table thead th').forEach((th,i) => {
+    if (i===0) return;
     const col = cols[i-1];
     if (col) th.style.borderTop = `3px solid ${col.floor.color}`;
   });
@@ -1480,13 +1590,12 @@ function renderSchedule() {
 }
 
 function updateStatusBar() {
-  const dayData = schedData[appState.yearKey]?.[currentDay] || {};
-  let count = 0;
-  const cols = flattenColumns(appState.floors);
-  appState.hours.forEach(h => {
-    cols.forEach(col => {
+  const dayData = schedData[appState.yearKey]?.[currentDay]||{};
+  let count=0;
+  flattenColumns(appState.floors).forEach(col => {
+    appState.hours.forEach(h => {
       const e = dayData[h]?.[colKey(col)];
-      if (e && (e.teacher || e.subject)) count++;
+      if (e&&(e.teacher||e.subject)) count++;
     });
   });
   document.getElementById('sbCount').textContent = `${count} wpisów w tym dniu`;
@@ -1496,85 +1605,70 @@ function updateStatusBar() {
 //  EDIT MODAL
 // ================================================================
 function openEditModal(day, hour, key) {
-  _mDay = day; _mHour = hour; _mKey = key;
+  _mDay=day; _mHour=hour; _mKey=key;
   const cols = flattenColumns(appState.floors);
-  const col = cols.find(c => colKey(c) === key);
-  const entry = schedData[appState.yearKey]?.[day]?.[hour]?.[key] || {};
-  const cls = (appState.assignments[day] || {})[key] || '';
+  const col = cols.find(c=>colKey(c)===key);
+  const entry = schedData[appState.yearKey]?.[day]?.[hour]?.[key]||{};
+  const cls = (appState.assignments[day]||{})[key]||'';
+  const bld = (appState.buildings||[])[col?.floor?.buildingIdx||0];
 
-  document.getElementById('modalTitle').textContent = `Sala ${col?.room.num || '?'} — Godz. ${hour}`;
-  document.getElementById('modalSub').textContent = `${col?.floor.name} › ${col?.seg.name}${cls?' › '+cls:''} · ${appState.days[day]}`;
-  document.getElementById('inpTeacher').value = entry.teacher || '';
-  document.getElementById('inpSubject').value = entry.subject || '';
-  document.getElementById('inpNote').value = entry.note || '';
-
+  document.getElementById('modalTitle').textContent = `Sala ${col?.room.num||'?'} — Godz. ${hour}`;
+  document.getElementById('modalSub').textContent =
+    `${bld?bld.name+' · ':''}${col?.floor.name||''} › ${col?.seg.name||''}${cls?' › '+cls:''} · ${appState.days[day]}`;
+  document.getElementById('inpTeacher').value = entry.teacher||'';
+  document.getElementById('inpSubject').value = entry.subject||'';
+  document.getElementById('inpNote').value = entry.note||'';
   document.getElementById('editModal').classList.add('show');
   document.getElementById('inpTeacher').focus();
 }
-
 function closeEditModal() { document.getElementById('editModal').classList.remove('show'); }
-
 function saveCellData() {
   const yk = appState.yearKey;
-  if (!schedData[yk]) schedData[yk] = {};
-  if (!schedData[yk][_mDay]) schedData[yk][_mDay] = {};
-  if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour] = {};
-  schedData[yk][_mDay][_mHour][_mKey] = {
-    teacher: document.getElementById('inpTeacher').value.trim(),
-    subject: document.getElementById('inpSubject').value.trim(),
-    note: document.getElementById('inpNote').value.trim(),
+  if (!schedData[yk]) schedData[yk]={};
+  if (!schedData[yk][_mDay]) schedData[yk][_mDay]={};
+  if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour]={};
+  schedData[yk][_mDay][_mHour][_mKey]={
+    teacher:document.getElementById('inpTeacher').value.trim(),
+    subject:document.getElementById('inpSubject').value.trim(),
+    note:document.getElementById('inpNote').value.trim(),
   };
-  closeEditModal();
-  renderSchedule();
-  sbSet('Wpis zaktualizowany');
+  closeEditModal(); renderSchedule(); sbSet('Wpis zaktualizowany');
 }
-
 function clearCellData() {
-  const yk = appState.yearKey;
-  if (schedData[yk]?.[_mDay]?.[_mHour]) schedData[yk][_mDay][_mHour][_mKey] = {};
-  closeEditModal();
-  renderSchedule();
+  if (schedData[appState.yearKey]?.[_mDay]?.[_mHour]) schedData[appState.yearKey][_mDay][_mHour][_mKey]={};
+  closeEditModal(); renderSchedule();
 }
-
-document.getElementById('editModal').addEventListener('click', e => { if (e.target === document.getElementById('editModal')) closeEditModal(); });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeEditModal();
-  if (e.key === 'Enter' && e.ctrlKey && document.getElementById('editModal').classList.contains('show')) saveCellData();
+document.getElementById('editModal').addEventListener('click',e=>{if(e.target===document.getElementById('editModal'))closeEditModal();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeEditModal();
+  if(e.key==='Enter'&&e.ctrlKey&&document.getElementById('editModal').classList.contains('show'))saveCellData();
 });
 
 // ================================================================
 //  ARCHIVE
 // ================================================================
-function showArchive() {
-  renderArchiveBody();
-  document.getElementById('archivePanel').classList.add('show');
-}
+function showArchive() { renderArchiveBody(); document.getElementById('archivePanel').classList.add('show'); }
 function closeArchive() { document.getElementById('archivePanel').classList.remove('show'); }
-
 function renderArchiveBody() {
   const body = document.getElementById('archiveBody');
-  if (archive.length === 0 && !appState) { body.innerHTML = '<div class="archive-empty">Brak zarchiwizowanych planów.</div>'; return; }
-
   let html = '';
-  // Current year first
   if (appState) {
+    const bldInfo = (appState.buildings||[]).map(b=>b.name).filter(Boolean).join(', ');
     html += `<div class="archive-year-card" style="border-color:var(--accent);background:rgba(59,130,246,0.06)">
       <div class="archive-year-info">
         <h3>📌 ${esc(appState.yearLabel)} <span style="font-size:0.68rem;color:var(--green);font-weight:600">aktywny</span></h3>
-        <p>${flattenColumns(appState.floors).length} sal · ${appState.classes.length} klas · ${appState.hours.length} godzin</p>
+        <p>${appState.school?.name ? esc(appState.school.name)+' · ' : ''}${flattenColumns(appState.floors).length} sal · ${appState.classes.length} klas</p>
+        ${bldInfo ? `<p style="margin-top:2px;color:var(--text-dim)">🏢 ${esc(bldInfo)}</p>` : ''}
       </div>
-      <div class="archive-year-actions">
-        <button class="btn btn-ghost" onclick="closeArchive()">Otwórz</button>
-      </div>
+      <div class="archive-year-actions"><button class="btn btn-ghost" onclick="closeArchive()">Otwórz</button></div>
     </div>`;
   }
-
   archive.slice().reverse().forEach(item => {
-    const saved = item.savedAt ? new Date(item.savedAt).toLocaleDateString('pl-PL') : '';
+    const saved = item.savedAt ? new Date(item.savedAt).toLocaleDateString('pl-PL'):'';
     html += `<div class="archive-year-card">
       <div class="archive-year-info">
         <h3>📁 ${esc(item.label)}</h3>
-        <p>Zarchiwizowany${saved ? ': '+saved : ''}</p>
+        <p>${item.config?.school?.name?esc(item.config.school.name)+' · ':''}Zarchiwizowany${saved?': '+saved:''}</p>
       </div>
       <div class="archive-year-actions">
         <button class="btn btn-yellow" onclick="restoreYear('${item.yearKey}')">Przywróć</button>
@@ -1582,86 +1676,68 @@ function renderArchiveBody() {
       </div>
     </div>`;
   });
-
+  if (!html) html = '<div class="archive-empty">Brak zarchiwizowanych planów.</div>';
   body.innerHTML = html;
 }
-
 function restoreYear(yearKey) {
-  const item = archive.find(a => a.yearKey === yearKey);
-  if (!item) return;
-  if (!confirm(`Przywrócić rok ${item.label} jako aktywny? Bieżący rok zostanie zarchiwizowany.`)) return;
-
-  // Try to restore config — we stored a snapshot if available
-  if (item.config) {
-    if (appState) {
-      const ex = archive.find(a=>a.yearKey===appState.yearKey);
-      if (!ex) archive.push({ yearKey: appState.yearKey, label: appState.yearLabel, savedAt: new Date().toISOString(), config: appState });
-    }
-    appState = item.config;
-    archive = archive.filter(a => a.yearKey !== yearKey);
-    persistAll();
-    closeArchive();
-    currentDay = 0;
-    mountApp();
-    notify('📁 Przywrócono rok ' + item.label);
-  } else {
-    notify('⚠ Brak danych konfiguracji. Utwórz rok ponownie przez kreator.', true);
+  const item = archive.find(a=>a.yearKey===yearKey);
+  if (!item?.config) { notify('⚠ Brak danych konfiguracji — utwórz rok ponownie przez kreator.', true); return; }
+  if (!confirm(`Przywrócić rok ${item.label}? Bieżący rok zostanie zarchiwizowany.`)) return;
+  if (appState) {
+    const ex = archive.find(a=>a.yearKey===appState.yearKey);
+    if (!ex) archive.push({yearKey:appState.yearKey,label:appState.yearLabel,savedAt:new Date().toISOString(),config:appState});
   }
+  appState = item.config;
+  archive = archive.filter(a=>a.yearKey!==yearKey);
+  persistAll(); closeArchive(); currentDay=0; mountApp();
+  notify('📁 Przywrócono rok '+item.label);
 }
-
 function deleteArchive(yearKey) {
-  const item = archive.find(a => a.yearKey === yearKey);
+  const item = archive.find(a=>a.yearKey===yearKey);
   if (!confirm(`Trwale usunąć archiwum: ${item?.label}?`)) return;
-  archive = archive.filter(a => a.yearKey !== yearKey);
+  archive = archive.filter(a=>a.yearKey!==yearKey);
   delete schedData[yearKey];
-  persistAll();
-  renderArchiveBody();
+  persistAll(); renderArchiveBody();
   notify('🗑 Usunięto archiwum');
 }
-
-document.getElementById('archivePanel').addEventListener('click', e => { if (e.target === document.getElementById('archivePanel')) closeArchive(); });
+document.getElementById('archivePanel').addEventListener('click',e=>{if(e.target===document.getElementById('archivePanel'))closeArchive();});
 
 // ================================================================
 //  OTHER ACTIONS
 // ================================================================
 function clearDay() {
   if (!confirm(`Wyczyścić wszystkie wpisy: ${appState.days[currentDay]}?`)) return;
-  const yk = appState.yearKey;
-  schedData[yk][currentDay] = {};
-  appState.hours.forEach(h => { schedData[yk][currentDay][h] = {}; });
-  renderSchedule();
-  notify('🗑 Dzień wyczyszczony');
+  const yk=appState.yearKey;
+  schedData[yk][currentDay]={};
+  appState.hours.forEach(h=>{schedData[yk][currentDay][h]={};});
+  renderSchedule(); notify('🗑 Dzień wyczyszczony');
 }
-
 function exportPDF() {
-  const vf = document.getElementById('validFrom').value;
-  if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey] = {};
-  validFromDates[appState.yearKey][currentDay] = vf;
-  const dayName = appState.days[currentDay];
-  const date = vf ? ` (od ${vf})` : '';
-  document.title = `Plan Sal ${appState.yearLabel} — ${dayName}${date}`;
+  const vf=document.getElementById('validFrom').value;
+  if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey]={};
+  validFromDates[appState.yearKey][currentDay]=vf;
+  const school = appState.school?.short || appState.school?.name || '';
+  document.title=`${school?school+' — ':''}Plan Sal ${appState.yearLabel} — ${appState.days[currentDay]}${vf?' (od '+vf+')':''}`;
   window.print();
-  document.title = 'SalePlan — Plan Sal Zajęciowych';
+  document.title='SalePlan — Plan Sal Zajęciowych';
 }
-
-document.getElementById('validFrom').addEventListener('change', () => {
-  if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey] = {};
-  validFromDates[appState.yearKey][currentDay] = document.getElementById('validFrom').value;
+document.getElementById('validFrom').addEventListener('change',()=>{
+  if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey]={};
+  validFromDates[appState.yearKey][currentDay]=document.getElementById('validFrom').value;
 });
 
 // ================================================================
 //  HELPERS
 // ================================================================
-function esc(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function sbSet(msg) { document.getElementById('sbText').textContent = msg; setTimeout(()=>document.getElementById('sbText').textContent='Gotowy',2500); }
-
-function notify(msg, warn) {
-  const el = document.createElement('div');
-  el.className = 'notif';
-  el.style.borderColor = warn ? 'rgba(245,158,11,0.4)' : 'var(--border2)';
-  el.textContent = msg;
+function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function sbSet(msg){document.getElementById('sbText').textContent=msg;setTimeout(()=>document.getElementById('sbText').textContent='Gotowy',2500);}
+function notify(msg,warn){
+  const el=document.createElement('div');
+  el.className='notif';
+  el.style.borderColor=warn?'rgba(245,158,11,0.4)':'var(--border2)';
+  el.textContent=msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2900);
+  setTimeout(()=>el.remove(),2900);
 }
 
 // ================================================================
@@ -1671,12 +1747,11 @@ loadAll();
 if (!appState) {
   openWizardFirst();
 } else {
-  // Ensure schedule data has all hours
-  const yk = appState.yearKey;
-  if (!schedData[yk]) schedData[yk] = {};
-  appState.days.forEach((d,i) => {
-    if (!schedData[yk][i]) schedData[yk][i] = {};
-    appState.hours.forEach(h => { if (!schedData[yk][i][h]) schedData[yk][i][h] = {}; });
+  const yk=appState.yearKey;
+  if (!schedData[yk]) schedData[yk]={};
+  (appState.days||DAYS_DEFAULT).forEach((_,i)=>{
+    if (!schedData[yk][i]) schedData[yk][i]={};
+    (appState.hours||[]).forEach(h=>{if(!schedData[yk][i][h])schedData[yk][i][h]={};});
   });
   mountApp();
 }
