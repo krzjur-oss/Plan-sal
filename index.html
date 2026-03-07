@@ -489,6 +489,51 @@ body {
 .teacher-abbr-inp:focus { border-color: var(--accent); }
 .add-teacher-btn { display: flex; align-items: center; justify-content: center; gap: 6px; background: transparent; border: 1px dashed var(--border2); border-radius: 10px; padding: 10px; color: var(--text-muted); font-family: var(--font); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; width: 100%; }
 .add-teacher-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+/* Import area */
+.import-drop-zone {
+  border: 2px dashed var(--border2);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--surface2);
+  position: relative;
+  margin-bottom: 14px;
+}
+.import-drop-zone:hover, .import-drop-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.import-drop-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.import-drop-icon { font-size: 1.8rem; margin-bottom: 6px; }
+.import-drop-label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+.import-drop-sub { font-size: 0.72rem; color: var(--text-dim); margin-top: 4px; font-family: var(--mono); }
+.import-preview {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  display: none;
+}
+.import-preview.show { display: block; }
+.import-preview strong { color: var(--green); }
+.import-preview .import-err { color: var(--red); }
+.teacher-actions-row {
+  display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center;
+}
+.teacher-count-badge {
+  font-size: 0.72rem; color: var(--text-muted); font-family: var(--mono);
+  margin-left: auto; padding: 4px 10px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+}
 .teacher-abbr-badge { display: inline-block; background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); border-radius: 4px; font-family: var(--mono); font-size: 0.65rem; font-weight: 700; padding: 1px 5px; letter-spacing: 0.5px; flex-shrink: 0; }
 .teacher-col-header { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 6px; display: grid; grid-template-columns: 1fr 1fr 110px 36px; gap: 8px; padding: 0 12px; }
 .teacher-select { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 9px 12px; color: var(--text); font-family: var(--font); font-size: 0.85rem; outline: none; transition: border 0.15s, box-shadow 0.15s; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5a7a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
@@ -1016,12 +1061,29 @@ body {
   <div class="wizard-step" id="wStep4">
     <div class="wcard">
       <div class="wcard-title">👨‍🏫 Lista nauczycieli</div>
-      <div class="wcard-desc">Wpisz nauczycieli. Skrót jest generowany automatycznie — możesz go edytować ręcznie.</div>
+      <div class="wcard-desc">Wpisz nauczycieli ręcznie lub zaimportuj z pliku <strong style="color:var(--accent)">.txt</strong> (format: Imię Nazwisko, każdy w nowej linii). Skrót generowany automatycznie.</div>
+
+      <div class="import-drop-zone" id="importDropZone"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleImportDrop(event)">
+        <input type="file" accept=".txt,text/plain" onchange="handleImportFile(this)">
+        <div class="import-drop-icon">📄</div>
+        <div class="import-drop-label">Przeciągnij plik .txt lub kliknij, aby wybrać</div>
+        <div class="import-drop-sub">Format: Imię Nazwisko • jeden nauczyciel na linię</div>
+      </div>
+      <div class="import-preview" id="importPreview"></div>
+
+      <div class="teacher-actions-row">
+        <button class="add-teacher-btn" style="flex:1;min-width:160px" onclick="addTeacher()">＋ Dodaj ręcznie</button>
+        <button class="btn btn-red" style="font-size:0.75rem;padding:7px 12px" onclick="clearAllTeachers()" title="Wyczyść całą listę">🗑 Wyczyść listę</button>
+        <span class="teacher-count-badge" id="teacherCountBadge">0 nauczycieli</span>
+      </div>
+
       <div class="teacher-col-header">
         <span>Imię</span><span>Nazwisko</span><span>Skrót</span><span></span>
       </div>
       <div class="teacher-list" id="teacherList"></div>
-      <button class="add-teacher-btn" onclick="addTeacher()">＋ Dodaj nauczyciela</button>
     </div>
   </div>
 
@@ -1493,6 +1555,7 @@ function renderTeacherList() {
         title="Generowany automatycznie, możesz edytować ręcznie">
       <button class="icon-btn danger" onclick="removeTeacher(${i})">🗑</button>
     </div>`).join('');
+  updateTeacherCountBadge();
 }
 
 function addTeacher() {
@@ -1501,11 +1564,100 @@ function addTeacher() {
   // focus first input of new row
   const rows = document.querySelectorAll('.teacher-row');
   rows[rows.length-1]?.querySelector('.teacher-inp')?.focus();
+  updateTeacherCountBadge();
 }
 
 function removeTeacher(i) {
   wTeachers.splice(i, 1);
   renderTeacherList();
+}
+
+// ── Teacher import from TXT ──
+function handleImportFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  readTxtFile(file);
+  input.value = ''; // reset so same file can be re-imported
+}
+
+function handleImportDrop(e) {
+  e.preventDefault();
+  document.getElementById('importDropZone').classList.remove('drag-over');
+  const file = [...e.dataTransfer.files].find(f => f.name.endsWith('.txt') || f.type === 'text/plain');
+  if (!file) { notify('⚠ Wybierz plik .txt', true); return; }
+  readTxtFile(file);
+}
+
+function readTxtFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => importTeachersFromText(e.target.result);
+  reader.onerror = () => notify('⚠ Błąd odczytu pliku', true);
+  reader.readAsText(file, 'UTF-8');
+}
+
+function importTeachersFromText(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  let added = 0, skipped = 0, errors = [];
+
+  lines.forEach((line, idx) => {
+    // skip lines that look like headers or separators
+    if (/^[-=_#*]+$/.test(line)) { skipped++; return; }
+
+    const parts = line.split(/\s+/);
+    if (parts.length < 2) {
+      errors.push(`Linia ${idx+1}: "${line}" — brak imienia lub nazwiska`);
+      skipped++;
+      return;
+    }
+
+    const first = parts[0];
+    // everything after first word = surname (handles double-barreled surnames with space)
+    const last = parts.slice(1).join(' ');
+
+    // check duplicate (same first+last)
+    const exists = wTeachers.some(t =>
+      t.first.toLowerCase() === first.toLowerCase() &&
+      t.last.toLowerCase() === last.toLowerCase()
+    );
+    if (exists) { skipped++; return; }
+
+    const existingAbbrs = wTeachers.map(t => t.abbr).filter(Boolean);
+    const abbr = ensureUniqueAbbr(genAbbr(first, last), existingAbbrs);
+    wTeachers.push({ first, last, abbr });
+    added++;
+  });
+
+  renderTeacherList();
+  updateTeacherCountBadge();
+
+  // Show preview summary
+  const preview = document.getElementById('importPreview');
+  let html = `<strong>+${added}</strong> nauczycieli zaimportowano`;
+  if (skipped) html += ` · ${skipped} pominięto (duplikaty/błędy)`;
+  if (errors.length) {
+    html += `<div class="import-err" style="margin-top:6px">${errors.slice(0,3).map(e => '⚠ '+e).join('<br>')}</div>`;
+    if (errors.length > 3) html += `<div class="import-err">…i ${errors.length-3} więcej błędów</div>`;
+  }
+  preview.innerHTML = html;
+  preview.classList.add('show');
+  setTimeout(() => preview.classList.remove('show'), 6000);
+
+  if (added > 0) notify(`✓ Zaimportowano ${added} nauczycieli`);
+  else notify('⚠ Brak nowych nauczycieli do dodania', true);
+}
+
+function clearAllTeachers() {
+  if (wTeachers.length === 0) return;
+  if (!confirm(`Usunąć wszystkich ${wTeachers.length} nauczycieli z listy?`)) return;
+  wTeachers = [];
+  renderTeacherList();
+  updateTeacherCountBadge();
+  notify('🗑 Lista nauczycieli wyczyszczona');
+}
+
+function updateTeacherCountBadge() {
+  const badge = document.getElementById('teacherCountBadge');
+  if (badge) badge.textContent = `${wTeachers.length} nauczyciel${wTeachers.length === 1 ? '' : wTeachers.length < 5 ? 'i' : 'i'}`;
 }
 
 function autoAbbr(i) {
