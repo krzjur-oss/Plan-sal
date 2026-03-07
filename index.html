@@ -478,6 +478,24 @@ body {
 .floor-building-select { background: var(--surface3); border: 1px solid var(--border2); border-radius: 6px; padding: 3px 8px; color: var(--text); font-family: var(--mono); font-size: 0.72rem; outline: none; cursor: pointer; margin-right: 4px; }
 .school-name-topbar { font-size: 0.68rem; color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* Teachers step */
+.teacher-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; max-height: 400px; overflow-y: auto; padding-right: 4px; }
+.teacher-row { display: grid; grid-template-columns: 1fr 1fr 110px 36px; gap: 8px; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; transition: border-color 0.15s; }
+.teacher-row:hover { border-color: var(--border2); }
+.teacher-row:focus-within { border-color: var(--accent); }
+.teacher-inp { background: transparent; border: none; color: var(--text); font-family: var(--font); font-size: 0.84rem; outline: none; width: 100%; }
+.teacher-inp::placeholder { color: var(--text-dim); }
+.teacher-abbr-inp { background: var(--surface3); border: 1px solid var(--border2); border-radius: 6px; padding: 5px 10px; color: var(--accent); font-family: var(--mono); font-size: 0.8rem; font-weight: 700; outline: none; width: 100%; letter-spacing: 0.5px; transition: border-color 0.15s; }
+.teacher-abbr-inp:focus { border-color: var(--accent); }
+.add-teacher-btn { display: flex; align-items: center; justify-content: center; gap: 6px; background: transparent; border: 1px dashed var(--border2); border-radius: 10px; padding: 10px; color: var(--text-muted); font-family: var(--font); font-size: 0.82rem; cursor: pointer; transition: all 0.15s; width: 100%; }
+.add-teacher-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+.teacher-abbr-badge { display: inline-block; background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); border-radius: 4px; font-family: var(--mono); font-size: 0.65rem; font-weight: 700; padding: 1px 5px; letter-spacing: 0.5px; flex-shrink: 0; }
+.teacher-col-header { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 6px; display: grid; grid-template-columns: 1fr 1fr 110px 36px; gap: 8px; padding: 0 12px; }
+.teacher-select { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 9px 12px; color: var(--text); font-family: var(--font); font-size: 0.85rem; outline: none; transition: border 0.15s, box-shadow 0.15s; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5a7a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+.teacher-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.teacher-select option { background: var(--surface); color: var(--text); }
+.cell-abbr { display: inline-block; background: rgba(59,130,246,0.18); color: var(--accent); border-radius: 4px; font-family: var(--mono); font-size: 0.68rem; font-weight: 700; padding: 0 5px; margin-right: 3px; letter-spacing: 0.5px; }
+
 /* Wizard footer */
 .wizard-footer {
   display: flex;
@@ -892,7 +910,7 @@ body {
   <div class="wizard-header">
     <div class="wizard-badge">✦ Kreator konfiguracji</div>
     <div class="wizard-title">Nowy rok szkolny<br><span id="wTitleYear">2025/2026</span></div>
-    <div class="wizard-subtitle">Skonfiguruj szkołę, budynki, sale i klasy — zajmie to tylko chwilę.</div>
+    <div class="wizard-subtitle">Skonfiguruj szkołę, budynki, nauczycieli i klasy — zajmie to tylko chwilę.</div>
   </div>
 
   <!-- Steps indicator -->
@@ -919,6 +937,11 @@ body {
     <div class="wstep-line" id="wl3"></div>
     <div class="wstep" id="ws4">
       <div class="wstep-num">5</div>
+      <div class="wstep-label">Nauczyciele</div>
+    </div>
+    <div class="wstep-line" id="wl4"></div>
+    <div class="wstep" id="ws5">
+      <div class="wstep-num">6</div>
       <div class="wstep-label">Przypisania</div>
     </div>
   </div>
@@ -989,8 +1012,21 @@ body {
     </div>
   </div>
 
-  <!-- STEP 5: Assignments -->
+  <!-- STEP 5: Teachers -->
   <div class="wizard-step" id="wStep4">
+    <div class="wcard">
+      <div class="wcard-title">👨‍🏫 Lista nauczycieli</div>
+      <div class="wcard-desc">Wpisz nauczycieli. Skrót jest generowany automatycznie — możesz go edytować ręcznie.</div>
+      <div class="teacher-col-header">
+        <span>Imię</span><span>Nazwisko</span><span>Skrót</span><span></span>
+      </div>
+      <div class="teacher-list" id="teacherList"></div>
+      <button class="add-teacher-btn" onclick="addTeacher()">＋ Dodaj nauczyciela</button>
+    </div>
+  </div>
+
+  <!-- STEP 6: Assignments -->
+  <div class="wizard-step" id="wStep5">
     <div class="wcard">
       <div class="wcard-title">📌 Przypisanie klas do sal</div>
       <div class="wcard-desc">Dla każdego dnia tygodnia i każdej sali wybierz domyślnie przypisaną klasę (opcjonalnie).</div>
@@ -1003,7 +1039,7 @@ body {
 
   <!-- Footer -->
   <div class="wizard-footer">
-    <div class="wizard-footer-info" id="wFooterInfo">Krok 1 z 5</div>
+    <div class="wizard-footer-info" id="wFooterInfo">Krok 1 z 6</div>
     <div class="wizard-btns">
       <button class="btn btn-ghost" id="wBtnBack" onclick="wizardBack()" style="display:none">← Wstecz</button>
       <button class="btn btn-primary" id="wBtnNext" onclick="wizardNext()">Dalej →</button>
@@ -1064,7 +1100,9 @@ body {
     <div class="modal-sub" id="modalSub"></div>
     <div class="form-group">
       <label class="form-label">Nauczyciel</label>
-      <input type="text" class="form-input" id="inpTeacher" placeholder="Imię i nazwisko nauczyciela" autocomplete="off">
+      <select class="teacher-select" id="inpTeacher">
+        <option value="">— brak / wybierz —</option>
+      </select>
     </div>
     <div class="form-group">
       <label class="form-label">Przedmiot / Zajęcia</label>
@@ -1096,12 +1134,13 @@ body {
 
 <script>
 // ================================================================
-//  STATE
+//  CONSTANTS & STATE
 // ================================================================
 const DAYS_DEFAULT = ['Poniedziałek','Wtorek','Środa','Czwartek','Piątek'];
 const FLOOR_COLORS = ['#f59e0b','#3b82f6','#10b981','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
 const BUILDING_COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 const BUILDING_LETTERS = ['A','B','C','D','E','F','G','H'];
+const TOTAL_STEPS = 6;
 
 let appState = null;
 let schedData = {};
@@ -1111,13 +1150,41 @@ let currentDay = 0;
 let currentAssignDay = 0;
 
 // wizard temp
-let wBuildings = [];  // [{name, address}]
-let wFloors = [];     // [{name, color, buildingIdx, segments:[{name, rooms:[{num,sub}]}]}]
+let wBuildings = [];
+let wFloors = [];
 let wClasses = [];
+let wTeachers = []; // [{first, last, abbr}]
 let wAssignments = {};
 let wStep = 0;
 
 let _mDay, _mHour, _mKey;
+
+// ================================================================
+//  ABBREVIATION GENERATOR
+// ================================================================
+function genAbbr(first, last) {
+  const f = (first || '').trim();
+  const l = (last || '').trim();
+  if (!f && !l) return '';
+  const fLetter = f ? f[0].toUpperCase() : '';
+  // detect double-barreled surname: hyphen or space
+  const parts = l.split(/[-\s]+/).filter(Boolean);
+  let lPart = '';
+  if (parts.length >= 2) {
+    // two-part: 2 letters of first part + 1 letter of second
+    lPart = (parts[0].slice(0, 2) + parts[1][0]).toUpperCase();
+  } else if (parts.length === 1) {
+    lPart = parts[0].slice(0, 3).toUpperCase();
+  }
+  return fLetter + lPart;
+}
+
+function ensureUniqueAbbr(abbr, existingAbbrs) {
+  if (!existingAbbrs.includes(abbr)) return abbr;
+  let i = 2;
+  while (existingAbbrs.includes(abbr + i)) i++;
+  return abbr + i;
+}
 
 // ================================================================
 //  STORAGE
@@ -1147,10 +1214,7 @@ function saveData() {
 // ================================================================
 //  SAMPLE DATA
 // ================================================================
-const SAMPLE_BUILDINGS = [
-  { name: 'Budynek Główny', address: '' }
-];
-
+const SAMPLE_BUILDINGS = [{ name: 'Budynek Główny', address: '' }];
 const SAMPLE_FLOORS = [
   { name:'Parter 0', color:FLOOR_COLORS[0], buildingIdx:0, segments:[
     { name:'Segment A', rooms:[{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'6',sub:''},{num:'7',sub:''}] },
@@ -1168,7 +1232,6 @@ const SAMPLE_FLOORS = [
     { name:'', rooms:[{num:'16',sub:'D. Informatyczna'},{num:'18',sub:'M. Informatyczna'},{num:'21',sub:''}] },
   ]},
 ];
-
 const SAMPLE_CLASSES = ['I A','I B','I C','II A','II B','II C','III A','III B','III C','IV A','IV B','IV C','V A','V B','V C','VI A','VI B','VI C','VII A','VII B','VII C','VIII A','VIII B'];
 
 // ================================================================
@@ -1182,11 +1245,12 @@ function openWizardNewYear(preload) {
     wBuildings = JSON.parse(JSON.stringify(SAMPLE_BUILDINGS));
     wFloors = JSON.parse(JSON.stringify(SAMPLE_FLOORS));
     wClasses = [...SAMPLE_CLASSES];
+    wTeachers = [];
   } else if (appState) {
     wBuildings = JSON.parse(JSON.stringify(appState.buildings || SAMPLE_BUILDINGS));
     wFloors = JSON.parse(JSON.stringify(appState.floors));
     wClasses = [...appState.classes];
-    // Pre-fill school info
+    wTeachers = JSON.parse(JSON.stringify(appState.teachers || []));
     document.getElementById('wSchoolName').value = appState.school?.name || '';
     document.getElementById('wSchoolShort').value = appState.school?.short || '';
     document.getElementById('wSchoolPhone').value = appState.school?.phone || '';
@@ -1195,6 +1259,7 @@ function openWizardNewYear(preload) {
     wBuildings = JSON.parse(JSON.stringify(SAMPLE_BUILDINGS));
     wFloors = JSON.parse(JSON.stringify(SAMPLE_FLOORS));
     wClasses = [...SAMPLE_CLASSES];
+    wTeachers = [];
   }
 
   const now = new Date();
@@ -1206,20 +1271,18 @@ function openWizardNewYear(preload) {
   renderBuildingList();
   renderFloorList();
   renderClassGrid();
+  renderTeacherList();
   updateWizardStep();
   document.getElementById('wizardOverlay').classList.add('show');
 }
 
 function openWizardFirst() { openWizardNewYear(true); }
 
-const TOTAL_STEPS = 5;
-
 function wizardNext() {
   if (wStep === 0) {
     const name = document.getElementById('wSchoolName').value.trim();
     if (!name) { notify('⚠ Podaj nazwę szkoły', true); return; }
     if (wBuildings.length === 0) { notify('⚠ Dodaj przynajmniej jeden budynek', true); return; }
-    // sync buildings from DOM
     syncBuildingsFromDOM();
   }
   if (wStep === 1) {
@@ -1234,9 +1297,13 @@ function wizardNext() {
     wClasses = getClassesFromDOM();
     if (wClasses.filter(c=>c.trim()).length === 0) { notify('⚠ Dodaj przynajmniej jedną klasę', true); return; }
   }
-  if (wStep === 4) { finishWizard(); return; }
+  if (wStep === 4) {
+    syncTeachersFromDOM();
+    // teachers optional — no validation required
+  }
+  if (wStep === 5) { finishWizard(); return; }
   wStep++;
-  if (wStep === 4) renderAssignmentsStep();
+  if (wStep === 5) renderAssignmentsStep();
   updateWizardStep();
 }
 
@@ -1260,17 +1327,19 @@ function updateWizardStep() {
 
 function finishWizard() {
   syncBuildingsFromDOM();
+  syncTeachersFromDOM();
   const yearLabel = document.getElementById('wYear').value.trim();
   const hours = document.getElementById('wHours').value.split(',').map(h=>h.trim()).filter(Boolean);
   const classes = getClassesFromDOM().filter(c=>c.trim());
   const yearKey = 'y_' + yearLabel.replace(/\//g,'_');
-
   const school = {
     name: document.getElementById('wSchoolName').value.trim(),
     short: document.getElementById('wSchoolShort').value.trim(),
     phone: document.getElementById('wSchoolPhone').value.trim(),
     web: document.getElementById('wSchoolWeb').value.trim(),
   };
+  const teachers = wTeachers.filter(t => t.first || t.last);
+  const assignments = getAssignmentsFromDOM();
 
   if (appState) {
     const existing = archive.find(a => a.yearKey === appState.yearKey);
@@ -1279,9 +1348,7 @@ function finishWizard() {
     }
   }
 
-  const assignments = getAssignmentsFromDOM();
-
-  appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, assignments, days: DAYS_DEFAULT, school };
+  appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, days: DAYS_DEFAULT, school };
 
   if (!schedData[yearKey]) {
     schedData[yearKey] = {};
@@ -1315,9 +1382,9 @@ function buildBuildingEl(b, bi) {
     <div class="building-card-header">
       <div class="building-letter" style="background:${color}22;color:${color};border:1px solid ${color}55">${letter}</div>
       <div style="display:flex;flex:1;gap:8px;flex-wrap:wrap">
-        <input class="building-name-inp" data-bi="${bi}" value="${esc(b.name)}" placeholder="Nazwa budynku (np. Budynek Główny)"
+        <input class="building-name-inp" data-bi="${bi}" value="${esc(b.name)}" placeholder="Nazwa budynku"
           oninput="wBuildings[${bi}].name=this.value; updateFloorBuildingSelects()">
-        <input class="building-addr-inp" data-bi="${bi}" value="${esc(b.address||'')}" placeholder="Adres (np. ul. Szkolna 1, 30-001 Kraków)"
+        <input class="building-addr-inp" data-bi="${bi}" value="${esc(b.address||'')}" placeholder="Adres budynku"
           oninput="wBuildings[${bi}].address=this.value">
       </div>
       ${wBuildings.length > 1 ? `<button class="icon-btn danger" onclick="removeBuilding(${bi})">🗑</button>` : ''}
@@ -1328,37 +1395,23 @@ function buildBuildingEl(b, bi) {
 
 function addBuilding() {
   wBuildings.push({ name: '', address: '' });
-  renderBuildingList();
-  updateFloorBuildingSelects();
+  renderBuildingList(); updateFloorBuildingSelects();
 }
-
 function removeBuilding(bi) {
   if (wBuildings.length <= 1) { notify('⚠ Musi pozostać przynajmniej jeden budynek', true); return; }
-  // reassign floors from this building to building 0
   wFloors.forEach(f => { if (f.buildingIdx === bi) f.buildingIdx = 0; else if (f.buildingIdx > bi) f.buildingIdx--; });
   wBuildings.splice(bi, 1);
-  renderBuildingList();
-  renderFloorList();
+  renderBuildingList(); renderFloorList();
 }
-
 function syncBuildingsFromDOM() {
-  document.querySelectorAll('.building-name-inp').forEach(el => {
-    const bi = +el.dataset.bi;
-    if (wBuildings[bi]) wBuildings[bi].name = el.value;
-  });
-  document.querySelectorAll('.building-addr-inp').forEach(el => {
-    const bi = +el.dataset.bi;
-    if (wBuildings[bi]) wBuildings[bi].address = el.value;
-  });
+  document.querySelectorAll('.building-name-inp').forEach(el => { const bi=+el.dataset.bi; if(wBuildings[bi]) wBuildings[bi].name=el.value; });
+  document.querySelectorAll('.building-addr-inp').forEach(el => { const bi=+el.dataset.bi; if(wBuildings[bi]) wBuildings[bi].address=el.value; });
 }
-
 function updateFloorBuildingSelects() {
   document.querySelectorAll('.floor-building-select').forEach(sel => {
     const fi = +sel.dataset.fi;
     const cur = wFloors[fi]?.buildingIdx || 0;
-    sel.innerHTML = wBuildings.map((b,bi) =>
-      `<option value="${bi}" ${bi===cur?'selected':''}>${BUILDING_LETTERS[bi]||bi+1}: ${b.name||'Budynek '+(bi+1)}</option>`
-    ).join('');
+    sel.innerHTML = wBuildings.map((b,bi) => `<option value="${bi}" ${bi===cur?'selected':''}>${BUILDING_LETTERS[bi]||bi+1}: ${b.name||'Budynek '+(bi+1)}</option>`).join('');
   });
   renderBuildingList();
 }
@@ -1369,20 +1422,15 @@ function renderFloorList() {
   container.innerHTML = '';
   wFloors.forEach((floor, fi) => container.appendChild(buildFloorEl(floor, fi)));
 }
-
 function buildFloorEl(floor, fi) {
   const div = document.createElement('div');
   div.className = 'floor-item';
-  const buildingOptions = wBuildings.map((b, bi) =>
-    `<option value="${bi}" ${bi===(floor.buildingIdx||0)?'selected':''}>${BUILDING_LETTERS[bi]||bi+1}: ${b.name||'Budynek '+(bi+1)}</option>`
-  ).join('');
-
-  const segsHtml = floor.segments.map((seg, si) => `
+  const buildingOptions = wBuildings.map((b,bi) => `<option value="${bi}" ${bi===(floor.buildingIdx||0)?'selected':''}>${BUILDING_LETTERS[bi]||bi+1}: ${b.name||'Budynek '+(bi+1)}</option>`).join('');
+  const segsHtml = floor.segments.map((seg,si) => `
     <div class="segment-item">
       <div class="segment-header">
         <span style="font-size:0.65rem;color:var(--text-dim);font-family:var(--mono);flex-shrink:0">SEG</span>
-        <input class="seg-name-input" value="${esc(seg.name)}" placeholder="Nazwa segmentu (opcjonalnie)"
-          onchange="wFloors[${fi}].segments[${si}].name=this.value">
+        <input class="seg-name-input" value="${esc(seg.name)}" placeholder="Nazwa segmentu (opcjonalnie)" onchange="wFloors[${fi}].segments[${si}].name=this.value">
         <button class="icon-btn danger" onclick="removeSeg(${fi},${si})">✕</button>
       </div>
       <div class="rooms-row">
@@ -1390,17 +1438,12 @@ function buildFloorEl(floor, fi) {
         <button class="add-room-btn" onclick="addRoom(${fi},${si})">＋ sala</button>
       </div>
     </div>`).join('');
-
   div.innerHTML = `
     <div class="floor-item-header">
       <div class="floor-color-dot" style="background:${floor.color}"></div>
-      <input class="floor-name-input" value="${esc(floor.name)}" placeholder="Nazwa piętra / strefy"
-        onchange="wFloors[${fi}].name=this.value">
-      <select class="floor-building-select" data-fi="${fi}"
-        onchange="wFloors[${fi}].buildingIdx=+this.value; renderBuildingList()">${buildingOptions}</select>
-      <div class="floor-actions">
-        <button class="icon-btn danger" onclick="removeFloor(${fi})">🗑</button>
-      </div>
+      <input class="floor-name-input" value="${esc(floor.name)}" placeholder="Nazwa piętra / strefy" onchange="wFloors[${fi}].name=this.value">
+      <select class="floor-building-select" data-fi="${fi}" onchange="wFloors[${fi}].buildingIdx=+this.value; renderBuildingList()">${buildingOptions}</select>
+      <div class="floor-actions"><button class="icon-btn danger" onclick="removeFloor(${fi})">🗑</button></div>
     </div>
     <div class="segments-area">
       <div class="segments-label">Segmenty</div>
@@ -1409,20 +1452,12 @@ function buildFloorEl(floor, fi) {
     </div>`;
   return div;
 }
-
-function buildRoomChip(fi, si, ri, r) {
-  return `<div class="room-chip">
-    Sala <input class="room-chip-name" value="${esc(r.num)}" placeholder="nr"
-      onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].num=this.value">
-    <input class="room-chip-sub" value="${esc(r.sub||'')}" placeholder="opis…"
-      onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].sub=this.value">
-    <button class="chip-del" onclick="removeRoom(${fi},${si},${ri})">✕</button>
-  </div>`;
+function buildRoomChip(fi,si,ri,r) {
+  return `<div class="room-chip">Sala <input class="room-chip-name" value="${esc(r.num)}" placeholder="nr" onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].num=this.value"><input class="room-chip-sub" value="${esc(r.sub||'')}" placeholder="opis…" onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].sub=this.value"><button class="chip-del" onclick="removeRoom(${fi},${si},${ri})">✕</button></div>`;
 }
-
 function addFloor() {
   const ci = wFloors.length % FLOOR_COLORS.length;
-  wFloors.push({ name:`Piętro ${wFloors.length}`, color:FLOOR_COLORS[ci], buildingIdx:0, segments:[{name:'Segment A',rooms:[{num:'1',sub:''}]}] });
+  wFloors.push({name:`Piętro ${wFloors.length}`,color:FLOOR_COLORS[ci],buildingIdx:0,segments:[{name:'Segment A',rooms:[{num:'1',sub:''}]}]});
   renderFloorList();
 }
 function removeFloor(fi) { wFloors.splice(fi,1); renderFloorList(); renderBuildingList(); }
@@ -1444,6 +1479,58 @@ function addClass() { wClasses.push(''); renderClassGrid(); document.querySelect
 function removeClassAt(i) { wClasses.splice(i,1); renderClassGrid(); }
 function getClassesFromDOM() { return [...document.querySelectorAll('.class-input')].map(el=>el.value.trim()); }
 
+// ── Teachers ──
+function renderTeacherList() {
+  const container = document.getElementById('teacherList');
+  container.innerHTML = wTeachers.map((t,i) => `
+    <div class="teacher-row" id="trow_${i}">
+      <input class="teacher-inp" placeholder="Imię" value="${esc(t.first)}"
+        oninput="wTeachers[${i}].first=this.value; autoAbbr(${i})">
+      <input class="teacher-inp" placeholder="Nazwisko (lub Nazwisko-Człon2)" value="${esc(t.last)}"
+        oninput="wTeachers[${i}].last=this.value; autoAbbr(${i})">
+      <input class="teacher-abbr-inp" placeholder="Skrót" value="${esc(t.abbr)}" maxlength="6"
+        oninput="wTeachers[${i}].abbr=this.value.toUpperCase(); this.value=this.value.toUpperCase()"
+        title="Generowany automatycznie, możesz edytować ręcznie">
+      <button class="icon-btn danger" onclick="removeTeacher(${i})">🗑</button>
+    </div>`).join('');
+}
+
+function addTeacher() {
+  wTeachers.push({ first: '', last: '', abbr: '' });
+  renderTeacherList();
+  // focus first input of new row
+  const rows = document.querySelectorAll('.teacher-row');
+  rows[rows.length-1]?.querySelector('.teacher-inp')?.focus();
+}
+
+function removeTeacher(i) {
+  wTeachers.splice(i, 1);
+  renderTeacherList();
+}
+
+function autoAbbr(i) {
+  const t = wTeachers[i];
+  // only auto-generate if abbr is still "pristine" (matches previous auto or is empty)
+  const currentAuto = genAbbr(t.first, t.last);
+  const otherAbbrs = wTeachers.filter((_,j)=>j!==i).map(x=>x.abbr).filter(Boolean);
+  const unique = ensureUniqueAbbr(currentAuto, otherAbbrs);
+  wTeachers[i].abbr = unique;
+  const row = document.getElementById(`trow_${i}`);
+  if (row) row.querySelectorAll('.teacher-abbr-inp')[0].value = unique;
+}
+
+function syncTeachersFromDOM() {
+  document.querySelectorAll('.teacher-row').forEach((row, i) => {
+    const inputs = row.querySelectorAll('input');
+    if (wTeachers[i]) {
+      wTeachers[i].first = inputs[0].value.trim();
+      wTeachers[i].last = inputs[1].value.trim();
+      wTeachers[i].abbr = inputs[2].value.trim().toUpperCase();
+    }
+  });
+  wTeachers = wTeachers.filter(t => t.first || t.last);
+}
+
 // ── Assignments ──
 function renderAssignmentsStep() {
   currentAssignDay = 0;
@@ -1464,7 +1551,7 @@ function switchAssignDay(idx) {
 function renderAssignTable() {
   const tbl = document.getElementById('assignmentsTable');
   const cols = flattenColumns(wFloors);
-  const classOptions = ['<option value="">—</option>', ...wClasses.filter(c=>c).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`)].join('');
+  const classOptions = ['<option value="">—</option>',...wClasses.filter(c=>c).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`)].join('');
   if (!cols.length) { tbl.innerHTML='<tr><td style="padding:20px;color:var(--text-muted)">Brak sal</td></tr>'; return; }
   tbl.innerHTML = '<tr><th>Budynek</th><th>Piętro</th><th>Segment</th><th>Sala</th><th>Klasa</th></tr>' +
     cols.map(col => {
@@ -1481,10 +1568,7 @@ function renderAssignTable() {
       </tr>`;
     }).join('');
 }
-function setAssign(dayIdx, key, val) {
-  if (!wAssignments[dayIdx]) wAssignments[dayIdx]={};
-  wAssignments[dayIdx][key]=val;
-}
+function setAssign(dayIdx, key, val) { if (!wAssignments[dayIdx]) wAssignments[dayIdx]={}; wAssignments[dayIdx][key]=val; }
 function getAssignmentsFromDOM() { return wAssignments; }
 
 // ================================================================
@@ -1495,6 +1579,27 @@ function flattenColumns(floors) {
   const cols = [];
   floors.forEach((floor,fi) => floor.segments.forEach((seg,si) => seg.rooms.forEach((room,ri) => cols.push({floorIdx:fi,segIdx:si,roomIdx:ri,floor,seg,room}))));
   return cols;
+}
+
+// ================================================================
+//  TEACHER HELPERS
+// ================================================================
+function getTeacherByAbbr(abbr) {
+  return (appState?.teachers||[]).find(t => t.abbr === abbr) || null;
+}
+function teacherDisplayName(t) {
+  if (!t) return '';
+  return [t.first, t.last].filter(Boolean).join(' ');
+}
+function buildTeacherSelectOptions(selectedAbbr) {
+  const teachers = appState?.teachers || [];
+  let opts = '<option value="">— brak —</option>';
+  teachers.forEach(t => {
+    const name = teacherDisplayName(t);
+    const sel = t.abbr === selectedAbbr ? ' selected' : '';
+    opts += `<option value="${esc(t.abbr)}"${sel}>${esc(t.abbr)} — ${esc(name)}</option>`;
+  });
+  return opts;
 }
 
 // ================================================================
@@ -1516,7 +1621,6 @@ function mountApp() {
   const vfDates = validFromDates[appState.yearKey] || {};
   document.getElementById('validFrom').value = vfDates[currentDay] || '';
 
-  // ensure sched initialized
   const yk = appState.yearKey;
   if (!schedData[yk]) schedData[yk]={};
   appState.days.forEach((_,i) => {
@@ -1565,12 +1669,16 @@ function renderSchedule() {
     cols.forEach(col => {
       const key = colKey(col);
       const entry = dayData[h]?.[key]||{};
-      const filled = !!(entry.teacher||entry.subject);
+      const filled = !!(entry.teacherAbbr || entry.subject);
+      const teacher = entry.teacherAbbr ? getTeacherByAbbr(entry.teacherAbbr) : null;
       html += `<td><div class="cell-inner ${filled?'filled':''}" onclick="openEditModal(${currentDay},'${h}','${key}')">
         ${filled
-          ? `${entry.teacher?`<div class="cell-teacher">${esc(entry.teacher)}</div>`:''}
-             ${entry.subject?`<div class="cell-subject">${esc(entry.subject)}</div>`:''}
-             ${entry.note?`<div class="cell-note">${esc(entry.note)}</div>`:''}`
+          ? `<div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap">
+               ${entry.teacherAbbr ? `<span class="cell-abbr" title="${esc(teacherDisplayName(teacher))}">${esc(entry.teacherAbbr)}</span>` : ''}
+               ${entry.subject ? `<span class="cell-subject" style="flex:1">${esc(entry.subject)}</span>` : ''}
+             </div>
+             ${teacher ? `<div class="cell-teacher">${esc(teacherDisplayName(teacher))}</div>` : ''}
+             ${entry.note ? `<div class="cell-note">${esc(entry.note)}</div>` : ''}`
           : '<div class="cell-plus">＋</div>'}
       </div></td>`;
     });
@@ -1579,7 +1687,6 @@ function renderSchedule() {
   html += '</tbody></table>';
   document.getElementById('scheduleWrap').innerHTML = html;
 
-  // Color top borders by floor color
   document.querySelectorAll('.schedule-table thead th').forEach((th,i) => {
     if (i===0) return;
     const col = cols[i-1];
@@ -1595,7 +1702,7 @@ function updateStatusBar() {
   flattenColumns(appState.floors).forEach(col => {
     appState.hours.forEach(h => {
       const e = dayData[h]?.[colKey(col)];
-      if (e&&(e.teacher||e.subject)) count++;
+      if (e&&(e.teacherAbbr||e.subject)) count++;
     });
   });
   document.getElementById('sbCount').textContent = `${count} wpisów w tym dniu`;
@@ -1615,11 +1722,15 @@ function openEditModal(day, hour, key) {
   document.getElementById('modalTitle').textContent = `Sala ${col?.room.num||'?'} — Godz. ${hour}`;
   document.getElementById('modalSub').textContent =
     `${bld?bld.name+' · ':''}${col?.floor.name||''} › ${col?.seg.name||''}${cls?' › '+cls:''} · ${appState.days[day]}`;
-  document.getElementById('inpTeacher').value = entry.teacher||'';
+
+  // populate teacher select
+  const sel = document.getElementById('inpTeacher');
+  sel.innerHTML = buildTeacherSelectOptions(entry.teacherAbbr||'');
+
   document.getElementById('inpSubject').value = entry.subject||'';
   document.getElementById('inpNote').value = entry.note||'';
   document.getElementById('editModal').classList.add('show');
-  document.getElementById('inpTeacher').focus();
+  sel.focus();
 }
 function closeEditModal() { document.getElementById('editModal').classList.remove('show'); }
 function saveCellData() {
@@ -1628,9 +1739,9 @@ function saveCellData() {
   if (!schedData[yk][_mDay]) schedData[yk][_mDay]={};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour]={};
   schedData[yk][_mDay][_mHour][_mKey]={
-    teacher:document.getElementById('inpTeacher').value.trim(),
-    subject:document.getElementById('inpSubject').value.trim(),
-    note:document.getElementById('inpNote').value.trim(),
+    teacherAbbr: document.getElementById('inpTeacher').value,
+    subject: document.getElementById('inpSubject').value.trim(),
+    note: document.getElementById('inpNote').value.trim(),
   };
   closeEditModal(); renderSchedule(); sbSet('Wpis zaktualizowany');
 }
@@ -1657,8 +1768,8 @@ function renderArchiveBody() {
     html += `<div class="archive-year-card" style="border-color:var(--accent);background:rgba(59,130,246,0.06)">
       <div class="archive-year-info">
         <h3>📌 ${esc(appState.yearLabel)} <span style="font-size:0.68rem;color:var(--green);font-weight:600">aktywny</span></h3>
-        <p>${appState.school?.name ? esc(appState.school.name)+' · ' : ''}${flattenColumns(appState.floors).length} sal · ${appState.classes.length} klas</p>
-        ${bldInfo ? `<p style="margin-top:2px;color:var(--text-dim)">🏢 ${esc(bldInfo)}</p>` : ''}
+        <p>${appState.school?.name?esc(appState.school.name)+' · ':''}${flattenColumns(appState.floors).length} sal · ${appState.classes.length} klas · ${(appState.teachers||[]).length} nauczycieli</p>
+        ${bldInfo?`<p style="margin-top:2px;color:var(--text-dim)">🏢 ${esc(bldInfo)}</p>`:''}
       </div>
       <div class="archive-year-actions"><button class="btn btn-ghost" onclick="closeArchive()">Otwórz</button></div>
     </div>`;
@@ -1687,18 +1798,15 @@ function restoreYear(yearKey) {
     const ex = archive.find(a=>a.yearKey===appState.yearKey);
     if (!ex) archive.push({yearKey:appState.yearKey,label:appState.yearLabel,savedAt:new Date().toISOString(),config:appState});
   }
-  appState = item.config;
-  archive = archive.filter(a=>a.yearKey!==yearKey);
+  appState=item.config; archive=archive.filter(a=>a.yearKey!==yearKey);
   persistAll(); closeArchive(); currentDay=0; mountApp();
   notify('📁 Przywrócono rok '+item.label);
 }
 function deleteArchive(yearKey) {
   const item = archive.find(a=>a.yearKey===yearKey);
   if (!confirm(`Trwale usunąć archiwum: ${item?.label}?`)) return;
-  archive = archive.filter(a=>a.yearKey!==yearKey);
-  delete schedData[yearKey];
-  persistAll(); renderArchiveBody();
-  notify('🗑 Usunięto archiwum');
+  archive=archive.filter(a=>a.yearKey!==yearKey); delete schedData[yearKey];
+  persistAll(); renderArchiveBody(); notify('🗑 Usunięto archiwum');
 }
 document.getElementById('archivePanel').addEventListener('click',e=>{if(e.target===document.getElementById('archivePanel'))closeArchive();});
 
@@ -1732,12 +1840,9 @@ document.getElementById('validFrom').addEventListener('change',()=>{
 function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function sbSet(msg){document.getElementById('sbText').textContent=msg;setTimeout(()=>document.getElementById('sbText').textContent='Gotowy',2500);}
 function notify(msg,warn){
-  const el=document.createElement('div');
-  el.className='notif';
+  const el=document.createElement('div'); el.className='notif';
   el.style.borderColor=warn?'rgba(245,158,11,0.4)':'var(--border2)';
-  el.textContent=msg;
-  document.body.appendChild(el);
-  setTimeout(()=>el.remove(),2900);
+  el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(),2900);
 }
 
 // ================================================================
