@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SalePlan — Plan Sal Zajęciowych</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#080c12">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SalePlan">
+<link rel="apple-touch-icon" href="icon-152.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<meta name="description" content="Aplikacja do zarządzania planem sal zajęciowych w szkole">
+
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -377,28 +390,86 @@ body {
 }
 
 .class-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 90px 80px 1fr 32px;
+  gap: 6px;
   align-items: center;
-  gap: 8px;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 7px 10px;
+  transition: border-color 0.15s;
 }
+.class-item:focus-within { border-color: var(--accent); }
 
-.class-color { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink:0; }
+.class-color { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink:0; display:none; }
 
 .class-input {
-  flex: 1;
   background: transparent;
   border: none;
   color: var(--text);
   font-family: var(--mono);
   font-size: 0.82rem;
-  font-weight: 500;
+  font-weight: 600;
   outline: none;
+  width: 100%;
 }
 .class-input::placeholder { color: var(--text-dim); }
+.class-abbr-inp {
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  padding: 3px 7px;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  outline: none;
+  width: 100%;
+  text-transform: uppercase;
+  transition: border-color 0.15s;
+}
+.class-abbr-inp:focus { border-color: var(--accent); }
+.class-group-inp {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 0.78rem;
+  outline: none;
+  width: 100%;
+  padding: 2px 4px;
+  transition: border-color 0.15s;
+}
+.class-group-inp:focus { border-bottom-color: var(--accent); color: var(--text); }
+.class-col-header {
+  display: grid;
+  grid-template-columns: 90px 80px 1fr 32px;
+  gap: 6px;
+  padding: 0 10px;
+  margin-bottom: 6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+}
+.class-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
+.class-actions-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+.class-count-badge { font-size: 0.72rem; color: var(--text-muted); font-family: var(--mono); margin-left: auto; padding: 4px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; }
+.class-group-badge {
+  display: inline-block;
+  background: rgba(16,185,129,0.12);
+  color: var(--green);
+  border: 1px solid rgba(16,185,129,0.25);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  margin-left: 2px;
+}
 
 .add-class-btn {
   display: flex;
@@ -941,6 +1012,34 @@ body {
 }
 @keyframes notifIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 @keyframes notifOut { to { opacity:0; transform:translateY(8px); } }
+
+/* PWA install banner */
+#pwaInstallBanner {
+  display: none;
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-top: 2px solid var(--accent);
+  border-radius: 14px;
+  padding: 12px 18px;
+  z-index: 800;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  gap: 14px;
+  min-width: 280px;
+  max-width: 420px;
+  animation: notifIn 0.25s ease;
+}
+#pwaInstallBanner.show { display: flex; }
+.pwa-banner-icon { font-size: 1.6rem; flex-shrink: 0; }
+.pwa-banner-text { flex: 1; }
+.pwa-banner-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.pwa-banner-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+.pwa-banner-btns { display: flex; gap: 6px; flex-shrink: 0; }
 </style>
 </head>
 <body>
@@ -1047,13 +1146,37 @@ body {
     </div>
   </div>
 
-  <!-- STEP 4: Classes -->
+  <!-- STEP 4: Classes & Groups -->
   <div class="wizard-step" id="wStep3">
     <div class="wcard">
-      <div class="wcard-title">🎓 Lista klas</div>
-      <div class="wcard-desc">Wpisz wszystkie klasy, które będą uwzględnione w planie.</div>
-      <div class="classes-grid" id="classGrid"></div>
-      <button class="add-class-btn" onclick="addClass()">＋ Dodaj klasę</button>
+      <div class="wcard-title">🎓 Klasy i grupy</div>
+      <div class="wcard-desc">
+        Dodaj klasy i ich grupy ręcznie lub zaimportuj z pliku <strong style="color:var(--accent)">.txt</strong>.<br>
+        Format: <span style="font-family:var(--mono);color:var(--text-muted);font-size:0.8rem">klasa;skrót;nazwa grupy</span> — jeden wpis na linię.<br>
+        Dla całej klasy: <span style="font-family:var(--mono);color:var(--text-muted);font-size:0.8rem">1A;1A;cała klasa</span>
+      </div>
+
+      <div class="import-drop-zone" id="classImportDropZone"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleClassImportDrop(event)">
+        <input type="file" accept=".txt,text/plain" onchange="handleClassImportFile(this)">
+        <div class="import-drop-icon">📋</div>
+        <div class="import-drop-label">Przeciągnij plik .txt lub kliknij, aby wybrać</div>
+        <div class="import-drop-sub">Format: klasa;skrót;grupa • obsługuje ; i , jako separatory</div>
+      </div>
+      <div class="import-preview" id="classImportPreview"></div>
+
+      <div class="class-actions-row">
+        <button class="add-class-btn" style="flex:1;min-width:150px" onclick="addClass()">＋ Dodaj ręcznie</button>
+        <button class="btn btn-red" style="font-size:0.75rem;padding:7px 12px" onclick="clearAllClasses()">🗑 Wyczyść</button>
+        <span class="class-count-badge" id="classCountBadge">0 wpisów</span>
+      </div>
+
+      <div class="class-col-header">
+        <span>Klasa</span><span>Skrót</span><span>Grupa</span><span></span>
+      </div>
+      <div class="class-list" id="classGrid"></div>
     </div>
   </div>
 
@@ -1167,6 +1290,12 @@ body {
       </select>
     </div>
     <div class="form-group">
+      <label class="form-label">Klasa / Grupa</label>
+      <select class="teacher-select" id="inpClass">
+        <option value="">— brak / wybierz —</option>
+      </select>
+    </div>
+    <div class="form-group">
       <label class="form-label">Przedmiot / Zajęcia</label>
       <input type="text" class="form-input" id="inpSubject" placeholder="Nazwa przedmiotu lub zajęć" autocomplete="off">
     </div>
@@ -1180,6 +1309,19 @@ body {
       <button class="btn btn-red" onclick="clearCellData()">Wyczyść</button>
       <button class="btn btn-primary" onclick="saveCellData()">Zapisz</button>
     </div>
+  </div>
+</div>
+
+<!-- PWA Install Banner -->
+<div id="pwaInstallBanner">
+  <div class="pwa-banner-icon">📲</div>
+  <div class="pwa-banner-text">
+    <div class="pwa-banner-title">Zainstaluj SalePlan</div>
+    <div class="pwa-banner-sub">Działa offline · Skrót na pulpicie</div>
+  </div>
+  <div class="pwa-banner-btns">
+    <button class="btn btn-primary" style="font-size:0.75rem;padding:6px 12px" onclick="pwaInstall()">Instaluj</button>
+    <button class="btn btn-ghost" style="font-size:0.75rem;padding:6px 10px" onclick="pwaDismiss()">✕</button>
   </div>
 </div>
 
@@ -1294,7 +1436,15 @@ const SAMPLE_FLOORS = [
     { name:'', rooms:[{num:'16',sub:'D. Informatyczna'},{num:'18',sub:'M. Informatyczna'},{num:'21',sub:''}] },
   ]},
 ];
-const SAMPLE_CLASSES = ['I A','I B','I C','II A','II B','II C','III A','III B','III C','IV A','IV B','IV C','V A','V B','V C','VI A','VI B','VI C','VII A','VII B','VII C','VIII A','VIII B'];
+// wClasses is now array of {name, abbr, group}
+// e.g. {name:'1A', abbr:'1A', group:'cała klasa'} or {name:'1A', abbr:'1Agr1', group:'gr1'}
+const SAMPLE_CLASSES = [
+  {name:'I A',  abbr:'IA',    group:'cała klasa'},
+  {name:'I B',  abbr:'IB',    group:'cała klasa'},
+  {name:'II A', abbr:'IIA',   group:'cała klasa'},
+  {name:'II B', abbr:'IIB',   group:'cała klasa'},
+  {name:'III A',abbr:'IIIA',  group:'cała klasa'},
+];
 
 // ================================================================
 //  WIZARD
@@ -1306,12 +1456,12 @@ function openWizardNewYear(preload) {
   if (preload) {
     wBuildings = JSON.parse(JSON.stringify(SAMPLE_BUILDINGS));
     wFloors = JSON.parse(JSON.stringify(SAMPLE_FLOORS));
-    wClasses = [...SAMPLE_CLASSES];
+    wClasses = JSON.parse(JSON.stringify(SAMPLE_CLASSES));
     wTeachers = [];
   } else if (appState) {
     wBuildings = JSON.parse(JSON.stringify(appState.buildings || SAMPLE_BUILDINGS));
     wFloors = JSON.parse(JSON.stringify(appState.floors));
-    wClasses = [...appState.classes];
+    wClasses = JSON.parse(JSON.stringify(appState.classes || []));
     wTeachers = JSON.parse(JSON.stringify(appState.teachers || []));
     document.getElementById('wSchoolName').value = appState.school?.name || '';
     document.getElementById('wSchoolShort').value = appState.school?.short || '';
@@ -1357,7 +1507,7 @@ function wizardNext() {
   }
   if (wStep === 3) {
     wClasses = getClassesFromDOM();
-    if (wClasses.filter(c=>c.trim()).length === 0) { notify('⚠ Dodaj przynajmniej jedną klasę', true); return; }
+    if (wClasses.filter(c=>c.name).length === 0) { notify('⚠ Dodaj przynajmniej jedną klasę', true); return; }
   }
   if (wStep === 4) {
     syncTeachersFromDOM();
@@ -1392,7 +1542,7 @@ function finishWizard() {
   syncTeachersFromDOM();
   const yearLabel = document.getElementById('wYear').value.trim();
   const hours = document.getElementById('wHours').value.split(',').map(h=>h.trim()).filter(Boolean);
-  const classes = getClassesFromDOM().filter(c=>c.trim());
+  const classes = getClassesFromDOM(); // already filtered by getClassesFromDOM
   const yearKey = 'y_' + yearLabel.replace(/\//g,'_');
   const school = {
     name: document.getElementById('wSchoolName').value.trim(),
@@ -1532,14 +1682,107 @@ function removeRoom(fi,si,ri) { wFloors[fi].segments[si].rooms.splice(ri,1); ren
 function renderClassGrid() {
   document.getElementById('classGrid').innerHTML = wClasses.map((c,i) => `
     <div class="class-item">
-      <div class="class-color"></div>
-      <input class="class-input" value="${esc(c)}" placeholder="np. I A" data-ci="${i}">
+      <input class="class-input" value="${esc(c.name)}" placeholder="np. 1A"
+        oninput="wClasses[${i}].name=this.value">
+      <input class="class-abbr-inp" value="${esc(c.abbr)}" placeholder="skrót" maxlength="8"
+        oninput="wClasses[${i}].abbr=this.value.toUpperCase();this.value=this.value.toUpperCase()">
+      <input class="class-group-inp" value="${esc(c.group)}" placeholder="np. gr1 lub cała klasa"
+        oninput="wClasses[${i}].group=this.value">
       <button class="icon-btn danger" onclick="removeClassAt(${i})">✕</button>
     </div>`).join('');
+  updateClassCountBadge();
 }
-function addClass() { wClasses.push(''); renderClassGrid(); document.querySelectorAll('.class-input')[wClasses.length-1]?.focus(); }
+function addClass() {
+  wClasses.push({name:'', abbr:'', group:'cała klasa'});
+  renderClassGrid();
+  document.querySelectorAll('.class-input')[wClasses.length-1]?.focus();
+}
 function removeClassAt(i) { wClasses.splice(i,1); renderClassGrid(); }
-function getClassesFromDOM() { return [...document.querySelectorAll('.class-input')].map(el=>el.value.trim()); }
+function getClassesFromDOM() {
+  // sync from DOM before returning
+  document.querySelectorAll('.class-item').forEach((row,i) => {
+    if (!wClasses[i]) return;
+    const inps = row.querySelectorAll('input');
+    wClasses[i].name  = inps[0].value.trim();
+    wClasses[i].abbr  = inps[1].value.trim().toUpperCase();
+    wClasses[i].group = inps[2].value.trim();
+  });
+  return wClasses.filter(c => c.name);
+}
+function clearAllClasses() {
+  if (wClasses.length === 0) return;
+  if (!confirm('Usunąć wszystkie klasy z listy?')) return;
+  wClasses = []; renderClassGrid(); notify('🗑 Lista klas wyczyszczona');
+}
+function updateClassCountBadge() {
+  const b = document.getElementById('classCountBadge');
+  if (b) b.textContent = wClasses.filter(c=>c.name).length + ' wpisów';
+}
+
+// ── Class/group import from TXT ──
+function handleClassImportFile(input) {
+  const file = input.files[0]; if (!file) return;
+  readClassTxtFile(file); input.value='';
+}
+function handleClassImportDrop(e) {
+  e.preventDefault();
+  document.getElementById('classImportDropZone').classList.remove('drag-over');
+  const file = [...e.dataTransfer.files].find(f=>f.name.endsWith('.txt')||f.type==='text/plain');
+  if (!file) { notify('⚠ Wybierz plik .txt', true); return; }
+  readClassTxtFile(file);
+}
+function readClassTxtFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => importClassesFromText(e.target.result);
+  reader.onerror = () => notify('⚠ Błąd odczytu pliku', true);
+  reader.readAsText(file, 'UTF-8');
+}
+function importClassesFromText(text) {
+  const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  let added=0, skipped=0, errors=[];
+
+  lines.forEach((line, idx) => {
+    if (/^[-=_#*]+$/.test(line)) { skipped++; return; }
+    // support both ; and , as separator
+    const sep = line.includes(';') ? ';' : ',';
+    const parts = line.split(sep).map(p=>p.trim());
+
+    if (parts.length < 2) {
+      errors.push(`Linia ${idx+1}: "${line}" — za mało pól (wymagane: klasa;skrót;grupa)`);
+      skipped++; return;
+    }
+
+    const name  = parts[0] || '';
+    const abbr  = (parts[1] || name).toUpperCase();
+    const group = parts[2] || 'cała klasa';
+
+    if (!name) { skipped++; return; }
+
+    // check duplicate (same name + group)
+    const exists = wClasses.some(c =>
+      c.name.toLowerCase()===name.toLowerCase() &&
+      c.group.toLowerCase()===group.toLowerCase()
+    );
+    if (exists) { skipped++; return; }
+
+    wClasses.push({name, abbr, group});
+    added++;
+  });
+
+  renderClassGrid();
+  updateClassCountBadge();
+
+  const preview = document.getElementById('classImportPreview');
+  let html = `<strong>+${added}</strong> wpisów zaimportowano`;
+  if (skipped) html += ` · ${skipped} pominięto`;
+  if (errors.length) html += `<div class="import-err" style="margin-top:6px">${errors.slice(0,3).map(e=>'⚠ '+e).join('<br>')}</div>`;
+  preview.innerHTML = html;
+  preview.classList.add('show');
+  setTimeout(()=>preview.classList.remove('show'), 6000);
+
+  if (added>0) notify('✓ Zaimportowano '+added+' wpisów klas');
+  else notify('⚠ Brak nowych wpisów do dodania', true);
+}
 
 // ── Teachers ──
 function renderTeacherList() {
@@ -1703,7 +1946,15 @@ function switchAssignDay(idx) {
 function renderAssignTable() {
   const tbl = document.getElementById('assignmentsTable');
   const cols = flattenColumns(wFloors);
-  const classOptions = ['<option value="">—</option>',...wClasses.filter(c=>c).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`)].join('');
+  // Build options grouped by class name
+  const classOptsList = ['<option value="">—</option>'];
+  const seen = new Set();
+  wClasses.filter(c=>c.name).forEach(c => {
+    const val = c.abbr || c.name;
+    const label = c.group && c.group !== c.name ? `${c.name} — ${c.group}` : c.name;
+    if (!seen.has(val)) { seen.add(val); classOptsList.push(`<option value="${esc(val)}">${esc(label)}</option>`); }
+  });
+  const classOptions = classOptsList.join('');
   if (!cols.length) { tbl.innerHTML='<tr><td style="padding:20px;color:var(--text-muted)">Brak sal</td></tr>'; return; }
   tbl.innerHTML = '<tr><th>Budynek</th><th>Piętro</th><th>Segment</th><th>Sala</th><th>Klasa</th></tr>' +
     cols.map(col => {
@@ -1743,6 +1994,15 @@ function teacherDisplayName(t) {
   if (!t) return '';
   return [t.first, t.last].filter(Boolean).join(' ');
 }
+function resolveClassName(abbr) {
+  // Returns "KlasaName — Grupa" for tooltip
+  const found = (appState?.classes||[]).find(c => (c.abbr||c.name) === abbr);
+  if (!found) return abbr;
+  return found.group && found.group.toLowerCase() !== 'cała klasa'
+    ? `${found.name} — ${found.group}`
+    : found.name;
+}
+
 function buildTeacherSelectOptions(selectedAbbr) {
   const teachers = appState?.teachers || [];
   let opts = '<option value="">— brak —</option>';
@@ -1750,6 +2010,34 @@ function buildTeacherSelectOptions(selectedAbbr) {
     const name = teacherDisplayName(t);
     const sel = t.abbr === selectedAbbr ? ' selected' : '';
     opts += `<option value="${esc(t.abbr)}"${sel}>${esc(t.abbr)} — ${esc(name)}</option>`;
+  });
+  return opts;
+}
+
+function buildClassSelectOptions(selectedVal) {
+  const classes = appState?.classes || [];
+  let opts = '<option value="">— brak —</option>';
+  // Group by class name for optgroup display
+  const byClass = {};
+  classes.filter(c=>c.name).forEach(c => {
+    if (!byClass[c.name]) byClass[c.name] = [];
+    byClass[c.name].push(c);
+  });
+  Object.entries(byClass).forEach(([clsName, entries]) => {
+    if (entries.length === 1) {
+      const c = entries[0];
+      const val = c.abbr || c.name;
+      const label = c.group && c.group.toLowerCase() !== 'cała klasa' ? `${c.name} — ${c.group}` : c.name;
+      opts += `<option value="${esc(val)}"${val===selectedVal?' selected':''}>${esc(label)}</option>`;
+    } else {
+      opts += `<optgroup label="${esc(clsName)}">`;
+      entries.forEach(c => {
+        const val = c.abbr || c.name;
+        const label = c.group || c.name;
+        opts += `<option value="${esc(val)}"${val===selectedVal?' selected':''}>${esc(c.name)} — ${esc(label)}</option>`;
+      });
+      opts += '</optgroup>';
+    }
   });
   return opts;
 }
@@ -1821,12 +2109,13 @@ function renderSchedule() {
     cols.forEach(col => {
       const key = colKey(col);
       const entry = dayData[h]?.[key]||{};
-      const filled = !!(entry.teacherAbbr || entry.subject);
+      const filled = !!(entry.teacherAbbr || entry.subject || entry.className);
       const teacher = entry.teacherAbbr ? getTeacherByAbbr(entry.teacherAbbr) : null;
       html += `<td><div class="cell-inner ${filled?'filled':''}" onclick="openEditModal(${currentDay},'${h}','${key}')">
         ${filled
           ? `<div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap">
                ${entry.teacherAbbr ? `<span class="cell-abbr" title="${esc(teacherDisplayName(teacher))}">${esc(entry.teacherAbbr)}</span>` : ''}
+               ${entry.className ? `<span class="cell-abbr" style="background:rgba(16,185,129,0.15);color:var(--green);border-color:rgba(16,185,129,0.3)" title="${esc(resolveClassName(entry.className))}">${esc(entry.className)}</span>` : ''}
                ${entry.subject ? `<span class="cell-subject" style="flex:1">${esc(entry.subject)}</span>` : ''}
              </div>
              ${teacher ? `<div class="cell-teacher">${esc(teacherDisplayName(teacher))}</div>` : ''}
@@ -1854,7 +2143,7 @@ function updateStatusBar() {
   flattenColumns(appState.floors).forEach(col => {
     appState.hours.forEach(h => {
       const e = dayData[h]?.[colKey(col)];
-      if (e&&(e.teacherAbbr||e.subject)) count++;
+      if (e&&(e.teacherAbbr||e.subject||e.className)) count++;
     });
   });
   document.getElementById('sbCount').textContent = `${count} wpisów w tym dniu`;
@@ -1868,21 +2157,25 @@ function openEditModal(day, hour, key) {
   const cols = flattenColumns(appState.floors);
   const col = cols.find(c=>colKey(c)===key);
   const entry = schedData[appState.yearKey]?.[day]?.[hour]?.[key]||{};
-  const cls = (appState.assignments[day]||{})[key]||'';
+  const defaultCls = (appState.assignments[day]||{})[key]||'';
   const bld = (appState.buildings||[])[col?.floor?.buildingIdx||0];
 
   document.getElementById('modalTitle').textContent = `Sala ${col?.room.num||'?'} — Godz. ${hour}`;
   document.getElementById('modalSub').textContent =
-    `${bld?bld.name+' · ':''}${col?.floor.name||''} › ${col?.seg.name||''}${cls?' › '+cls:''} · ${appState.days[day]}`;
+    `${bld?bld.name+' · ':''}${col?.floor.name||''} › ${col?.seg.name||''} · ${appState.days[day]}`;
 
-  // populate teacher select
-  const sel = document.getElementById('inpTeacher');
-  sel.innerHTML = buildTeacherSelectOptions(entry.teacherAbbr||'');
+  // Teacher select
+  const selT = document.getElementById('inpTeacher');
+  selT.innerHTML = buildTeacherSelectOptions(entry.teacherAbbr||'');
+
+  // Class select — pre-select saved value, fallback to assignment default
+  const selC = document.getElementById('inpClass');
+  selC.innerHTML = buildClassSelectOptions(entry.className || defaultCls || '');
 
   document.getElementById('inpSubject').value = entry.subject||'';
   document.getElementById('inpNote').value = entry.note||'';
   document.getElementById('editModal').classList.add('show');
-  sel.focus();
+  selT.focus();
 }
 function closeEditModal() { document.getElementById('editModal').classList.remove('show'); }
 function saveCellData() {
@@ -1892,8 +2185,9 @@ function saveCellData() {
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour]={};
   schedData[yk][_mDay][_mHour][_mKey]={
     teacherAbbr: document.getElementById('inpTeacher').value,
-    subject: document.getElementById('inpSubject').value.trim(),
-    note: document.getElementById('inpNote').value.trim(),
+    className:   document.getElementById('inpClass').value,
+    subject:     document.getElementById('inpSubject').value.trim(),
+    note:        document.getElementById('inpNote').value.trim(),
   };
   closeEditModal(); renderSchedule(); sbSet('Wpis zaktualizowany');
 }
@@ -2011,7 +2305,50 @@ if (!appState) {
     (appState.hours||[]).forEach(h=>{if(!schedData[yk][i][h])schedData[yk][i][h]={};});
   });
   mountApp();
+// ================================================================
+//  PWA — SERVICE WORKER & INSTALL PROMPT
+// ================================================================
+let _pwaPrompt = null;
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registered, scope:', reg.scope))
+      .catch(err => console.warn('SW registration failed:', err));
+  });
 }
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _pwaPrompt = e;
+  // Show banner after a short delay so app has time to load
+  setTimeout(() => {
+    if (!localStorage.getItem('sp_pwa_dismissed')) {
+      document.getElementById('pwaInstallBanner').classList.add('show');
+    }
+  }, 3000);
+});
+
+function pwaInstall() {
+  document.getElementById('pwaInstallBanner').classList.remove('show');
+  if (_pwaPrompt) {
+    _pwaPrompt.prompt();
+    _pwaPrompt.userChoice.then(result => {
+      if (result.outcome === 'accepted') notify('✓ SalePlan zainstalowany!');
+      _pwaPrompt = null;
+    });
+  }
+}
+
+function pwaDismiss() {
+  document.getElementById('pwaInstallBanner').classList.remove('show');
+  localStorage.setItem('sp_pwa_dismissed', '1');
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwaInstallBanner').classList.remove('show');
+  notify('✓ SalePlan zainstalowany na urządzeniu!');
+});
 </script>
 </body>
 </html>
