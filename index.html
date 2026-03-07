@@ -2281,12 +2281,15 @@ function renderSchedule() {
   const homerooms  = appState.homerooms||{};  // colKey -> {className, teacherAbbr}
 
   // ── Detect if multi-building / multi-floor / multi-segment ──
-  const uniqueBuildings = [...new Set(appState.floors.map(f=>f.buildingIdx||0))];
-  const uniqueFloors    = [...new Set(cols.map(c=>c.floorIdx))];
-  const uniqueSegs      = [...new Set(cols.map(c=>c.floorIdx+'-'+c.segIdx))];
+  const uniqueBuildings = [...new Set((appState.floors||[]).map(f=>f.buildingIdx||0))];
+  // Show building row only when >1 buildings
   const showBuilding = uniqueBuildings.length > 1;
-  const showFloor    = uniqueFloors.length > 1;
-  const showSeg      = uniqueSegs.length > 1;
+  // Show floor row when any floor has a non-empty name
+  const showFloor = (appState.floors||[]).some(f => (f.name||'').trim() !== '');
+  // Show segment row when any segment has a non-empty name
+  const showSeg = (appState.floors||[]).some(f =>
+    (f.segments||[]).some(s => (s.name||'').trim() !== '')
+  );
 
   const numHeaderRows = 1 // always: room row
     + (showBuilding ? 1 : 0)
