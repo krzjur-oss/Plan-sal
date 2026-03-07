@@ -44,7 +44,7 @@ Otwórz plik `index.html` w przeglądarce — bez żadnej instalacji.
 ### GitHub Pages
 1. Wgraj repozytorium na GitHub
 2. **Settings → Pages → Deploy from branch → main → / (root)**
-3. Dostępne pod: `https://krzjur-oss.github.io/Plan-sal/`
+3. Dostępne pod: **(https://krzjur-oss.github.io/Plan-sal/)**
 
 ---
 
