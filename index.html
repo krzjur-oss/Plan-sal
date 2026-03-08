@@ -2098,9 +2098,10 @@ function wizardNext() {
   wStep++;
   if (wStep === 5) renderAssignmentsStep();
   updateWizardStep();
+  tutSyncToWizard(wStep);
 }
 
-function wizardBack() { if (wStep > 0) { wStep--; updateWizardStep(); } }
+function wizardBack() { if (wStep > 0) { wStep--; updateWizardStep(); tutSyncToWizard(wStep); } }
 
 function updateWizardStep() {
   for (let i = 0; i < TOTAL_STEPS; i++) {
@@ -3357,27 +3358,37 @@ function tutPrev() {
 }
 
 function tutDraw() {
-  const s = TUT_STEPS[_ts];
+  const s     = TUT_STEPS[_ts];
   const total = TUT_STEPS.length;
 
   document.getElementById('tutH').innerHTML = s.h;
   document.getElementById('tutP').innerHTML = s.p;
   document.getElementById('tutProgress').textContent = `Krok ${_ts + 1} z ${total}`;
-  document.getElementById('tutPrevBtn').style.display = _ts > 0 ? 'inline-block' : 'none';
-  document.getElementById('tutNextBtn').textContent = _ts === total - 1 ? '✓ Zakończ' : 'Dalej →';
 
-  // Spotlight na aktualny krok kreatora jeśli wStep >= 0
+  // Ukryj/pokaż Pomiń tylko na ostatnim kroku zmień tekst
+  const skipBtn = document.getElementById('tutSkipBtn');
+  if (_ts === total - 1) {
+    skipBtn.textContent = '✓ Zakończ';
+    skipBtn.onclick = function(){ window.tutClose(); };
+  } else {
+    skipBtn.textContent = 'Pomiń samouczek';
+    skipBtn.onclick = function(){ window.tutClose(); };
+  }
+
+  // Spotlight — z korekcją pozycji scrollowania
   const hole = document.getElementById('tutHole');
   if (s.wStep >= 0) {
     const el = document.getElementById('wStep' + s.wStep);
     if (el) {
-      const r = el.getBoundingClientRect();
-      const pad = 6;
+      const r   = el.getBoundingClientRect();
+      const pad = 8;
       hole.classList.add('on');
+      // getBoundingClientRect jest relatywny do viewport — nie do dokumentu
+      // więc NIE dodajemy scrollY, bo hole ma position:fixed
       hole.style.left   = `${r.left - pad}px`;
-      hole.style.top    = `${r.top - pad}px`;
-      hole.style.width  = `${r.width + pad*2}px`;
-      hole.style.height = `${r.height + pad*2}px`;
+      hole.style.top    = `${r.top  - pad}px`;
+      hole.style.width  = `${r.width  + pad * 2}px`;
+      hole.style.height = `${r.height + pad * 2}px`;
     } else {
       hole.classList.remove('on');
     }
@@ -3385,24 +3396,31 @@ function tutDraw() {
     hole.classList.remove('on');
   }
 
-  // Pozycja okienka — prawy dolny róg
+  // Okienko — prawy dolny róg
   const box = document.getElementById('tutBox');
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const bw = Math.min(300, vw - 24);
   box.style.right  = '12px';
   box.style.bottom = '12px';
   box.style.left   = 'auto';
   box.style.top    = 'auto';
   box.style.transform = 'none';
-  box.style.width  = bw + 'px';
 }
 
+// Przerysuj spotlight przy scrollowaniu
+window.addEventListener('scroll', function() {
+  const box = document.getElementById('tutBox');
+  if (box && box.classList.contains('on')) tutDraw();
+}, { passive: true });
+
 function tutSyncToWizard(step) {
-  // Jeśli samouczek jest aktywny — przeskocz do kroku odpowiadającego krokowi kreatora
   const box = document.getElementById('tutBox');
   if (!box || !box.classList.contains('on')) return;
   const idx = TUT_STEPS.findIndex(s => s.wStep === step);
-  if (idx >= 0) { _ts = idx; tutDraw(); }
+  if (idx >= 0) {
+    _ts = idx;
+    const el = document.getElementById('wStep' + step);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(tutDraw, 350);
+  }
 }
 
 function tutAutoShow() {
@@ -3430,8 +3448,6 @@ window.tutPrev  = tutPrev;
   <p id="tutP"></p>
   <div id="tutFooter">
     <button id="tutSkipBtn" onclick="window.tutClose()">Pomiń samouczek</button>
-    <button id="tutPrevBtn" onclick="window.tutPrev()" style="display:none">← Wstecz</button>
-    <button id="tutNextBtn" onclick="window.tutNext()">Dalej →</button>
   </div>
 </div>
 </body>
