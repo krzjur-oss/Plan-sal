@@ -1166,6 +1166,128 @@ body {
 .pwa-banner-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
 .pwa-banner-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
 .pwa-banner-btns { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ================================================================
+   TUTORIAL — tooltip-style step-by-step
+   ================================================================ */
+#tutorialOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  pointer-events: none;
+}
+#tutorialOverlay.active { display: block; }
+
+/* Dark backdrop with hole cutout via box-shadow */
+.tut-spotlight {
+  position: fixed;
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(4,6,18,0.72);
+  transition: all 0.3s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
+  z-index: 901;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.tut-tooltip {
+  position: fixed;
+  z-index: 902;
+  background: var(--surface2);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 18px 20px 16px;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px var(--accent-glow);
+  pointer-events: all;
+  transition: all 0.3s cubic-bezier(.4,0,.2,1);
+}
+body.light .tut-tooltip {
+  background: #fff;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+}
+
+.tut-tooltip::before {
+  content: '';
+  position: absolute;
+  width: 10px; height: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--accent);
+  transform: rotate(45deg);
+  transition: all 0.3s;
+}
+body.light .tut-tooltip::before { background: #fff; }
+
+.tut-tooltip.arrow-top::before    { top:-6px; left:24px; border-bottom:none; border-right:none; }
+.tut-tooltip.arrow-bottom::before { bottom:-6px; left:24px; border-top:none; border-left:none; }
+.tut-tooltip.arrow-left::before   { left:-6px; top:20px; border-right:none; border-bottom:none; }
+.tut-tooltip.arrow-right::before  { right:-6px; top:20px; border-left:none; border-top:none; }
+.tut-tooltip.arrow-center::before { display:none; }
+
+.tut-badge {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 1px;
+  color: var(--accent); text-transform: uppercase;
+  margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+}
+.tut-step-dots {
+  display: flex; gap: 4px; margin-left: auto;
+}
+.tut-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--border2); transition: background 0.2s;
+}
+.tut-dot.active { background: var(--accent); }
+.tut-dot.done   { background: var(--green); }
+
+.tut-title {
+  font-size: 0.95rem; font-weight: 800; color: var(--text);
+  margin-bottom: 6px; line-height: 1.3;
+}
+.tut-body {
+  font-size: 0.8rem; color: var(--text-muted); line-height: 1.55;
+}
+.tut-body strong { color: var(--text); font-weight: 700; }
+.tut-body code {
+  font-family: var(--mono); font-size: 0.75rem;
+  background: var(--surface3); border-radius: 4px;
+  padding: 1px 5px; color: var(--accent);
+}
+
+.tut-footer {
+  display: flex; align-items: center; gap: 8px; margin-top: 14px;
+}
+.tut-btn-skip {
+  font-size: 0.72rem; color: var(--text-dim); cursor: pointer;
+  background: none; border: none; padding: 4px 0;
+  font-family: var(--font); transition: color 0.15s;
+}
+.tut-btn-skip:hover { color: var(--text-muted); }
+.tut-btn-prev {
+  font-size: 0.78rem; color: var(--text-muted); cursor: pointer;
+  background: var(--surface3); border: 1px solid var(--border);
+  border-radius: 7px; padding: 6px 12px; font-family: var(--font);
+  transition: all 0.15s;
+}
+.tut-btn-prev:hover { border-color: var(--border2); }
+.tut-btn-next {
+  flex: 1; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 8px; padding: 8px 16px;
+  font-family: var(--font); transition: opacity 0.15s;
+}
+.tut-btn-next:hover { opacity: 0.85; }
+
+/* Tutorial trigger button in topbar */
+.tut-trigger {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text-muted); font-weight: 700; font-size: 0.85rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.tut-trigger:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1413,6 +1535,7 @@ body {
       <button class="btn btn-primary" onclick="saveData()">💾 Zapisz</button>
       <button class="btn btn-yellow" onclick="openWizardNewYear()">＋ Nowy rok</button>
       <button class="btn btn-red" onclick="clearDay()">🗑 Dzień</button>
+      <button class="tut-trigger" onclick="tutStart()" title="Samouczek">?</button>
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
     </div>
   </div>
@@ -2492,7 +2615,7 @@ function clearCellData() {
 }
 document.getElementById('editModal').addEventListener('click',e=>{if(e.target===document.getElementById('editModal'))closeEditModal();});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')closeEditModal();
+  if(e.key==='Escape') { closeEditModal(); if(_tutActive) tutSkip(); }
   if(e.key==='Enter'&&e.ctrlKey&&document.getElementById('editModal').classList.contains('show'))saveCellData();
 });
 
@@ -2632,6 +2755,7 @@ if (!appState) {
     (appState.hours||[]).forEach(h=>{if(!schedData[yk][i][h])schedData[yk][i][h]={};});
   });
   mountApp();
+  tutAutoStart();
 }
 
 // ================================================================
@@ -2920,6 +3044,216 @@ window.addEventListener('appinstalled', () => {
   document.getElementById('pwaInstallBanner').classList.remove('show');
   notify('✓ SalePlan zainstalowany na urządzeniu!');
 });
+
+// ================================================================
+//  TUTORIAL
+// ================================================================
+const TUT_KEY = 'sp_tut_done';
+
+const TUT_STEPS = [
+  {
+    title: 'Witaj w SalePlan! 👋',
+    body: 'To <strong>plan sal zajęciowych</strong> — szybki podgląd które klasy i nauczyciele są gdzie i kiedy.<br><br>Przeprowadzę Cię przez najważniejsze funkcje. Możesz pominąć w dowolnym momencie.',
+    target: null,
+    arrow: 'center',
+  },
+  {
+    title: 'Nazwa szkoły i rok',
+    body: 'Tu widać skrót nazwy szkoły i aktywny <strong>rok szkolny</strong>.<br><br>Kliknij w <code>rok</code> aby zobaczyć archiwum poprzednich lat.',
+    target: '#yearPill',
+    arrow: 'bottom',
+  },
+  {
+    title: 'Dni tygodnia',
+    body: 'Przełączaj między dniami klikając przyciski <strong>Poniedziałek — Piątek</strong>.<br><br>Każdy dzień ma osobny plan.',
+    target: '#dayTabs',
+    arrow: 'bottom',
+  },
+  {
+    title: 'Tabela planu',
+    body: 'Każda kolumna to <strong>jedna sala</strong>, każdy wiersz to <strong>godzina lekcyjna</strong>.<br><br>Kliknij <code>＋</code> w dowolnej komórce aby przypisać nauczyciela, klasę i przedmiot.',
+    target: '#scheduleWrap',
+    arrow: 'top',
+  },
+  {
+    title: 'Nagłówek — piętra i segmenty',
+    body: 'Wiersze nagłówka pokazują <strong>piętro → segment → numer sali</strong>.<br><br>Wiersz <strong>Gospod.</strong> — kliknij aby przypisać wychowawcę klasy do sali.',
+    target: '#scheduleWrap',
+    arrow: 'top',
+    highlight: 'thead',
+  },
+  {
+    title: 'Data obowiązywania planu',
+    body: 'Pole <strong>Od:</strong> pozwala zaznaczyć od kiedy ten plan obowiązuje.<br><br>Data jest zapisywana razem z planem i pojawia się w wydruku PDF.',
+    target: '.valid-from-wrap',
+    arrow: 'bottom',
+  },
+  {
+    title: 'Eksport PDF',
+    body: 'Kliknij <code>⬇ PDF</code> aby wydrukować lub zapisać plan jako plik PDF.<br><br>Plik automatycznie otrzymuje nazwę <code>ps_(rok)_(data)</code>. Wydruk jest poziomy, dopasowany do arkusza A4.',
+    target: '.btn-green',
+    arrow: 'bottom',
+  },
+  {
+    title: 'Zapis i bezpieczeństwo danych',
+    body: '<code>💾 Zapisz</code> zapisuje plan w pamięci przeglądarki (<strong>localStorage</strong>).<br><br>Dane nie są wysyłane nigdzie — są tylko na tym urządzeniu.',
+    target: '.btn-primary',
+    arrow: 'bottom',
+  },
+  {
+    title: 'Nowy rok szkolny',
+    body: 'Kliknij <code>＋ Nowy rok</code> aby uruchomić kreator nowego roku.<br><br>Budynki, piętra, klasy i nauczyciele zostaną <strong>przepisane automatycznie</strong> — zmieniasz tylko co się zmieniło.',
+    target: '.btn-yellow',
+    arrow: 'bottom',
+  },
+  {
+    title: 'Kreator konfiguracji',
+    body: 'Kreator prowadzi przez 6 kroków:<br><strong>1.</strong> Szkoła i budynki<br><strong>2.</strong> Rok szkolny i godziny<br><strong>3.</strong> Piętra i sale (import z pliku TXT)<br><strong>4.</strong> Klasy i grupy<br><strong>5.</strong> Nauczyciele<br><strong>6.</strong> Przypisanie klas do sal',
+    target: '.btn-yellow',
+    arrow: 'bottom',
+  },
+  {
+    title: 'Gotowe! 🎉',
+    body: 'Teraz wiesz jak korzystać z SalePlan.<br><br>Przycisk <code>?</code> w topbarze uruchomi ten samouczek ponownie w każdej chwili.',
+    target: '.tut-trigger',
+    arrow: 'bottom',
+  },
+];
+
+let _tutStep = 0;
+let _tutActive = false;
+
+function tutStart(force = false) {
+  if (!appState && !force) return; // don't run during wizard
+  _tutStep = 0;
+  _tutActive = true;
+  document.getElementById('tutorialOverlay').classList.add('active');
+  tutRender();
+}
+
+function tutSkip() {
+  _tutActive = false;
+  document.getElementById('tutorialOverlay').classList.remove('active');
+  localStorage.setItem(TUT_KEY, '1');
+}
+
+function tutNext() {
+  if (_tutStep < TUT_STEPS.length - 1) {
+    _tutStep++;
+    tutRender();
+  } else {
+    tutSkip();
+  }
+}
+
+function tutPrev() {
+  if (_tutStep > 0) { _tutStep--; tutRender(); }
+}
+
+function tutRender() {
+  const step = TUT_STEPS[_tutStep];
+  const total = TUT_STEPS.length;
+
+  // Dots
+  const dotsEl = document.getElementById('tutDots');
+  dotsEl.innerHTML = TUT_STEPS.map((_, i) =>
+    `<div class="tut-dot ${i === _tutStep ? 'active' : i < _tutStep ? 'done' : ''}"></div>`
+  ).join('');
+
+  document.getElementById('tutTitle').innerHTML = step.title;
+  document.getElementById('tutBody').innerHTML  = step.body;
+  document.getElementById('tutBtnPrev').style.display = _tutStep > 0 ? 'block' : 'none';
+  document.getElementById('tutBtnNext').textContent   = _tutStep === total - 1 ? '✓ Zakończ' : 'Dalej →';
+
+  // Spotlight
+  const spot = document.getElementById('tutSpotlight');
+  const tip  = document.getElementById('tutTooltip');
+
+  let targetEl = step.target ? document.querySelector(step.target) : null;
+  // override for thead highlight
+  if (step.highlight === 'thead') {
+    targetEl = document.querySelector('.schedule-table thead') || targetEl;
+  }
+
+  if (!targetEl || step.target === null) {
+    // Center modal — no spotlight
+    spot.style.cssText = 'display:none';
+    tip.className = 'tut-tooltip arrow-center';
+    tip.style.cssText = `
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    `;
+    return;
+  }
+
+  const rect = targetEl.getBoundingClientRect();
+  const pad  = 6;
+
+  // Position spotlight
+  spot.style.cssText = `
+    display: block;
+    left:   ${rect.left   - pad}px;
+    top:    ${rect.top    - pad}px;
+    width:  ${rect.width  + pad*2}px;
+    height: ${rect.height + pad*2}px;
+  `;
+
+  // Position tooltip — prefer below, fallback above, left, right
+  const tipW = 300;
+  const tipH = 220; // approx
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const margin = 12;
+
+  let left = rect.left;
+  let top, arrowClass;
+
+  if (step.arrow === 'bottom' || rect.top > tipH + margin + 57) {
+    // place above target
+    top = rect.top - tipH - margin;
+    arrowClass = 'arrow-bottom';
+    if (top < 10) { top = rect.bottom + margin; arrowClass = 'arrow-top'; }
+  } else {
+    // place below target
+    top = rect.bottom + margin;
+    arrowClass = 'arrow-top';
+  }
+
+  // Keep within viewport
+  if (left + tipW > vw - 8) left = vw - tipW - 8;
+  if (left < 8) left = 8;
+  if (top < 57) top = 57;
+  if (top + tipH > vh - 8) top = vh - tipH - 8;
+
+  tip.className = `tut-tooltip ${arrowClass}`;
+  tip.style.cssText = `left:${left}px; top:${top}px; transform:none;`;
+}
+
+// Auto-start on first visit (after app loads)
+function tutAutoStart() {
+  if (!localStorage.getItem(TUT_KEY) && appState) {
+    setTimeout(tutStart, 800);
+  }
+}
+
 </script>
+
+<!-- ── TUTORIAL OVERLAY ── -->
+<div id="tutorialOverlay">
+  <div class="tut-spotlight" id="tutSpotlight"></div>
+  <div class="tut-tooltip" id="tutTooltip">
+    <div class="tut-badge">
+      <span>✦ Samouczek</span>
+      <div class="tut-step-dots" id="tutDots"></div>
+    </div>
+    <div class="tut-title" id="tutTitle"></div>
+    <div class="tut-body" id="tutBody"></div>
+    <div class="tut-footer">
+      <button class="tut-btn-skip" onclick="tutSkip()">Pomiń samouczek</button>
+      <button class="tut-btn-prev" id="tutBtnPrev" onclick="tutPrev()">← Wstecz</button>
+      <button class="tut-btn-next" id="tutBtnNext" onclick="tutNext()">Dalej →</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
