@@ -1411,6 +1411,7 @@ body {
         <input type="date" class="valid-from-input" id="validFrom">
       </div>
       <button class="btn btn-green" onclick="exportPDF()">⬇ PDF</button>
+      <button class="btn" onclick="debugFloors()" style="background:var(--surface2);font-size:0.7rem;padding:6px 10px" title="Pokaż dane pięter">🔍</button>
       <button class="btn btn-primary" onclick="saveData()">💾 Zapisz</button>
       <button class="btn btn-yellow" onclick="openWizardNewYear()">＋ Nowy rok</button>
       <button class="btn btn-red" onclick="clearDay()">🗑 Dzień</button>
@@ -2555,6 +2556,19 @@ function clearDay() {
   appState.hours.forEach(h=>{schedData[yk][currentDay][h]={};});
   renderSchedule(); notify('🗑 Dzień wyczyszczony');
 }
+function debugFloors() {
+  if (!appState?.floors?.length) { alert('Brak pięter w appState'); return; }
+  const lines = appState.floors.map((f,fi) => {
+    const segs = (f.segments||[]).map((s,si) =>
+      `    seg[${si}] name="${s.name||''}" rooms=${(s.rooms||[]).map(r=>r.num).join(',')}`
+    ).join('\n');
+    return `floor[${fi}] name="${f.name||''}" buildingIdx=${f.buildingIdx||0}\n${segs}`;
+  });
+  const showFloor = appState.floors.some(f => (f.name||'').trim() !== '');
+  const showSeg   = appState.floors.some(f => (f.segments||[]).some(s => (s.name||'').trim() !== ''));
+  alert(`showFloor=${showFloor}  showSeg=${showSeg}\n\n${lines.join('\n')}`);
+}
+
 function exportPDF() {
   const vf = document.getElementById('validFrom').value;
   if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey] = {};
