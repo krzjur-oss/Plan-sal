@@ -1367,6 +1367,75 @@ body.light .tut-tooltip::before { background: #fff; }
 /* ================================================================
    SAMOUCZEK
    ================================================================ */
+#tutBg {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(4,6,18,0.78);
+  z-index: 9001;
+  cursor: pointer;
+}
+#tutBg.on { display: block; }
+#tutHole {
+  display: none;
+  position: fixed;
+  z-index: 9002;
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px var(--accent);
+  pointer-events: none;
+}
+#tutHole.on { display: block; }
+#tutBox {
+  display: none;
+  position: fixed;
+  z-index: 9010;
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 20px 20px 16px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+}
+body.light #tutBox { background: #fff; }
+#tutBox.on { display: block; }
+#tutBox h3 { font-size:0.95rem; font-weight:800; color:var(--text); margin:0 0 8px; }
+#tutBox p  { font-size:0.8rem; color:var(--text-muted); line-height:1.6; margin:0 0 14px; }
+#tutBox p strong { color: var(--text); }
+#tutBox p code {
+  font-family:var(--mono); font-size:0.74rem;
+  background:var(--surface2); border-radius:4px;
+  padding:1px 5px; color:var(--accent);
+}
+#tutFooter { display:flex; gap:8px; align-items:center; }
+#tutProgress { font-size:0.68rem; color:var(--text-dim); margin-bottom:10px; }
+#tutSkipBtn {
+  font-size:0.72rem; color:var(--text-dim);
+  background:none; border:none; cursor:pointer; font-family:var(--font); padding:0;
+}
+#tutSkipBtn:hover { color:var(--text-muted); }
+#tutPrevBtn {
+  font-size:0.78rem; color:var(--text-muted);
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:7px; padding:6px 12px; cursor:pointer; font-family:var(--font);
+}
+#tutNextBtn {
+  flex:1; font-size:0.82rem; font-weight:700;
+  background:var(--accent); color:#fff;
+  border:none; border-radius:8px; padding:8px 16px; cursor:pointer; font-family:var(--font);
+}
+.tut-trigger {
+  width:30px; height:30px; border-radius:50%;
+  background:var(--surface2); border:1px solid var(--border2);
+  color:var(--text-muted); font-weight:700; font-size:0.85rem;
+  cursor:pointer; display:flex; align-items:center;
+  justify-content:center; transition:all 0.15s; flex-shrink:0;
+}
+.tut-trigger:hover { border-color:var(--accent); color:var(--accent); }
+
+/* ================================================================
+   SAMOUCZEK
+   ================================================================ */
 #tutOverlay {
   display: none;
   position: fixed;
@@ -3268,14 +3337,13 @@ function tutOpen() {
   const phase = tutPhase();
   _ts = TUT_STEPS.findIndex(s => s.phase === phase);
   if (_ts < 0) _ts = 0;
-  const ov = document.getElementById('tutOverlay');
-  ov.style.display = 'block'; // force show regardless of CSS
-  ov.classList.add('on');
+  document.getElementById('tutBg').classList.add('on');
+  document.getElementById('tutBox').classList.add('on');
   tutDraw();
 }
 
 function tutClose() {
-  document.getElementById('tutOverlay').classList.remove('on');
+  ['tutBg','tutHole','tutBox'].forEach(id => document.getElementById(id).classList.remove('on'));
   localStorage.setItem(TUT_DONE_KEY, '1');
 }
 
@@ -3314,48 +3382,34 @@ function tutDraw() {
   const box  = document.getElementById('tutBox');
 
   if (!s.target) {
-    // Centered — no hole, box centered
-    hole.style.cssText = 'display:none';
-    box.style.display  = 'block';
-    box.style.left     = '50%';
-    box.style.top      = '50%';
-    box.style.transform = 'translate(-50%,-50%)';
+    hole.classList.remove('on');
+    box.style.cssText = 'display:block;left:50%;top:50%;transform:translate(-50%,-50%)';
     return;
   }
 
   const el = document.querySelector(s.target);
   if (!el) {
-    hole.style.cssText = 'display:none';
-    box.style.cssText  = 'top:50%;left:50%;transform:translate(-50%,-50%)';
+    hole.classList.remove('on');
+    box.style.cssText = 'display:block;left:50%;top:50%;transform:translate(-50%,-50%)';
     return;
   }
 
-  const r   = el.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
   const pad = 6;
-  hole.style.cssText = [
-    'display:block',
-    `left:${r.left - pad}px`,
-    `top:${r.top - pad}px`,
-    `width:${r.width + pad*2}px`,
-    `height:${r.height + pad*2}px`,
-  ].join(';');
+  hole.classList.add('on');
+  hole.style.left   = `${r.left - pad}px`;
+  hole.style.top    = `${r.top - pad}px`;
+  hole.style.width  = `${r.width + pad*2}px`;
+  hole.style.height = `${r.height + pad*2}px`;
 
-  // Place box below or above
   const bw = 300, bh = 250;
   const vw = window.innerWidth, vh = window.innerHeight;
   let bx = Math.max(8, Math.min(r.left, vw - bw - 8));
-  let by, transform = 'none';
-
-  if (r.bottom + bh + 16 < vh) {
-    by = r.bottom + 12;
-  } else if (r.top - bh - 12 > 60) {
-    by = r.top - bh - 12;
-  } else {
-    by = Math.max(70, (vh - bh) / 2);
-    bx = Math.min(r.right + 12, vw - bw - 8);
-    bx = Math.max(8, bx);
-  }
-  box.style.cssText = `left:${bx}px;top:${by}px;transform:${transform}`;
+  let by;
+  if (r.bottom + bh + 16 < vh)      { by = r.bottom + 12; }
+  else if (r.top - bh - 12 > 60)    { by = r.top - bh - 12; }
+  else { by = Math.max(70,(vh-bh)/2); bx = Math.max(8,Math.min(r.right+12,vw-bw-8)); }
+  box.style.cssText = `display:block;left:${bx}px;top:${by}px;transform:none`;
 }
 
 function tutAutoShow() {
@@ -3370,18 +3424,16 @@ function tutAutoShow() {
 
 
 <!-- SAMOUCZEK -->
-<div id="tutOverlay" onclick="if(event.target===this||event.target.id==='tutBg')tutClose()">
-  <div id="tutBg"></div>
-  <div id="tutHole"></div>
-  <div id="tutBox">
-    <div id="tutProgress"></div>
-    <h3 id="tutH"></h3>
-    <p id="tutP"></p>
-    <div id="tutFooter">
-      <button id="tutSkipBtn" onclick="tutClose()">Pomiń samouczek</button>
-      <button id="tutPrevBtn" onclick="tutPrev()" style="display:none">← Wstecz</button>
-      <button id="tutNextBtn" onclick="tutNext()">Dalej →</button>
-    </div>
+<div id="tutBg" onclick="tutClose()"></div>
+<div id="tutHole"></div>
+<div id="tutBox">
+  <div id="tutProgress"></div>
+  <h3 id="tutH"></h3>
+  <p id="tutP"></p>
+  <div id="tutFooter">
+    <button id="tutSkipBtn" onclick="tutClose()">Pomiń samouczek</button>
+    <button id="tutPrevBtn" onclick="tutPrev()" style="display:none">← Wstecz</button>
+    <button id="tutNextBtn" onclick="tutNext()">Dalej →</button>
   </div>
 </div>
 </body>
