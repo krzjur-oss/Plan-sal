@@ -61,7 +61,7 @@ body.light {
   --yellow: #d97706;
   --teal: #0891b2;
 }
-body.light body.light #wizardOverlay {
+body.light #wizardOverlay {
   background: rgba(220,227,240,0.97);
 }
 body.light .modal-overlay {
@@ -2741,9 +2741,7 @@ function readFloorTxtFile(file) {
 }
 
 function importFloorsFromText(text) {
-  const lines = text.split(/
-?
-/).map(l => l.trim()).filter(Boolean);
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const multiBuilding = wBuildings.length > 1;
   let added = 0, skipped = 0;
 
