@@ -3337,14 +3337,19 @@ function tutOpen() {
   const phase = tutPhase();
   _ts = TUT_STEPS.findIndex(s => s.phase === phase);
   if (_ts < 0) _ts = 0;
-  document.getElementById('tutBg').classList.add('on');
-  document.getElementById('tutBox').classList.add('on');
+  const bg  = document.getElementById('tutBg');
+  const box = document.getElementById('tutBox');
+  if (bg)  { bg.style.display  = 'block'; bg.classList.add('on');  }
+  if (box) { box.style.display = 'block'; box.classList.add('on'); }
   tutDraw();
 }
 
 function tutClose() {
-  ['tutBg','tutHole','tutBox'].forEach(id => document.getElementById(id).classList.remove('on'));
-  localStorage.setItem(TUT_DONE_KEY, '1');
+  ['tutBg','tutHole','tutBox'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.remove('on'); el.style.display = 'none'; }
+  });
+  try { localStorage.setItem(TUT_DONE_KEY, '1'); } catch(e) {}
 }
 
 function tutNext() {
@@ -3419,21 +3424,26 @@ function tutAutoShow() {
     setTimeout(tutOpen, 600);
   }
 }
+// Expose tutorial functions globally
+window.tutOpen  = tutOpen;
+window.tutClose = tutClose;
+window.tutNext  = tutNext;
+window.tutPrev  = tutPrev;
 
 </script>
 
 
 <!-- SAMOUCZEK -->
-<div id="tutBg" onclick="tutClose()"></div>
+<div id="tutBg" onclick="window.tutClose()"></div>
 <div id="tutHole"></div>
 <div id="tutBox">
   <div id="tutProgress"></div>
   <h3 id="tutH"></h3>
   <p id="tutP"></p>
   <div id="tutFooter">
-    <button id="tutSkipBtn" onclick="tutClose()">Pomiń samouczek</button>
-    <button id="tutPrevBtn" onclick="tutPrev()" style="display:none">← Wstecz</button>
-    <button id="tutNextBtn" onclick="tutNext()">Dalej →</button>
+    <button id="tutSkipBtn" onclick="window.tutClose()">Pomiń samouczek</button>
+    <button id="tutPrevBtn" onclick="window.tutPrev()" style="display:none">← Wstecz</button>
+    <button id="tutNextBtn" onclick="window.tutNext()">Dalej →</button>
   </div>
 </div>
 </body>
