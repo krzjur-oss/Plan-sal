@@ -1175,37 +1175,34 @@ body {
   position: fixed;
   inset: 0;
   z-index: 900;
-  pointer-events: none;
 }
 #tutorialOverlay.active {
   display: block;
-  pointer-events: none; /* children override individually */
 }
 
 /* Dark backdrop with hole cutout via box-shadow */
 .tut-spotlight {
   position: fixed;
   border-radius: 8px;
-  box-shadow: 0 0 0 9999px rgba(4,6,18,0.72);
-  transition: all 0.3s cubic-bezier(.4,0,.2,1);
-  pointer-events: none;
+  box-shadow: 0 0 0 9999px rgba(4,6,18,0.75);
+  transition: left 0.3s, top 0.3s, width 0.3s, height 0.3s;
   z-index: 901;
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+  pointer-events: none;
 }
 
 .tut-tooltip {
   position: fixed;
-  z-index: 902;
+  z-index: 903;
   background: var(--surface2);
   border: 1px solid var(--accent);
   border-radius: 14px;
   padding: 18px 20px 16px;
   width: 300px;
   max-width: calc(100vw - 32px);
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px var(--accent-glow);
-  pointer-events: all;
-  transition: all 0.3s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  cursor: default;
 }
 body.light .tut-tooltip {
   background: #fff;
@@ -3325,6 +3322,7 @@ function tutAutoStart() {
 
 <!-- ── TUTORIAL OVERLAY ── -->
 <div id="tutorialOverlay">
+  <div id="tutBackdrop" onclick="tutSkip()" style="position:fixed;inset:0;z-index:900;cursor:default"></div>
   <div class="tut-spotlight" id="tutSpotlight"></div>
   <div class="tut-tooltip" id="tutTooltip">
     <div class="tut-badge">
