@@ -1,6 +1,26 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+<script>
+// Force SW update — unregister old cache versions
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => {
+      reg.update();
+      // If SW is not sp-v10, unregister and reload
+      if (reg.active && reg.active.scriptURL) {
+        caches.keys().then(keys => {
+          const hasNew = keys.some(k => k === 'sp-v10');
+          if (!hasNew && keys.length > 0) {
+            keys.forEach(k => caches.delete(k));
+            reg.unregister().then(() => location.reload());
+          }
+        });
+      }
+    });
+  });
+}
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SalePlan — Plan Sal Zajęciowych</title>
