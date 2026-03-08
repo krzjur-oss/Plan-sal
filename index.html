@@ -1392,6 +1392,7 @@ body.light .tut-tooltip::before { background: #fff; }
 #tutBox {
   position: fixed;
   z-index: 9003;
+  display: block;
   width: 300px;
   max-width: calc(100vw - 24px);
   background: var(--surface);
@@ -1399,7 +1400,6 @@ body.light .tut-tooltip::before { background: #fff; }
   border-radius: 14px;
   padding: 20px 20px 16px;
   box-shadow: 0 12px 48px rgba(0,0,0,0.6);
-  transition: all 0.25s ease;
 }
 body.light #tutBox { background: #fff; }
 #tutBox h3 {
@@ -1839,6 +1839,52 @@ body.light #tutBox { background: #fff; }
 </div>
 
 <script>
+const TUT_DONE_KEY = 'sp_tut3_done';
+
+const TUT_STEPS = [
+  { target: null, phase: 'wizard',
+    h: 'Witaj w SalePlan! 👋',
+    p: 'To plan sal zajęciowych dla Twojej szkoły. Kreator przeprowadzi Cię przez konfigurację — ten samouczek wyjaśni każdy krok. Możesz pominąć w dowolnym momencie.' },
+  { target: '#wStep0', phase: 'wizard',
+    h: 'Krok 1 — Szkoła i budynki',
+    p: 'Wpisz <strong>nazwę szkoły</strong> i <strong>skrót</strong>. Jeśli szkoła ma kilka budynków — dodaj każdy osobno z adresem.' },
+  { target: '#wStep1', phase: 'wizard',
+    h: 'Krok 2 — Rok szkolny i godziny',
+    p: 'Wpisz rok szkolny np. <code>2025/2026</code>. W polu Godziny wpisz numery lekcji oddzielone przecinkami: <code>0,1,2,3,4,5,6,7,8</code>' },
+  { target: '#wStep2', phase: 'wizard',
+    h: 'Krok 3 — Piętra i sale',
+    p: 'Dodaj piętra, segmenty i numery sal. Możesz też <strong>wczytać sale z pliku TXT</strong> — format: <code>piętro;segment;sala</code>' },
+  { target: '#wStep3', phase: 'wizard',
+    h: 'Krok 4 — Klasy i grupy',
+    p: 'Dodaj klasy z nazwą, skrótem i opcjonalną grupą (np. <code>gr. ang.</code>) dla klas dzielonych na grupy.' },
+  { target: '#wStep4', phase: 'wizard',
+    h: 'Krok 5 — Nauczyciele',
+    p: 'Dodaj nauczycieli — imię, nazwisko i skrót (np. <code>KJUR</code>). Skróty widać w komórkach tabeli. Ten krok jest opcjonalny.' },
+  { target: '#wStep5', phase: 'wizard',
+    h: 'Krok 6 — Przypisanie klas do sal',
+    p: 'Opcjonalnie przypisz klasy do sal jako domyślne miejsca. Pojawią się w wierszu <strong>Gospod.</strong> w nagłówku tabeli.' },
+  { target: '#wBtnNext', phase: 'wizard',
+    h: 'Nawigacja kreatora',
+    p: 'Używaj <strong>Dalej →</strong> i <strong>← Wstecz</strong> między krokami. Kreator sprawdza wymagane pola zanim przejdziesz dalej.' },
+  { target: '#scheduleWrap', phase: 'app',
+    h: 'Tabela planu sal',
+    p: 'Każda <strong>kolumna</strong> to sala, każdy <strong>wiersz</strong> to godzina. Kliknij <code>＋</code> aby przypisać nauczyciela, klasę i przedmiot.' },
+  { target: '#dayTabs', phase: 'app',
+    h: 'Dni tygodnia',
+    p: 'Przełączaj między dniami przyciskami <strong>Poniedziałek — Piątek</strong>. Każdy dzień ma osobny plan.' },
+  { target: '.btn-green', phase: 'app',
+    h: 'Eksport PDF',
+    p: 'Drukuje lub zapisuje plan jako plik A4 poziomy. Nazwa pliku: <code>ps_(rok)_(data)</code>. Data w polu <strong>Od:</strong> trafi do wydruku.' },
+  { target: '.btn-yellow', phase: 'app',
+    h: 'Nowy rok i archiwum',
+    p: '<strong>Nowy rok</strong> — kreator z przepisanymi budynkami i salami. Kliknij w rok szkolny w lewym górnym rogu aby zobaczyć <strong>archiwum</strong>.' },
+  { target: '#tutTriggerBtn', phase: 'app',
+    h: 'Gotowe! 🎉',
+    p: 'Ten przycisk <code>?</code> uruchomi samouczek ponownie w każdej chwili.' },
+];
+
+let _ts = 0;
+
 // ================================================================
 //  CONSTANTS & STATE
 // ================================================================
@@ -3211,51 +3257,7 @@ window.addEventListener('appinstalled', () => {
 // ================================================================
 //  SAMOUCZEK
 // ================================================================
-const TUT_DONE_KEY = 'sp_tut2_done';
-
-const TUT_STEPS = [
-  { target: null, phase: 'wizard',
-    h: 'Witaj w SalePlan! 👋',
-    p: 'To plan sal zajęciowych dla Twojej szkoły. Kreator przeprowadzi Cię przez konfigurację — ten samouczek wyjaśni każdy krok. Możesz pominąć w dowolnym momencie.' },
-  { target: '#wStep0', phase: 'wizard',
-    h: 'Krok 1 — Szkoła i budynki',
-    p: 'Wpisz <strong>nazwę szkoły</strong> i <strong>skrót</strong>. Jeśli szkoła ma kilka budynków — dodaj każdy osobno z adresem.' },
-  { target: '#wStep1', phase: 'wizard',
-    h: 'Krok 2 — Rok szkolny i godziny',
-    p: 'Wpisz rok szkolny np. <code>2025/2026</code>. W polu Godziny wpisz numery lekcji oddzielone przecinkami: <code>0,1,2,3,4,5,6,7,8</code>' },
-  { target: '#wStep2', phase: 'wizard',
-    h: 'Krok 3 — Piętra i sale',
-    p: 'Dodaj piętra, segmenty i numery sal. Możesz też <strong>wczytać sale z pliku TXT</strong> — format: <code>piętro;segment;sala</code>' },
-  { target: '#wStep3', phase: 'wizard',
-    h: 'Krok 4 — Klasy i grupy',
-    p: 'Dodaj klasy z nazwą, skrótem i opcjonalną grupą (np. <code>gr. ang.</code>) dla klas dzielonych na grupy.' },
-  { target: '#wStep4', phase: 'wizard',
-    h: 'Krok 5 — Nauczyciele',
-    p: 'Dodaj nauczycieli — imię, nazwisko i skrót (np. <code>KJUR</code>). Skróty widać w komórkach tabeli. Ten krok jest opcjonalny.' },
-  { target: '#wStep5', phase: 'wizard',
-    h: 'Krok 6 — Przypisanie klas do sal',
-    p: 'Opcjonalnie przypisz klasy do sal jako domyślne miejsca. Pojawią się w wierszu <strong>Gospod.</strong> w nagłówku tabeli.' },
-  { target: '#wBtnNext', phase: 'wizard',
-    h: 'Nawigacja kreatora',
-    p: 'Używaj <strong>Dalej →</strong> i <strong>← Wstecz</strong> między krokami. Kreator sprawdza wymagane pola zanim przejdziesz dalej.' },
-  { target: '#scheduleWrap', phase: 'app',
-    h: 'Tabela planu sal',
-    p: 'Każda <strong>kolumna</strong> to sala, każdy <strong>wiersz</strong> to godzina. Kliknij <code>＋</code> aby przypisać nauczyciela, klasę i przedmiot.' },
-  { target: '#dayTabs', phase: 'app',
-    h: 'Dni tygodnia',
-    p: 'Przełączaj między dniami przyciskami <strong>Poniedziałek — Piątek</strong>. Każdy dzień ma osobny plan.' },
-  { target: '.btn-green', phase: 'app',
-    h: 'Eksport PDF',
-    p: 'Drukuje lub zapisuje plan jako plik A4 poziomy. Nazwa pliku: <code>ps_(rok)_(data)</code>. Data w polu <strong>Od:</strong> trafi do wydruku.' },
-  { target: '.btn-yellow', phase: 'app',
-    h: 'Nowy rok i archiwum',
-    p: '<strong>Nowy rok</strong> — kreator z przepisanymi budynkami i salami. Kliknij w rok szkolny w lewym górnym rogu aby zobaczyć <strong>archiwum</strong>.' },
-  { target: '#tutTriggerBtn', phase: 'app',
-    h: 'Gotowe! 🎉',
-    p: 'Ten przycisk <code>?</code> uruchomi samouczek ponownie w każdej chwili.' },
-];
-
-let _ts = 0; // current step index
+ // current step index
 
 function tutPhase() {
   return document.getElementById('wizardOverlay').classList.contains('show') ? 'wizard' : 'app';
@@ -3265,7 +3267,9 @@ function tutOpen() {
   const phase = tutPhase();
   _ts = TUT_STEPS.findIndex(s => s.phase === phase);
   if (_ts < 0) _ts = 0;
-  document.getElementById('tutOverlay').classList.add('on');
+  const ov = document.getElementById('tutOverlay');
+  ov.style.display = 'block'; // force show regardless of CSS
+  ov.classList.add('on');
   tutDraw();
 }
 
@@ -3309,9 +3313,12 @@ function tutDraw() {
   const box  = document.getElementById('tutBox');
 
   if (!s.target) {
-    // Centered — no hole
+    // Centered — no hole, box centered
     hole.style.cssText = 'display:none';
-    box.style.cssText  = 'top:50%;left:50%;transform:translate(-50%,-50%)';
+    box.style.display  = 'block';
+    box.style.left     = '50%';
+    box.style.top      = '50%';
+    box.style.transform = 'translate(-50%,-50%)';
     return;
   }
 
@@ -3351,6 +3358,8 @@ function tutDraw() {
 }
 
 function tutAutoShow() {
+  // Clear old tutorial keys from previous versions
+  ['sp_tut_done','sp_tut_ver','sp_tut2_done'].forEach(k => localStorage.removeItem(k));
   if (!localStorage.getItem(TUT_DONE_KEY)) {
     setTimeout(tutOpen, 600);
   }
