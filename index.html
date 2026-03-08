@@ -793,7 +793,7 @@ body {
   text-align: center;
   color: var(--text-muted);
   position: sticky;
-  top: 57px; /* overridden dynamically by fixStickyHeaders() */
+  top: var(--th-top, 57px);
   z-index: 5;
   vertical-align: middle;
 }
@@ -803,7 +803,6 @@ body {
   background: var(--surface);
   font-family: var(--mono);
   color: var(--text-dim);
-  z-index: 6;
 }
 
 /* Multi-row merged header */
@@ -2167,21 +2166,6 @@ function getAssignmentsFromDOM() { return wAssignments; }
 // ================================================================
 //  COLUMN UTILS
 // ================================================================
-function fixStickyHeaders() {
-  const topbarH = document.querySelector('.topbar')?.offsetHeight || 57;
-  const table = document.querySelector('.schedule-table');
-  if (!table) return;
-  const rows = table.querySelectorAll('thead tr');
-  let offset = topbarH;
-  rows.forEach(row => {
-    const cells = row.querySelectorAll('th');
-    cells.forEach(th => {
-      th.style.top = offset + 'px';
-    });
-    offset += row.offsetHeight || 28;
-  });
-}
-
 function colKey(col) { return `f${col.floorIdx}_s${col.segIdx}_${col.room.num}`; }
 function flattenColumns(floors) {
   const cols = [];
@@ -2313,19 +2297,26 @@ function renderSchedule() {
   // Row 5: Homeroom class + teacher (always)
 
   // helper: build merged cells for a given key extractor
-  function buildMergedRow(keyFn, labelFn, stylesFn, extraClass='', timeCell='') {
-    let row = `<tr><th class="time-th" rowspan="1" style="background:var(--surface)">${timeCell}</th>`;
+  function buildMergedRow(keyFn, labelFn, stylesFn, extraClass='', timeCell='', topPx=57) {
+    const topStyle = `--th-top:${topPx}px;`;
+    let row = `<tr><th class="time-th" rowspan="1" style="background:var(--surface);${topStyle}">${timeCell}</th>`;
     let i = 0;
     while (i < cols.length) {
       const key = keyFn(cols[i]);
       let span = 1;
       while (i+span < cols.length && keyFn(cols[i+span]) === key) span++;
       const styles = stylesFn ? stylesFn(cols[i]) : '';
-      row += `<th colspan="${span}" class="${extraClass}" style="${styles}">${labelFn(cols[i])}</th>`;
+      row += `<th colspan="${span}" class="${extraClass}" style="${topStyle}${styles}">${labelFn(cols[i])}</th>`;
       i += span;
     }
     return row + '</tr>';
   }
+
+  // Calculate topbar height dynamically
+  const topbarHeight = document.querySelector('.topbar')?.getBoundingClientRect().bottom || 57;
+  // Row heights (approximate, will be refined after render)
+  const ROW_H = 26;
+  let _rowTop = topbarHeight;
 
   let thead = '<thead>';
 
@@ -2333,16 +2324,11 @@ function renderSchedule() {
   if (showBuilding) {
     thead += buildMergedRow(
       c => c.floor.buildingIdx||0,
-      c => {
-        const bld = buildings[c.floor.buildingIdx||0];
-        return esc(bld?.name||'—');
-      },
-      c => {
-        const color = BUILDING_COLORS[(c.floor.buildingIdx||0) % BUILDING_COLORS.length];
-        return `color:${color};border-top:3px solid ${color};border-bottom:2px solid ${color}`;
-      },
-      'th-building'
+      c => { const bld = buildings[c.floor.buildingIdx||0]; return esc(bld?.name||'—'); },
+      c => { const color = BUILDING_COLORS[(c.floor.buildingIdx||0) % BUILDING_COLORS.length]; return `color:${color};border-top:3px solid ${color};border-bottom:2px solid ${color}`; },
+      'th-building', '', _rowTop
     );
+    _rowTop += ROW_H;
   }
 
   // Row: Floors
@@ -2351,8 +2337,9 @@ function renderSchedule() {
       c => c.floorIdx,
       c => esc(c.floor.name),
       c => `color:${c.floor.color};border-bottom:1px solid ${c.floor.color}40`,
-      'th-floor'
+      'th-floor', '', _rowTop
     );
+    _rowTop += ROW_H;
   }
 
   // Row: Segments
@@ -2361,13 +2348,15 @@ function renderSchedule() {
       c => c.floorIdx+'-'+c.segIdx,
       c => esc(c.seg.name||'—'),
       c => `border-top:2px solid ${c.floor.color}60`,
-      'th-seg-row'
+      'th-seg-row', '', _rowTop
     );
+    _rowTop += ROW_H;
   }
 
   // Row: Room numbers (always, not merged)
   {
-    let row = `<tr><th class="time-th" style="background:var(--surface)">Godz.</th>`;
+    const topStyle = `--th-top:${_rowTop}px;`;
+    let row = `<tr><th class="time-th" style="background:var(--surface);${topStyle}">Godz.</th>`;
     cols.forEach(col => {
       const label = col.room.sub
         ? `Sala ${esc(col.room.num)}<br><span style="font-size:0.55rem;color:var(--text-dim)">${esc(col.room.sub)}</span>`
@@ -2375,21 +2364,23 @@ function renderSchedule() {
       const floorColor = col.floor.color;
       const topBorder = !showBuilding && !showFloor && !showSeg
         ? `border-top:3px solid ${floorColor}` : '';
-      row += `<th class="th-room-row" style="${topBorder}">${label}</th>`;
+      row += `<th class="th-room-row" style="${topStyle}${topBorder}">${label}</th>`;
     });
     thead += row + '</tr>';
+    _rowTop += ROW_H;
   }
 
   // Row: Homeroom (class + teacher wychowawca)
   {
-    let row = `<tr><th class="time-th" style="background:var(--surface);font-size:0.55rem;color:var(--text-dim)">Gospod.</th>`;
+    const topStyle = `--th-top:${_rowTop}px;`;
+    let row = `<tr><th class="time-th" style="background:var(--surface);font-size:0.55rem;color:var(--text-dim);${topStyle}">Gospod.</th>`;
     cols.forEach(col => {
       const key = colKey(col);
       const hr  = homerooms[key]||{};
       const assignedCls = assignments[key]||'';
       const displayCls  = hr.className || assignedCls || '';
       const hrTeacher   = hr.teacherAbbr ? getTeacherByAbbr(hr.teacherAbbr) : null;
-      row += `<th class="th-homeroom" onclick="openHomeroomModal('${key}')" style="cursor:pointer" title="Kliknij aby ustawić gospodarza">
+      row += `<th class="th-homeroom" onclick="openHomeroomModal('${key}')" style="cursor:pointer;${topStyle}" title="Kliknij aby ustawić gospodarza">
         ${displayCls ? `<div class="hr-class">${esc(displayCls)}</div>` : '<div style="color:var(--text-dim);font-size:0.55rem">—</div>'}
         ${hrTeacher ? `<div class="hr-teacher">${esc(hrTeacher.abbr)}</div>` : ''}
       </th>`;
@@ -2427,7 +2418,6 @@ function renderSchedule() {
   document.getElementById('scheduleWrap').innerHTML =
     `<table class="schedule-table">${thead}${tbody}</table>`;
 
-  fixStickyHeaders();
   updateStatusBar();
 }
 
@@ -2630,7 +2620,6 @@ function toggleTheme() {
 // ================================================================
 //  INIT
 // ================================================================
-window.addEventListener('resize', () => { fixStickyHeaders(); });
 loadAll();
 applyTheme(localStorage.getItem('sp_theme') || 'dark');
 if (!appState) {
