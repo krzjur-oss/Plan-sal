@@ -1167,6 +1167,61 @@ body {
 .pwa-banner-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
 .pwa-banner-btns { display: flex; gap: 6px; flex-shrink: 0; }
 
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Notifications */
+.notif {
+  position: fixed;
+  bottom: 42px;
+  right: 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  z-index: 999;
+  animation: notifIn 0.2s ease, notifOut 0.3s ease 2.5s forwards;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  display: flex; align-items: center; gap: 8px;
+}
+@keyframes notifIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes notifOut { to { opacity:0; transform:translateY(8px); } }
+
+/* PWA install banner */
+#pwaInstallBanner {
+  display: none;
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-top: 2px solid var(--accent);
+  border-radius: 14px;
+  padding: 12px 18px;
+  z-index: 800;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  gap: 14px;
+  min-width: 280px;
+  max-width: 420px;
+  animation: notifIn 0.25s ease;
+}
+#pwaInstallBanner.show { display: flex; }
+.pwa-banner-icon { font-size: 1.6rem; flex-shrink: 0; }
+.pwa-banner-text { flex: 1; }
+.pwa-banner-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.pwa-banner-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+.pwa-banner-btns { display: flex; gap: 6px; flex-shrink: 0; }
+
 /* ================================================================
    TUTORIAL — tooltip-style step-by-step
    ================================================================ */
@@ -1288,6 +1343,93 @@ body.light .tut-tooltip::before { background: #fff; }
   transition: all 0.15s; flex-shrink: 0;
 }
 .tut-trigger:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ================================================================
+   SAMOUCZEK
+   ================================================================ */
+#tutOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+}
+#tutOverlay.on { display: block; }
+
+#tutBg {
+  position: fixed;
+  inset: 0;
+  background: rgba(4,6,18,0.78);
+  z-index: 9001;
+}
+#tutHole {
+  position: fixed;
+  z-index: 9002;
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px var(--accent);
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+#tutBox {
+  position: fixed;
+  z-index: 9003;
+  width: 300px;
+  max-width: calc(100vw - 24px);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 20px 20px 16px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+  transition: all 0.25s ease;
+}
+body.light #tutBox { background: #fff; }
+#tutBox h3 {
+  font-size: 0.95rem; font-weight: 800;
+  color: var(--text); margin: 0 0 8px;
+}
+#tutBox p {
+  font-size: 0.8rem; color: var(--text-muted);
+  line-height: 1.6; margin: 0 0 14px;
+}
+#tutBox p strong { color: var(--text); }
+#tutBox p code {
+  font-family: var(--mono); font-size: 0.74rem;
+  background: var(--surface2); border-radius: 4px;
+  padding: 1px 5px; color: var(--accent);
+}
+#tutFooter {
+  display: flex; gap: 8px; align-items: center;
+}
+#tutSkipBtn {
+  font-size: 0.72rem; color: var(--text-dim);
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font); padding: 0;
+}
+#tutSkipBtn:hover { color: var(--text-muted); }
+#tutPrevBtn {
+  font-size: 0.78rem; color: var(--text-muted);
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 7px; padding: 6px 12px; cursor: pointer;
+  font-family: var(--font);
+}
+#tutNextBtn {
+  flex: 1; font-size: 0.82rem; font-weight: 700;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 8px 16px; cursor: pointer;
+  font-family: var(--font);
+}
+#tutProgress {
+  font-size: 0.68rem; color: var(--text-dim);
+  margin-bottom: 10px;
+}
+.tut-trigger {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text-muted); font-weight: 700; font-size: 0.85rem;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; transition: all 0.15s; flex-shrink: 0;
+}
+.tut-trigger:hover { border-color: var(--accent); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1306,7 +1448,6 @@ body.light .tut-tooltip::before { background: #fff; }
         <div class="wizard-title">Nowy rok szkolny<br><span id="wTitleYear">2025/2026</span></div>
         <div class="wizard-subtitle">Skonfiguruj szkołę, budynki, nauczycieli i klasy — zajmie to tylko chwilę.</div>
       </div>
-      <button class="tut-trigger" onclick="tutRestart()" title="Samouczek" style="flex-shrink:0;margin-top:2px">?</button>
       <button class="theme-toggle" id="themeToggleWizard" onclick="toggleTheme()" title="Przełącz motyw" style="flex-shrink:0;margin-top:4px">🌙</button>
     </div>
   </div>
@@ -1536,7 +1677,7 @@ body.light .tut-tooltip::before { background: #fff; }
       <button class="btn btn-primary" onclick="saveData()">💾 Zapisz</button>
       <button class="btn btn-yellow" onclick="openWizardNewYear()">＋ Nowy rok</button>
       <button class="btn btn-red" onclick="clearDay()">🗑 Dzień</button>
-      <button class="tut-trigger" onclick="tutRestart()" title="Samouczek — powtórz">?</button>
+      <button class="tut-trigger" id="tutTriggerBtn" onclick="tutOpen()" title="Samouczek">?</button>
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
     </div>
   </div>
@@ -1801,10 +1942,7 @@ function openWizardNewYear(preload) {
   document.getElementById('wizardOverlay').classList.add('show');
 }
 
-function openWizardFirst() {
-  openWizardNewYear();
-  tutAutoStart();
-}
+function openWizardFirst() { openWizardNewYear(); tutAutoShow(); }
 
 function wizardNext() {
   if (wStep === 0) {
@@ -2619,7 +2757,7 @@ function clearCellData() {
 }
 document.getElementById('editModal').addEventListener('click',e=>{if(e.target===document.getElementById('editModal'))closeEditModal();});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape') { closeEditModal(); if(_tutActive) tutSkip(); }
+  if(e.key==='Escape'){closeEditModal();tutClose();}
   if(e.key==='Enter'&&e.ctrlKey&&document.getElementById('editModal').classList.contains('show'))saveCellData();
 });
 
@@ -2759,7 +2897,7 @@ if (!appState) {
     (appState.hours||[]).forEach(h=>{if(!schedData[yk][i][h])schedData[yk][i][h]={};});
   });
   mountApp();
-  tutAutoStart();
+  tutAutoShow();
 }
 
 // ================================================================
@@ -3049,292 +3187,170 @@ window.addEventListener('appinstalled', () => {
   notify('✓ SalePlan zainstalowany na urządzeniu!');
 });
 
+
 // ================================================================
-//  TUTORIAL
+//  SAMOUCZEK
 // ================================================================
-const TUT_KEY = 'sp_tut_done';
-const TUT_VER = '1';
-// Reset tutorial if version changed
-if (localStorage.getItem(TUT_KEY) && localStorage.getItem('sp_tut_ver') !== TUT_VER) {
-  localStorage.removeItem(TUT_KEY);
-}
-localStorage.setItem('sp_tut_ver', TUT_VER);
+const TUT_DONE_KEY = 'sp_tut2_done';
 
 const TUT_STEPS = [
-  // ── KREATOR (kroki 0-7) ──
-  {
-    phase: 'wizard',
-    title: 'Witaj w SalePlan! 👋',
-    body: 'To <strong>plan sal zajęciowych</strong> dla Twojej szkoły.<br><br>Zanim zaczniesz, kreator przeprowadzi Cię przez konfigurację. Ten samouczek wyjaśni każdy krok.<br><br>Możesz pominąć w dowolnym momencie przyciskiem <strong>Pomiń</strong>.',
-    target: null,
-    arrow: 'center',
-  },
-  {
-    phase: 'wizard',
-    title: 'Krok 1 — Szkoła i budynki',
-    body: 'Wpisz <strong>nazwę szkoły</strong> i <strong>skrót</strong> (wyświetlany w topbarze).<br><br>Dodaj budynki jeśli szkoła ma więcej niż jeden obiekt. Możesz też wpisać adres każdego budynku.',
-    target: '#wStep0',
-    arrow: 'right',
-  },
-  {
-    phase: 'wizard',
-    title: 'Krok 2 — Rok szkolny i godziny',
-    body: 'Wpisz <strong>rok szkolny</strong> w formacie <code>2025/2026</code>.<br><br>W polu <strong>Godziny</strong> wpisz numery lekcji oddzielone przecinkami, np. <code>0,1,2,3,4,5,6,7,8</code>. Lekcja 0 to zerówka.',
-    target: '#wStep1',
-    arrow: 'right',
-  },
-  {
-    phase: 'wizard',
-    title: 'Krok 3 — Piętra i sale',
-    body: 'Dodaj <strong>piętra i segmenty</strong> budynku, a w każdym segmencie — numery sal.<br><br>Możesz też <strong>wczytać sale z pliku TXT</strong> — jeden wpis na linię w formacie:<br><code>piętro;segment;sala;opis</code>',
-    target: '#wStep2',
-    arrow: 'right',
-  },
-  {
-    phase: 'wizard',
-    title: 'Krok 4 — Klasy i grupy',
-    body: 'Dodaj <strong>klasy</strong> które funkcjonują w szkole.<br><br>Każda klasa ma nazwę (np. <code>4A</code>), skrót i opcjonalnie <strong>grupę</strong> (np. <code>gr. ang.</code>) dla klas dzielonych.',
-    target: '#wStep3',
-    arrow: 'right',
-  },
-  {
-    phase: 'wizard',
-    title: 'Krok 5 — Nauczyciele',
-    body: 'Dodaj <strong>nauczycieli</strong> — imię, nazwisko i skrót (np. <code>KJUR</code>).<br><br>Skróty pojawiają się w komórkach planu. Nauczyciele są opcjonalni — możesz ich dodać później.',
-    target: '#wStep4',
-    arrow: 'right',
-  },
-  {
-    phase: 'wizard',
-    title: 'Krok 6 — Przypisanie klas do sal',
-    body: 'Opcjonalnie przypisz <strong>klasy do sal</strong> jako domyślne miejsca pobytu.<br><br>To ułatwia uzupełnianie planu — przypisanie pojawi się w wierszu <strong>Gospod.</strong> w nagłówku tabeli.',
-    target: '#wStep5',
-    arrow: 'right',
-  },
-  {
-    phase: 'wizard',
-    title: 'Przyciski nawigacji',
-    body: 'Używaj przycisków <strong>Dalej →</strong> i <strong>← Wstecz</strong> aby poruszać się między krokami.<br><br>Kreator sprawdza wymagane pola — nie przejdziesz dalej bez nazwy szkoły i przynajmniej jednej sali.',
-    target: '#wBtnNext',
-    arrow: 'top',
-  },
-  // ── PLAN (kroki 8-13) ──
-  {
-    phase: 'app',
-    title: 'Tabela planu sal',
-    body: 'Każda <strong>kolumna</strong> to sala, każdy <strong>wiersz</strong> to godzina lekcyjna.<br><br>Kliknij <code>＋</code> w komórce aby przypisać nauczyciela, klasę i przedmiot do danej sali i godziny.',
-    target: '#scheduleWrap',
-    arrow: 'top',
-  },
-  {
-    phase: 'app',
-    title: 'Nagłówek — piętra i segmenty',
-    body: 'Wiersze nagłówka pokazują kolejno:<br><strong>Piętro → Segment → Numer sali</strong><br><br>Wiersz <strong>Gospod.</strong> — kliknij komórkę aby przypisać wychowawcę klasy do sali.',
-    target: '#scheduleWrap',
-    arrow: 'top',
-    highlight: 'thead',
-  },
-  {
-    phase: 'app',
-    title: 'Dni tygodnia i data',
-    body: 'Przełączaj między dniami przyciskami <strong>Poniedziałek — Piątek</strong>.<br><br>Pole <strong>Od:</strong> pozwala oznaczyć od kiedy ten plan obowiązuje — data trafi do wydruku PDF.',
-    target: '#dayTabs',
-    arrow: 'bottom',
-  },
-  {
-    phase: 'app',
-    title: 'Eksport PDF i zapis',
-    body: '<code>⬇ PDF</code> — drukuje lub zapisuje plan jako plik A4 poziomy.<br>Nazwa pliku: <code>ps_(rok)_(data)</code><br><br><code>💾 Zapisz</code> — zapisuje dane w pamięci przeglądarki. Dane są tylko na tym urządzeniu.',
-    target: '.btn-green',
-    arrow: 'bottom',
-  },
-  {
-    phase: 'app',
-    title: 'Nowy rok i archiwum',
-    body: '<code>＋ Nowy rok</code> — uruchamia kreator nowego roku. Budynki, sale i nauczyciele są <strong>przepisywane automatycznie</strong>.<br><br>Kliknij w <code>rok szkolny</code> w lewym górnym rogu aby przeglądać <strong>archiwum</strong> poprzednich lat.',
-    target: '.btn-yellow',
-    arrow: 'bottom',
-  },
-  {
-    phase: 'app',
-    title: 'Gotowe! 🎉',
-    body: 'Teraz wiesz jak korzystać z SalePlan.<br><br>Przycisk <code>?</code> w prawym górnym rogu uruchomi ten samouczek ponownie w każdej chwili.',
-    target: '.tut-trigger',
-    arrow: 'bottom',
-  },
+  { target: null, phase: 'wizard',
+    h: 'Witaj w SalePlan! 👋',
+    p: 'To plan sal zajęciowych dla Twojej szkoły. Kreator przeprowadzi Cię przez konfigurację — ten samouczek wyjaśni każdy krok. Możesz pominąć w dowolnym momencie.' },
+  { target: '#wStep0', phase: 'wizard',
+    h: 'Krok 1 — Szkoła i budynki',
+    p: 'Wpisz <strong>nazwę szkoły</strong> i <strong>skrót</strong>. Jeśli szkoła ma kilka budynków — dodaj każdy osobno z adresem.' },
+  { target: '#wStep1', phase: 'wizard',
+    h: 'Krok 2 — Rok szkolny i godziny',
+    p: 'Wpisz rok szkolny np. <code>2025/2026</code>. W polu Godziny wpisz numery lekcji oddzielone przecinkami: <code>0,1,2,3,4,5,6,7,8</code>' },
+  { target: '#wStep2', phase: 'wizard',
+    h: 'Krok 3 — Piętra i sale',
+    p: 'Dodaj piętra, segmenty i numery sal. Możesz też <strong>wczytać sale z pliku TXT</strong> — format: <code>piętro;segment;sala</code>' },
+  { target: '#wStep3', phase: 'wizard',
+    h: 'Krok 4 — Klasy i grupy',
+    p: 'Dodaj klasy z nazwą, skrótem i opcjonalną grupą (np. <code>gr. ang.</code>) dla klas dzielonych na grupy.' },
+  { target: '#wStep4', phase: 'wizard',
+    h: 'Krok 5 — Nauczyciele',
+    p: 'Dodaj nauczycieli — imię, nazwisko i skrót (np. <code>KJUR</code>). Skróty widać w komórkach tabeli. Ten krok jest opcjonalny.' },
+  { target: '#wStep5', phase: 'wizard',
+    h: 'Krok 6 — Przypisanie klas do sal',
+    p: 'Opcjonalnie przypisz klasy do sal jako domyślne miejsca. Pojawią się w wierszu <strong>Gospod.</strong> w nagłówku tabeli.' },
+  { target: '#wBtnNext', phase: 'wizard',
+    h: 'Nawigacja kreatora',
+    p: 'Używaj <strong>Dalej →</strong> i <strong>← Wstecz</strong> między krokami. Kreator sprawdza wymagane pola zanim przejdziesz dalej.' },
+  { target: '#scheduleWrap', phase: 'app',
+    h: 'Tabela planu sal',
+    p: 'Każda <strong>kolumna</strong> to sala, każdy <strong>wiersz</strong> to godzina. Kliknij <code>＋</code> aby przypisać nauczyciela, klasę i przedmiot.' },
+  { target: '#dayTabs', phase: 'app',
+    h: 'Dni tygodnia',
+    p: 'Przełączaj między dniami przyciskami <strong>Poniedziałek — Piątek</strong>. Każdy dzień ma osobny plan.' },
+  { target: '.btn-green', phase: 'app',
+    h: 'Eksport PDF',
+    p: 'Drukuje lub zapisuje plan jako plik A4 poziomy. Nazwa pliku: <code>ps_(rok)_(data)</code>. Data w polu <strong>Od:</strong> trafi do wydruku.' },
+  { target: '.btn-yellow', phase: 'app',
+    h: 'Nowy rok i archiwum',
+    p: '<strong>Nowy rok</strong> — kreator z przepisanymi budynkami i salami. Kliknij w rok szkolny w lewym górnym rogu aby zobaczyć <strong>archiwum</strong>.' },
+  { target: '#tutTriggerBtn', phase: 'app',
+    h: 'Gotowe! 🎉',
+    p: 'Ten przycisk <code>?</code> uruchomi samouczek ponownie w każdej chwili.' },
 ];
 
-let _tutStep = 0;
-let _tutActive = false;
+let _ts = 0; // current step index
 
-function tutStart(force = false) {
-  _tutStep = 0;
-  _tutActive = true;
-  document.getElementById('tutorialOverlay').classList.add('active');
-  tutRender();
+function tutPhase() {
+  return document.getElementById('wizardOverlay').classList.contains('show') ? 'wizard' : 'app';
 }
 
-function tutCurrentPhase() {
-  // Are we in wizard mode?
-  const wizActive = document.getElementById('wizardOverlay')?.classList.contains('show');
-  return wizActive ? 'wizard' : 'app';
+function tutOpen() {
+  const phase = tutPhase();
+  _ts = TUT_STEPS.findIndex(s => s.phase === phase);
+  if (_ts < 0) _ts = 0;
+  document.getElementById('tutOverlay').classList.add('on');
+  tutDraw();
 }
 
-function tutFirstStepOfPhase(phase) {
-  return TUT_STEPS.findIndex(s => s.phase === phase);
-}
-
-function tutLastStepOfPhase(phase) {
-  let last = -1;
-  TUT_STEPS.forEach((s, i) => { if (s.phase === phase) last = i; });
-  return last;
-}
-
-function tutSkip() {
-  _tutActive = false;
-  document.getElementById('tutorialOverlay').classList.remove('active');
-  localStorage.setItem(TUT_KEY, '1');
-}
-
-function tutRestart() {
-  localStorage.removeItem(TUT_KEY);
-  // Start from appropriate phase
-  const phase = tutCurrentPhase();
-  _tutStep = tutFirstStepOfPhase(phase);
-  _tutActive = true;
-  document.getElementById('tutorialOverlay').classList.add('active');
-  tutRender();
+function tutClose() {
+  document.getElementById('tutOverlay').classList.remove('on');
+  localStorage.setItem(TUT_DONE_KEY, '1');
 }
 
 function tutNext() {
-  const next = _tutStep + 1;
-  if (next >= TUT_STEPS.length) { tutSkip(); return; }
-
-  const nextStep = TUT_STEPS[next];
-  const phase = tutCurrentPhase();
-
-  // If next step is 'app' but we're still in wizard — skip to end
-  if (nextStep.phase === 'app' && phase === 'wizard') {
-    tutSkip(); return;
-  }
-  // If next step is 'wizard' but wizard is closed — skip to first app step
-  if (nextStep.phase === 'wizard' && phase === 'app') {
-    _tutStep = tutFirstStepOfPhase('app');
-  } else {
-    _tutStep = next;
-  }
-  tutRender();
+  const phase = tutPhase();
+  let next = _ts + 1;
+  // Skip steps of wrong phase
+  while (next < TUT_STEPS.length && TUT_STEPS[next].phase !== phase) next++;
+  if (next >= TUT_STEPS.length) { tutClose(); return; }
+  _ts = next;
+  tutDraw();
 }
 
 function tutPrev() {
-  if (_tutStep > 0) { _tutStep--; tutRender(); }
+  const phase = tutPhase();
+  let prev = _ts - 1;
+  while (prev >= 0 && TUT_STEPS[prev].phase !== phase) prev--;
+  if (prev < 0) return;
+  _ts = prev;
+  tutDraw();
 }
 
-function tutRender() {
-  const step = TUT_STEPS[_tutStep];
-  const total = TUT_STEPS.length;
+function tutDraw() {
+  const s = TUT_STEPS[_ts];
+  const phase = tutPhase();
+  const phaseSteps = TUT_STEPS.filter(x => x.phase === phase);
+  const phaseIdx   = phaseSteps.indexOf(s);
 
-  // Dots
-  const dotsEl = document.getElementById('tutDots');
-  dotsEl.innerHTML = TUT_STEPS.map((_, i) =>
-    `<div class="tut-dot ${i === _tutStep ? 'active' : i < _tutStep ? 'done' : ''}"></div>`
-  ).join('');
+  document.getElementById('tutH').innerHTML = s.h;
+  document.getElementById('tutP').innerHTML = s.p;
+  document.getElementById('tutProgress').textContent = `Krok ${phaseIdx+1} z ${phaseSteps.length}`;
+  document.getElementById('tutPrevBtn').style.display = phaseIdx > 0 ? 'block' : 'none';
+  document.getElementById('tutNextBtn').textContent = phaseIdx === phaseSteps.length - 1 ? '✓ Zakończ' : 'Dalej →';
 
-  document.getElementById('tutTitle').innerHTML = step.title;
-  document.getElementById('tutBody').innerHTML  = step.body;
-  document.getElementById('tutBtnPrev').style.display = _tutStep > 0 ? 'block' : 'none';
-  document.getElementById('tutBtnNext').textContent   = _tutStep === total - 1 ? '✓ Zakończ' : 'Dalej →';
+  const hole = document.getElementById('tutHole');
+  const box  = document.getElementById('tutBox');
 
-  // Spotlight
-  const spot = document.getElementById('tutSpotlight');
-  const tip  = document.getElementById('tutTooltip');
-
-  let targetEl = step.target ? document.querySelector(step.target) : null;
-  // Override for thead highlight
-  if (step.highlight === 'thead') {
-    targetEl = document.querySelector('.schedule-table thead') || targetEl;
-  }
-  // If target not visible (e.g. wizard step panel hidden), fall back to wBtnNext
-  if (targetEl) {
-    const r = targetEl.getBoundingClientRect();
-    if (r.width === 0 && r.height === 0) targetEl = document.getElementById('wBtnNext') || null;
-  }
-
-  if (!targetEl || step.target === null) {
-    // Center modal — full backdrop + centered tooltip
-    spot.style.cssText = 'display:block;left:0;top:0;width:100vw;height:100vh;border-radius:0;outline:none;box-shadow:0 0 0 9999px rgba(4,6,18,0.82)';
-    tip.className = 'tut-tooltip arrow-center';
-    tip.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%)';
+  if (!s.target) {
+    // Centered — no hole
+    hole.style.cssText = 'display:none';
+    box.style.cssText  = 'top:50%;left:50%;transform:translate(-50%,-50%)';
     return;
   }
 
-  const rect = targetEl.getBoundingClientRect();
-  const pad  = 6;
-
-  // Position spotlight
-  spot.style.cssText = `
-    display: block;
-    left:   ${rect.left   - pad}px;
-    top:    ${rect.top    - pad}px;
-    width:  ${rect.width  + pad*2}px;
-    height: ${rect.height + pad*2}px;
-  `;
-
-  // Position tooltip — prefer below, fallback above, left, right
-  const tipW = 300;
-  const tipH = 220; // approx
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const margin = 12;
-
-  let left = rect.left;
-  let top, arrowClass;
-
-  if (step.arrow === 'bottom' || rect.top > tipH + margin + 57) {
-    // place above target
-    top = rect.top - tipH - margin;
-    arrowClass = 'arrow-bottom';
-    if (top < 10) { top = rect.bottom + margin; arrowClass = 'arrow-top'; }
-  } else {
-    // place below target
-    top = rect.bottom + margin;
-    arrowClass = 'arrow-top';
+  const el = document.querySelector(s.target);
+  if (!el) {
+    hole.style.cssText = 'display:none';
+    box.style.cssText  = 'top:50%;left:50%;transform:translate(-50%,-50%)';
+    return;
   }
 
-  // Keep within viewport
-  if (left + tipW > vw - 8) left = vw - tipW - 8;
-  if (left < 8) left = 8;
-  if (top < 57) top = 57;
-  if (top + tipH > vh - 8) top = vh - tipH - 8;
+  const r   = el.getBoundingClientRect();
+  const pad = 6;
+  hole.style.cssText = [
+    'display:block',
+    `left:${r.left - pad}px`,
+    `top:${r.top - pad}px`,
+    `width:${r.width + pad*2}px`,
+    `height:${r.height + pad*2}px`,
+  ].join(';');
 
-  tip.className = `tut-tooltip ${arrowClass}`;
-  tip.style.cssText = `left:${left}px; top:${top}px; transform:none;`;
+  // Place box below or above
+  const bw = 300, bh = 250;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let bx = Math.max(8, Math.min(r.left, vw - bw - 8));
+  let by, transform = 'none';
+
+  if (r.bottom + bh + 16 < vh) {
+    by = r.bottom + 12;
+  } else if (r.top - bh - 12 > 60) {
+    by = r.top - bh - 12;
+  } else {
+    by = Math.max(70, (vh - bh) / 2);
+    bx = Math.min(r.right + 12, vw - bw - 8);
+    bx = Math.max(8, bx);
+  }
+  box.style.cssText = `left:${bx}px;top:${by}px;transform:${transform}`;
 }
 
-// Auto-start on first visit (after app loads)
-function tutAutoStart() {
-  if (!localStorage.getItem(TUT_KEY)) {
-    setTimeout(() => tutStart(), 700);
+function tutAutoShow() {
+  if (!localStorage.getItem(TUT_DONE_KEY)) {
+    setTimeout(tutOpen, 600);
   }
 }
 
 </script>
 
-<!-- ── TUTORIAL OVERLAY ── -->
-<div id="tutorialOverlay">
-  <div id="tutBackdrop" onclick="tutSkip()" style="position:fixed;inset:0;z-index:900;cursor:default"></div>
-  <div class="tut-spotlight" id="tutSpotlight"></div>
-  <div class="tut-tooltip" id="tutTooltip">
-    <div class="tut-badge">
-      <span>✦ Samouczek</span>
-      <div class="tut-step-dots" id="tutDots"></div>
-    </div>
-    <div class="tut-title" id="tutTitle"></div>
-    <div class="tut-body" id="tutBody"></div>
-    <div class="tut-footer">
-      <button class="tut-btn-skip" onclick="tutSkip()">Pomiń samouczek</button>
-      <button class="tut-btn-prev" id="tutBtnPrev" onclick="tutPrev()">← Wstecz</button>
-      <button class="tut-btn-next" id="tutBtnNext" onclick="tutNext()">Dalej →</button>
+
+<!-- SAMOUCZEK -->
+<div id="tutOverlay">
+  <div id="tutBg" onclick="tutClose()"></div>
+  <div id="tutHole"></div>
+  <div id="tutBox">
+    <div id="tutProgress"></div>
+    <h3 id="tutH"></h3>
+    <p id="tutP"></p>
+    <div id="tutFooter">
+      <button id="tutSkipBtn" onclick="tutClose()">Pomiń samouczek</button>
+      <button id="tutPrevBtn" onclick="tutPrev()" style="display:none">← Wstecz</button>
+      <button id="tutNextBtn" onclick="tutNext()">Dalej →</button>
     </div>
   </div>
 </div>
