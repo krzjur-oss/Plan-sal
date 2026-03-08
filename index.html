@@ -1380,6 +1380,7 @@ body.light .tut-tooltip::before { background: #fff; }
   inset: 0;
   background: rgba(4,6,18,0.78);
   z-index: 9001;
+  pointer-events: none;
 }
 #tutHole {
   position: fixed;
@@ -3369,8 +3370,8 @@ function tutAutoShow() {
 
 
 <!-- SAMOUCZEK -->
-<div id="tutOverlay">
-  <div id="tutBg" onclick="tutClose()"></div>
+<div id="tutOverlay" onclick="if(event.target===this||event.target.id==='tutBg')tutClose()">
+  <div id="tutBg"></div>
   <div id="tutHole"></div>
   <div id="tutBox">
     <div id="tutProgress"></div>
