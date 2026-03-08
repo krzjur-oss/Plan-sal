@@ -777,10 +777,11 @@ body {
 
 /* TABLE */
 .schedule-table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .schedule-table th {
@@ -808,22 +809,26 @@ body {
 /* Multi-row merged header */
 .th-building {
   font-size: 0.6rem; font-weight: 800; font-family: var(--mono);
-  letter-spacing: 0.5px; padding: 3px 2px;
+  letter-spacing: 0.5px; padding: 4px 4px;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 .th-floor {
-  font-size: 0.62rem; font-weight: 700; padding: 2px 2px;
+  font-size: 0.62rem; font-weight: 700; padding: 3px 4px;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 .th-seg-row {
-  font-size: 0.58rem; color: var(--text-dim); padding: 2px 2px;
+  font-size: 0.58rem; color: var(--text-dim); padding: 3px 4px;
   text-transform: uppercase; letter-spacing: 0.4px;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 .th-room-row {
   font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
-  color: var(--accent); padding: 3px 2px;
+  color: var(--accent); padding: 4px 4px;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 .th-homeroom {
   font-size: 0.58rem; padding: 3px 2px; line-height: 1.3;
@@ -843,7 +848,7 @@ body {
   border: 1px solid var(--border);
   padding: 0;
   vertical-align: top;
-  min-width: 80px;
+  min-width: 90px;
   background: var(--surface);
 }
 
@@ -1072,16 +1077,41 @@ body {
 
 /* PRINT */
 @media print {
-  .topbar, .statusbar, .modal-overlay, #wizardOverlay, #archivePanel, #pwaInstallBanner { display: none !important; }
-  body, body.light { background: #fff; color: #000; }
-  .main { padding: 0; }
-  .schedule-table th, .schedule-table td { border: 1px solid #ccc; }
-  .cell-inner.filled { border-left: 3px solid #333; background: #f0f4ff; }
-  .cell-teacher { color: #006; }
-  .cell-subject { color: #000; }
-  .schedule-table th { background: #f0f0f0; color: #333; position: static; }
-  .schedule-table td.time-cell { background: #f5f5f5; }
-  @page { margin: 12mm; size: landscape; }
+  .topbar, .statusbar, .modal-overlay, #wizardOverlay, #archivePanel, #pwaInstallBanner,
+  #homeroomModal, .notif, .pwa-install-banner { display: none !important; }
+  body, body.light { background: #fff !important; color: #000 !important; }
+  .main { padding: 0 !important; overflow: visible !important; }
+  .schedule-wrap { min-width: unset !important; overflow: visible !important; }
+  .schedule-table {
+    width: 100% !important;
+    table-layout: auto !important;
+    font-size: 0.6rem !important;
+    border-collapse: collapse !important;
+  }
+  .schedule-table th, .schedule-table td {
+    border: 0.5px solid #bbb !important;
+    padding: 2px 3px !important;
+  }
+  .schedule-table th {
+    background: #f0f0f0 !important;
+    color: #333 !important;
+    position: static !important;
+    white-space: nowrap;
+  }
+  .th-building { font-size: 0.55rem !important; background: #e8e8e8 !important; }
+  .th-floor    { font-size: 0.55rem !important; }
+  .th-seg-row  { font-size: 0.5rem !important; }
+  .th-room-row { font-size: 0.62rem !important; color: #1a56db !important; }
+  .th-homeroom { font-size: 0.5rem !important; }
+  .cell-inner  { min-height: 28px !important; padding: 2px 3px !important; }
+  .cell-inner.filled { border-left: 2px solid #555 !important; background: #f0f4ff !important; }
+  .cell-abbr   { font-size: 0.55rem !important; padding: 0 2px !important; }
+  .cell-teacher { color: #003 !important; font-size: 0.55rem !important; }
+  .cell-subject { color: #000 !important; font-size: 0.58rem !important; }
+  .cell-note   { font-size: 0.5rem !important; }
+  .schedule-table td.time-cell { background: #f5f5f5 !important; }
+  .schedule-table td { min-width: unset !important; }
+  @page { margin: 8mm; size: A4 landscape; }
 }
 
 /* Scrollbar */
@@ -2526,13 +2556,20 @@ function clearDay() {
   renderSchedule(); notify('🗑 Dzień wyczyszczony');
 }
 function exportPDF() {
-  const vf=document.getElementById('validFrom').value;
-  if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey]={};
-  validFromDates[appState.yearKey][currentDay]=vf;
-  const school = appState.school?.short || appState.school?.name || '';
-  document.title=`${school?school+' — ':''}Plan Sal ${appState.yearLabel} — ${appState.days[currentDay]}${vf?' (od '+vf+')':''}`;
+  const vf = document.getElementById('validFrom').value;
+  if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey] = {};
+  validFromDates[appState.yearKey][currentDay] = vf;
+
+  // Build filename: ps_(rok)_(YYYY-MM-DD)
+  const year   = (appState.yearLabel || appState.yearKey).replace(/\//g, '-');
+  const today  = new Date().toISOString().slice(0, 10);
+  const school = appState.school?.short || appState.school?.name || 'plan';
+  const safeSchool = school.replace(/[^a-zA-Z0-9ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, '_').toLowerCase();
+  document.title = `ps_${year}_${today}`;
+
+  // Print — browser uses document.title as default filename
   window.print();
-  document.title='SalePlan — Plan Sal Zajęciowych';
+  document.title = 'SalePlan — Plan Sal Zajęciowych';
 }
 document.getElementById('validFrom').addEventListener('change',()=>{
   if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey]={};
