@@ -226,12 +226,7 @@ body {
 }
 .wcard-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; }
 
-/* Year input */
-.year-input-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
+
 
 .big-input {
   background: var(--surface2);
@@ -416,13 +411,7 @@ body {
 
 .add-floor-btn { margin-top: 0; }
 
-/* Classes step */
-.classes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
-}
+
 
 .class-item {
   display: grid;
@@ -437,7 +426,7 @@ body {
 }
 .class-item:focus-within { border-color: var(--accent); }
 
-.class-color { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink:0; display:none; }
+
 
 .class-input {
   background: transparent;
@@ -493,18 +482,7 @@ body {
 .class-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; max-height: 380px; overflow-y: auto; padding-right: 4px; }
 .class-actions-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
 .class-count-badge { font-size: 0.72rem; color: var(--text-muted); font-family: var(--mono); margin-left: auto; padding: 4px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; }
-.class-group-badge {
-  display: inline-block;
-  background: rgba(16,185,129,0.12);
-  color: var(--green);
-  border: 1px solid rgba(16,185,129,0.25);
-  border-radius: 4px;
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  font-weight: 600;
-  padding: 1px 5px;
-  margin-left: 2px;
-}
+
 
 .add-class-btn {
   display: flex;
@@ -640,7 +618,7 @@ body {
   margin-left: auto; padding: 4px 10px;
   background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
 }
-.teacher-abbr-badge { display: inline-block; background: rgba(59,130,246,0.15); color: var(--accent); border: 1px solid rgba(59,130,246,0.3); border-radius: 4px; font-family: var(--mono); font-size: 0.65rem; font-weight: 700; padding: 1px 5px; letter-spacing: 0.5px; flex-shrink: 0; }
+
 .teacher-col-header { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); margin-bottom: 6px; display: grid; grid-template-columns: 1fr 1fr 110px 36px; gap: 8px; padding: 0 12px; }
 .teacher-select { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 9px 12px; color: var(--text); font-family: var(--font); font-size: 0.85rem; outline: none; transition: border 0.15s, box-shadow 0.15s; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5a7a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
 .teacher-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
@@ -860,11 +838,6 @@ body {
   color: var(--green); font-size: 0.56rem; font-family: var(--mono);
 }
 
-/* Legacy - keep for backward compat */
-.th-inner { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.th-room { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--accent); }
-.th-seg { font-size: 0.58rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-.th-class { font-size: 0.68rem; color: var(--text-muted); font-weight: 700; background: var(--surface3); border-radius: 4px; padding: 1px 5px; margin-top: 1px; }
 
 .schedule-table td {
   border: 1px solid var(--border);
@@ -1638,49 +1611,15 @@ function saveData() {
 // ================================================================
 //  SAMPLE DATA
 // ================================================================
-const SAMPLE_BUILDINGS = [{ name: 'Budynek Główny', address: '' }];
-const SAMPLE_FLOORS = [
-  { name:'Parter 0', color:FLOOR_COLORS[0], buildingIdx:0, segments:[
-    { name:'Segment A', rooms:[{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'6',sub:''},{num:'7',sub:''}] },
-    { name:'Segment B', rooms:[{num:'1',sub:''},{num:'3',sub:''},{num:'4',sub:''}] },
-  ]},
-  { name:'Piętro I', color:FLOOR_COLORS[1], buildingIdx:0, segments:[
-    { name:'Segment A', rooms:[{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'7',sub:''}] },
-    { name:'Segment B', rooms:[{num:'1',sub:''},{num:'2',sub:''},{num:'3',sub:''}] },
-  ]},
-  { name:'Piętro II', color:FLOOR_COLORS[2], buildingIdx:0, segments:[
-    { name:'Segment A', rooms:[{num:'1',sub:''},{num:'2',sub:''},{num:'5',sub:''},{num:'6',sub:''},{num:'7',sub:''}] },
-    { name:'Segment B', rooms:[{num:'1',sub:''},{num:'3',sub:''},{num:'5',sub:''}] },
-  ]},
-  { name:'Segment Żywnościowy', color:FLOOR_COLORS[3], buildingIdx:0, segments:[
-    { name:'', rooms:[{num:'16',sub:'D. Informatyczna'},{num:'18',sub:'M. Informatyczna'},{num:'21',sub:''}] },
-  ]},
-];
-// wClasses is now array of {name, abbr, group}
-// e.g. {name:'1A', abbr:'1A', group:'cała klasa'} or {name:'1A', abbr:'1Agr1', group:'gr1'}
-const SAMPLE_CLASSES = [
-  {name:'I A',  abbr:'IA',    group:'cała klasa'},
-  {name:'I B',  abbr:'IB',    group:'cała klasa'},
-  {name:'II A', abbr:'IIA',   group:'cała klasa'},
-  {name:'II B', abbr:'IIB',   group:'cała klasa'},
-  {name:'III A',abbr:'IIIA',  group:'cała klasa'},
-];
 
-// ================================================================
-//  WIZARD
-// ================================================================
 function openWizardNewYear(preload) {
   wStep = 0;
   wAssignments = {};
 
-  if (preload) {
-    wBuildings = JSON.parse(JSON.stringify(SAMPLE_BUILDINGS));
-    wFloors = JSON.parse(JSON.stringify(SAMPLE_FLOORS));
-    wClasses = JSON.parse(JSON.stringify(SAMPLE_CLASSES));
-    wTeachers = [];
-  } else if (appState) {
-    wBuildings = JSON.parse(JSON.stringify(appState.buildings || SAMPLE_BUILDINGS));
-    wFloors = JSON.parse(JSON.stringify(appState.floors));
+  if (appState) {
+    // Nowy rok — przepisz dane z bieżącego roku (budynki, klasy, nauczyciele)
+    wBuildings = JSON.parse(JSON.stringify(appState.buildings || [{ name: '', address: '' }]));
+    wFloors = JSON.parse(JSON.stringify(appState.floors || []));
     wClasses = JSON.parse(JSON.stringify(appState.classes || []));
     wTeachers = JSON.parse(JSON.stringify(appState.teachers || []));
     document.getElementById('wSchoolName').value = appState.school?.name || '';
@@ -1688,9 +1627,10 @@ function openWizardNewYear(preload) {
     document.getElementById('wSchoolPhone').value = appState.school?.phone || '';
     document.getElementById('wSchoolWeb').value = appState.school?.web || '';
   } else {
-    wBuildings = JSON.parse(JSON.stringify(SAMPLE_BUILDINGS));
-    wFloors = JSON.parse(JSON.stringify(SAMPLE_FLOORS));
-    wClasses = [...SAMPLE_CLASSES];
+    // Pierwsze uruchomienie — puste pola
+    wBuildings = [{ name: '', address: '' }];
+    wFloors = [];
+    wClasses = [];
     wTeachers = [];
   }
 
@@ -1708,7 +1648,7 @@ function openWizardNewYear(preload) {
   document.getElementById('wizardOverlay').classList.add('show');
 }
 
-function openWizardFirst() { openWizardNewYear(true); }
+function openWizardFirst() { openWizardNewYear(); }
 
 function wizardNext() {
   if (wStep === 0) {
@@ -2319,11 +2259,6 @@ function renderSchedule() {
     (f.segments||[]).some(s => (s.name||'').trim() !== '')
   );
 
-  const numHeaderRows = 1 // always: room row
-    + (showBuilding ? 1 : 0)
-    + (showFloor    ? 1 : 0)
-    + (showSeg      ? 1 : 0)
-    + 1; // homeroom row always shown
 
   // ── Build merged header rows ──
   // Row 1 (optional): Buildings — merged across all cols of same building
