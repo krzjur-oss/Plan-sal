@@ -1177,7 +1177,10 @@ body {
   z-index: 900;
   pointer-events: none;
 }
-#tutorialOverlay.active { display: block; }
+#tutorialOverlay.active {
+  display: block;
+  pointer-events: none; /* children override individually */
+}
 
 /* Dark backdrop with hole cutout via box-shadow */
 .tut-spotlight {
@@ -1306,6 +1309,7 @@ body.light .tut-tooltip::before { background: #fff; }
         <div class="wizard-title">Nowy rok szkolny<br><span id="wTitleYear">2025/2026</span></div>
         <div class="wizard-subtitle">Skonfiguruj szkołę, budynki, nauczycieli i klasy — zajmie to tylko chwilę.</div>
       </div>
+      <button class="tut-trigger" onclick="tutRestart()" title="Samouczek" style="flex-shrink:0;margin-top:2px">?</button>
       <button class="theme-toggle" id="themeToggleWizard" onclick="toggleTheme()" title="Przełącz motyw" style="flex-shrink:0;margin-top:4px">🌙</button>
     </div>
   </div>
@@ -1535,7 +1539,7 @@ body.light .tut-tooltip::before { background: #fff; }
       <button class="btn btn-primary" onclick="saveData()">💾 Zapisz</button>
       <button class="btn btn-yellow" onclick="openWizardNewYear()">＋ Nowy rok</button>
       <button class="btn btn-red" onclick="clearDay()">🗑 Dzień</button>
-      <button class="tut-trigger" onclick="tutStart()" title="Samouczek">?</button>
+      <button class="tut-trigger" onclick="tutRestart()" title="Samouczek — powtórz">?</button>
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
     </div>
   </div>
@@ -1800,7 +1804,10 @@ function openWizardNewYear(preload) {
   document.getElementById('wizardOverlay').classList.add('show');
 }
 
-function openWizardFirst() { openWizardNewYear(); }
+function openWizardFirst() {
+  openWizardNewYear();
+  tutAutoStart();
+}
 
 function wizardNext() {
   if (wStep === 0) {
@@ -3049,72 +3056,112 @@ window.addEventListener('appinstalled', () => {
 //  TUTORIAL
 // ================================================================
 const TUT_KEY = 'sp_tut_done';
+const TUT_VER = '1';
+// Reset tutorial if version changed
+if (localStorage.getItem(TUT_KEY) && localStorage.getItem('sp_tut_ver') !== TUT_VER) {
+  localStorage.removeItem(TUT_KEY);
+}
+localStorage.setItem('sp_tut_ver', TUT_VER);
 
 const TUT_STEPS = [
+  // ── KREATOR (kroki 0-7) ──
   {
+    phase: 'wizard',
     title: 'Witaj w SalePlan! 👋',
-    body: 'To <strong>plan sal zajęciowych</strong> — szybki podgląd które klasy i nauczyciele są gdzie i kiedy.<br><br>Przeprowadzę Cię przez najważniejsze funkcje. Możesz pominąć w dowolnym momencie.',
+    body: 'To <strong>plan sal zajęciowych</strong> dla Twojej szkoły.<br><br>Zanim zaczniesz, kreator przeprowadzi Cię przez konfigurację. Ten samouczek wyjaśni każdy krok.<br><br>Możesz pominąć w dowolnym momencie przyciskiem <strong>Pomiń</strong>.',
     target: null,
     arrow: 'center',
   },
   {
-    title: 'Nazwa szkoły i rok',
-    body: 'Tu widać skrót nazwy szkoły i aktywny <strong>rok szkolny</strong>.<br><br>Kliknij w <code>rok</code> aby zobaczyć archiwum poprzednich lat.',
-    target: '#yearPill',
-    arrow: 'bottom',
+    phase: 'wizard',
+    title: 'Krok 1 — Szkoła i budynki',
+    body: 'Wpisz <strong>nazwę szkoły</strong> i <strong>skrót</strong> (wyświetlany w topbarze).<br><br>Dodaj budynki jeśli szkoła ma więcej niż jeden obiekt. Możesz też wpisać adres każdego budynku.',
+    target: '#wStep0',
+    arrow: 'right',
   },
   {
-    title: 'Dni tygodnia',
-    body: 'Przełączaj między dniami klikając przyciski <strong>Poniedziałek — Piątek</strong>.<br><br>Każdy dzień ma osobny plan.',
-    target: '#dayTabs',
-    arrow: 'bottom',
+    phase: 'wizard',
+    title: 'Krok 2 — Rok szkolny i godziny',
+    body: 'Wpisz <strong>rok szkolny</strong> w formacie <code>2025/2026</code>.<br><br>W polu <strong>Godziny</strong> wpisz numery lekcji oddzielone przecinkami, np. <code>0,1,2,3,4,5,6,7,8</code>. Lekcja 0 to zerówka.',
+    target: '#wStep1',
+    arrow: 'right',
   },
   {
-    title: 'Tabela planu',
-    body: 'Każda kolumna to <strong>jedna sala</strong>, każdy wiersz to <strong>godzina lekcyjna</strong>.<br><br>Kliknij <code>＋</code> w dowolnej komórce aby przypisać nauczyciela, klasę i przedmiot.',
+    phase: 'wizard',
+    title: 'Krok 3 — Piętra i sale',
+    body: 'Dodaj <strong>piętra i segmenty</strong> budynku, a w każdym segmencie — numery sal.<br><br>Możesz też <strong>wczytać sale z pliku TXT</strong> — jeden wpis na linię w formacie:<br><code>piętro;segment;sala;opis</code>',
+    target: '#wStep2',
+    arrow: 'right',
+  },
+  {
+    phase: 'wizard',
+    title: 'Krok 4 — Klasy i grupy',
+    body: 'Dodaj <strong>klasy</strong> które funkcjonują w szkole.<br><br>Każda klasa ma nazwę (np. <code>4A</code>), skrót i opcjonalnie <strong>grupę</strong> (np. <code>gr. ang.</code>) dla klas dzielonych.',
+    target: '#wStep3',
+    arrow: 'right',
+  },
+  {
+    phase: 'wizard',
+    title: 'Krok 5 — Nauczyciele',
+    body: 'Dodaj <strong>nauczycieli</strong> — imię, nazwisko i skrót (np. <code>KJUR</code>).<br><br>Skróty pojawiają się w komórkach planu. Nauczyciele są opcjonalni — możesz ich dodać później.',
+    target: '#wStep4',
+    arrow: 'right',
+  },
+  {
+    phase: 'wizard',
+    title: 'Krok 6 — Przypisanie klas do sal',
+    body: 'Opcjonalnie przypisz <strong>klasy do sal</strong> jako domyślne miejsca pobytu.<br><br>To ułatwia uzupełnianie planu — przypisanie pojawi się w wierszu <strong>Gospod.</strong> w nagłówku tabeli.',
+    target: '#wStep5',
+    arrow: 'right',
+  },
+  {
+    phase: 'wizard',
+    title: 'Przyciski nawigacji',
+    body: 'Używaj przycisków <strong>Dalej →</strong> i <strong>← Wstecz</strong> aby poruszać się między krokami.<br><br>Kreator sprawdza wymagane pola — nie przejdziesz dalej bez nazwy szkoły i przynajmniej jednej sali.',
+    target: '#wBtnNext',
+    arrow: 'top',
+  },
+  // ── PLAN (kroki 8-13) ──
+  {
+    phase: 'app',
+    title: 'Tabela planu sal',
+    body: 'Każda <strong>kolumna</strong> to sala, każdy <strong>wiersz</strong> to godzina lekcyjna.<br><br>Kliknij <code>＋</code> w komórce aby przypisać nauczyciela, klasę i przedmiot do danej sali i godziny.',
     target: '#scheduleWrap',
     arrow: 'top',
   },
   {
+    phase: 'app',
     title: 'Nagłówek — piętra i segmenty',
-    body: 'Wiersze nagłówka pokazują <strong>piętro → segment → numer sali</strong>.<br><br>Wiersz <strong>Gospod.</strong> — kliknij aby przypisać wychowawcę klasy do sali.',
+    body: 'Wiersze nagłówka pokazują kolejno:<br><strong>Piętro → Segment → Numer sali</strong><br><br>Wiersz <strong>Gospod.</strong> — kliknij komórkę aby przypisać wychowawcę klasy do sali.',
     target: '#scheduleWrap',
     arrow: 'top',
     highlight: 'thead',
   },
   {
-    title: 'Data obowiązywania planu',
-    body: 'Pole <strong>Od:</strong> pozwala zaznaczyć od kiedy ten plan obowiązuje.<br><br>Data jest zapisywana razem z planem i pojawia się w wydruku PDF.',
-    target: '.valid-from-wrap',
+    phase: 'app',
+    title: 'Dni tygodnia i data',
+    body: 'Przełączaj między dniami przyciskami <strong>Poniedziałek — Piątek</strong>.<br><br>Pole <strong>Od:</strong> pozwala oznaczyć od kiedy ten plan obowiązuje — data trafi do wydruku PDF.',
+    target: '#dayTabs',
     arrow: 'bottom',
   },
   {
-    title: 'Eksport PDF',
-    body: 'Kliknij <code>⬇ PDF</code> aby wydrukować lub zapisać plan jako plik PDF.<br><br>Plik automatycznie otrzymuje nazwę <code>ps_(rok)_(data)</code>. Wydruk jest poziomy, dopasowany do arkusza A4.',
+    phase: 'app',
+    title: 'Eksport PDF i zapis',
+    body: '<code>⬇ PDF</code> — drukuje lub zapisuje plan jako plik A4 poziomy.<br>Nazwa pliku: <code>ps_(rok)_(data)</code><br><br><code>💾 Zapisz</code> — zapisuje dane w pamięci przeglądarki. Dane są tylko na tym urządzeniu.',
     target: '.btn-green',
     arrow: 'bottom',
   },
   {
-    title: 'Zapis i bezpieczeństwo danych',
-    body: '<code>💾 Zapisz</code> zapisuje plan w pamięci przeglądarki (<strong>localStorage</strong>).<br><br>Dane nie są wysyłane nigdzie — są tylko na tym urządzeniu.',
-    target: '.btn-primary',
-    arrow: 'bottom',
-  },
-  {
-    title: 'Nowy rok szkolny',
-    body: 'Kliknij <code>＋ Nowy rok</code> aby uruchomić kreator nowego roku.<br><br>Budynki, piętra, klasy i nauczyciele zostaną <strong>przepisane automatycznie</strong> — zmieniasz tylko co się zmieniło.',
+    phase: 'app',
+    title: 'Nowy rok i archiwum',
+    body: '<code>＋ Nowy rok</code> — uruchamia kreator nowego roku. Budynki, sale i nauczyciele są <strong>przepisywane automatycznie</strong>.<br><br>Kliknij w <code>rok szkolny</code> w lewym górnym rogu aby przeglądać <strong>archiwum</strong> poprzednich lat.',
     target: '.btn-yellow',
     arrow: 'bottom',
   },
   {
-    title: 'Kreator konfiguracji',
-    body: 'Kreator prowadzi przez 6 kroków:<br><strong>1.</strong> Szkoła i budynki<br><strong>2.</strong> Rok szkolny i godziny<br><strong>3.</strong> Piętra i sale (import z pliku TXT)<br><strong>4.</strong> Klasy i grupy<br><strong>5.</strong> Nauczyciele<br><strong>6.</strong> Przypisanie klas do sal',
-    target: '.btn-yellow',
-    arrow: 'bottom',
-  },
-  {
+    phase: 'app',
     title: 'Gotowe! 🎉',
-    body: 'Teraz wiesz jak korzystać z SalePlan.<br><br>Przycisk <code>?</code> w topbarze uruchomi ten samouczek ponownie w każdej chwili.',
+    body: 'Teraz wiesz jak korzystać z SalePlan.<br><br>Przycisk <code>?</code> w prawym górnym rogu uruchomi ten samouczek ponownie w każdej chwili.',
     target: '.tut-trigger',
     arrow: 'bottom',
   },
@@ -3124,11 +3171,26 @@ let _tutStep = 0;
 let _tutActive = false;
 
 function tutStart(force = false) {
-  if (!appState && !force) return; // don't run during wizard
   _tutStep = 0;
   _tutActive = true;
   document.getElementById('tutorialOverlay').classList.add('active');
   tutRender();
+}
+
+function tutCurrentPhase() {
+  // Are we in wizard mode?
+  const wizActive = document.getElementById('wizardOverlay')?.classList.contains('show');
+  return wizActive ? 'wizard' : 'app';
+}
+
+function tutFirstStepOfPhase(phase) {
+  return TUT_STEPS.findIndex(s => s.phase === phase);
+}
+
+function tutLastStepOfPhase(phase) {
+  let last = -1;
+  TUT_STEPS.forEach((s, i) => { if (s.phase === phase) last = i; });
+  return last;
 }
 
 function tutSkip() {
@@ -3137,13 +3199,34 @@ function tutSkip() {
   localStorage.setItem(TUT_KEY, '1');
 }
 
+function tutRestart() {
+  localStorage.removeItem(TUT_KEY);
+  // Start from appropriate phase
+  const phase = tutCurrentPhase();
+  _tutStep = tutFirstStepOfPhase(phase);
+  _tutActive = true;
+  document.getElementById('tutorialOverlay').classList.add('active');
+  tutRender();
+}
+
 function tutNext() {
-  if (_tutStep < TUT_STEPS.length - 1) {
-    _tutStep++;
-    tutRender();
-  } else {
-    tutSkip();
+  const next = _tutStep + 1;
+  if (next >= TUT_STEPS.length) { tutSkip(); return; }
+
+  const nextStep = TUT_STEPS[next];
+  const phase = tutCurrentPhase();
+
+  // If next step is 'app' but we're still in wizard — skip to end
+  if (nextStep.phase === 'app' && phase === 'wizard') {
+    tutSkip(); return;
   }
+  // If next step is 'wizard' but wizard is closed — skip to first app step
+  if (nextStep.phase === 'wizard' && phase === 'app') {
+    _tutStep = tutFirstStepOfPhase('app');
+  } else {
+    _tutStep = next;
+  }
+  tutRender();
 }
 
 function tutPrev() {
@@ -3170,19 +3253,21 @@ function tutRender() {
   const tip  = document.getElementById('tutTooltip');
 
   let targetEl = step.target ? document.querySelector(step.target) : null;
-  // override for thead highlight
+  // Override for thead highlight
   if (step.highlight === 'thead') {
     targetEl = document.querySelector('.schedule-table thead') || targetEl;
   }
+  // If target not visible (e.g. wizard step panel hidden), fall back to wBtnNext
+  if (targetEl) {
+    const r = targetEl.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) targetEl = document.getElementById('wBtnNext') || null;
+  }
 
   if (!targetEl || step.target === null) {
-    // Center modal — no spotlight
-    spot.style.cssText = 'display:none';
+    // Center modal — full backdrop + centered tooltip
+    spot.style.cssText = 'display:block;left:0;top:0;width:100vw;height:100vh;border-radius:0;outline:none;box-shadow:0 0 0 9999px rgba(4,6,18,0.82)';
     tip.className = 'tut-tooltip arrow-center';
-    tip.style.cssText = `
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-    `;
+    tip.style.cssText = 'top:50%;left:50%;transform:translate(-50%,-50%)';
     return;
   }
 
@@ -3231,8 +3316,8 @@ function tutRender() {
 
 // Auto-start on first visit (after app loads)
 function tutAutoStart() {
-  if (!localStorage.getItem(TUT_KEY) && appState) {
-    setTimeout(tutStart, 800);
+  if (!localStorage.getItem(TUT_KEY)) {
+    setTimeout(() => tutStart(), 700);
   }
 }
 
