@@ -1176,9 +1176,14 @@ body {
 <div class="wizard">
 
   <div class="wizard-header">
-    <div class="wizard-badge">✦ Kreator konfiguracji</div>
-    <div class="wizard-title">Nowy rok szkolny<br><span id="wTitleYear">2025/2026</span></div>
-    <div class="wizard-subtitle">Skonfiguruj szkołę, budynki, nauczycieli i klasy — zajmie to tylko chwilę.</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div>
+        <div class="wizard-badge">✦ Kreator konfiguracji</div>
+        <div class="wizard-title">Nowy rok szkolny<br><span id="wTitleYear">2025/2026</span></div>
+        <div class="wizard-subtitle">Skonfiguruj szkołę, budynki, nauczycieli i klasy — zajmie to tylko chwilę.</div>
+      </div>
+      <button class="theme-toggle" id="themeToggleWizard" onclick="toggleTheme()" title="Przełącz motyw" style="flex-shrink:0;margin-top:4px">🌙</button>
+    </div>
   </div>
 
   <!-- Steps indicator -->
@@ -1264,9 +1269,32 @@ body {
   <div class="wizard-step" id="wStep2">
     <div class="wcard">
       <div class="wcard-title">🏗 Piętra i sale</div>
-      <div class="wcard-desc">Dodaj piętra, segmenty i numery sal. Każde piętro przypisz do odpowiedniego budynku.</div>
+      <div class="wcard-desc">
+        Dodaj piętra, segmenty i sale ręcznie lub <strong style="color:var(--accent)">zaimportuj z pliku .txt</strong>.<br>
+        Format jednej linii: <span style="font-family:var(--mono);color:var(--text-muted);font-size:0.8rem">piętro;segment;sala;opis</span><br>
+        Przykłady:<br>
+        <span style="font-family:var(--mono);color:var(--text-muted);font-size:0.78rem">
+          Parter;A;1;pracownia komputerowa<br>
+          Parter;A;2;<br>
+          I piętro;B;10;sala językowa<br>
+          I piętro;;15;
+        </span>
+        <span style="font-size:0.75rem;color:var(--text-dim)">Segment i opis są opcjonalne. Przy jednym budynku kolumna budynku jest pomijana, przy wielu dodaj ją jako pierwszą: <span style="font-family:var(--mono)">budynek;piętro;segment;sala;opis</span></span>
+      </div>
+
+      <div class="import-drop-zone" id="floorImportDropZone"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="handleFloorImportDrop(event)">
+        <input type="file" accept=".txt,text/plain" onchange="handleFloorImportFile(this)">
+        <div class="import-drop-icon">🏗</div>
+        <div class="import-drop-label">Przeciągnij plik .txt lub kliknij, aby wybrać</div>
+        <div class="import-drop-sub">Format: piętro;segment;sala;opis — jeden wpis na linię</div>
+      </div>
+      <div class="import-preview" id="floorImportPreview"></div>
+
       <div class="floor-list" id="floorList"></div>
-      <button class="add-floor-btn" onclick="addFloor()">＋ Dodaj piętro / strefę</button>
+      <button class="add-floor-btn" onclick="addFloor()" style="margin-top:8px">＋ Dodaj piętro / strefę ręcznie</button>
     </div>
   </div>
 
@@ -2593,8 +2621,12 @@ function notify(msg,warn){
 function applyTheme(theme) {
   const isLight = theme === 'light';
   document.body.classList.toggle('light', isLight);
-  const btn = document.getElementById('themeToggle');
-  if (btn) btn.textContent = isLight ? '☀️' : '🌙';
+  const icon = isLight ? '☀️' : '🌙';
+  // sync all theme toggle buttons (topbar + wizard)
+  ['themeToggle','themeToggleWizard'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.textContent = icon;
+  });
   // update PWA theme-color meta
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = isLight ? '#f0f4fa' : '#080c12';
@@ -2689,6 +2721,94 @@ function clearHomeroom() {
 document.getElementById('homeroomModal').addEventListener('click', e => {
   if (e.target === document.getElementById('homeroomModal')) closeHomeroomModal();
 });
+
+// ================================================================
+//  FLOOR / ROOM IMPORT (step 3)
+// ================================================================
+function handleFloorImportDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const file = e.dataTransfer?.files?.[0];
+  if (file) readFloorTxtFile(file);
+}
+function handleFloorImportFile(input) {
+  if (input.files?.[0]) readFloorTxtFile(input.files[0]);
+}
+function readFloorTxtFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => importFloorsFromText(e.target.result);
+  reader.readAsText(file, 'utf-8');
+}
+
+function importFloorsFromText(text) {
+  const lines = text.split(/?
+/).map(l => l.trim()).filter(Boolean);
+  const multiBuilding = wBuildings.length > 1;
+  let added = 0, skipped = 0;
+
+  lines.forEach(line => {
+    // split on ; or ,
+    const parts = line.split(/[;,]/).map(p => p.trim());
+
+    let buildingName, floorName, segName, roomNum, roomSub;
+
+    if (multiBuilding) {
+      // format: budynek;piętro;segment;sala;opis
+      [buildingName, floorName, segName, roomNum, roomSub] = parts;
+    } else {
+      // format: piętro;segment;sala;opis
+      [floorName, segName, roomNum, roomSub] = parts;
+      buildingName = wBuildings[0]?.name || '';
+    }
+
+    if (!roomNum) { skipped++; return; }
+
+    // Find or create the building index
+    let buildingIdx = 0;
+    if (multiBuilding && buildingName) {
+      const bi = wBuildings.findIndex(b =>
+        b.name.trim().toLowerCase() === buildingName.trim().toLowerCase()
+      );
+      if (bi >= 0) buildingIdx = bi;
+    }
+
+    // Find or create floor matching name + buildingIdx
+    const fName = (floorName || 'Parter').trim();
+    let floor = wFloors.find(f =>
+      f.name.trim() === fName && (f.buildingIdx||0) === buildingIdx
+    );
+    if (!floor) {
+      const color = FLOOR_COLORS[wFloors.length % FLOOR_COLORS.length];
+      floor = { name: fName, color, buildingIdx, segments: [] };
+      wFloors.push(floor);
+    }
+
+    // Find or create segment
+    const sName = (segName || '').trim();
+    let seg = floor.segments.find(s => s.name.trim() === sName);
+    if (!seg) {
+      seg = { name: sName, rooms: [] };
+      floor.segments.push(seg);
+    }
+
+    // Check duplicate room number in this segment
+    if (seg.rooms.some(r => r.num.trim() === roomNum.trim())) {
+      skipped++; return;
+    }
+
+    seg.rooms.push({ num: roomNum.trim(), sub: (roomSub||'').trim() });
+    added++;
+  });
+
+  renderFloorList();
+
+  const prev = document.getElementById('floorImportPreview');
+  if (prev) {
+    prev.textContent = `✓ Dodano ${added} sal${added===1?'ę':added<5?'e':''}${skipped ? ` · ${skipped} pominięto (duplikaty / błędy)` : ''}`;
+    prev.style.color = added > 0 ? 'var(--green)' : 'var(--red)';
+  }
+  if (added > 0) notify(`✓ Zaimportowano ${added} sal z pliku`);
+}
 
 // ================================================================
 //  QUICK-ADD (from edit modal)
