@@ -1389,12 +1389,16 @@ body.light .tut-tooltip::before { background: #fff; }
   display: none;
   position: fixed;
   z-index: 9010;
-  width: 300px;
+  right: 12px;
+  bottom: 12px;
+  left: auto;
+  top: auto;
+  width: 280px;
   max-width: calc(100vw - 24px);
   background: var(--surface);
   border: 1px solid var(--accent);
   border-radius: 14px;
-  padding: 20px 20px 16px;
+  padding: 16px 18px 14px;
   box-shadow: 0 12px 48px rgba(0,0,0,0.6);
 }
 body.light #tutBox { background: #fff; }
@@ -3326,7 +3330,7 @@ function tutPhase() {
 }
 
 function tutOpen() {
-  _ts = 0; // zawsze start od powitania
+  _ts = 0;
   const bg  = document.getElementById('tutBg');
   const box = document.getElementById('tutBox');
   if (bg)  { bg.style.display  = 'block'; bg.classList.add('on'); }
@@ -3335,8 +3339,8 @@ function tutOpen() {
 }
 
 function tutClose() {
-  ['tutBg','tutHole','tutBox'].forEach(id => {
-    const el = document.getElementById(id);
+  ['tutBg','tutHole','tutBox'].forEach(function(id) {
+    var el = document.getElementById(id);
     if (el) { el.classList.remove('on'); el.style.display = 'none'; }
   });
   try { localStorage.setItem(TUT_DONE_KEY, '1'); } catch(e) {}
@@ -3366,27 +3370,28 @@ function tutDraw() {
   const el_sk = document.getElementById('tutSkipBtn');
   if (!el_h) return;
 
-  el_h.innerHTML  = s.h;
-  el_p.innerHTML  = s.p;
-  el_pr.textContent = `Krok ${_ts + 1} z ${total}`;
+  el_h.innerHTML    = s.h;
+  el_p.innerHTML    = s.p;
+  el_pr.textContent = 'Krok ' + (_ts + 1) + ' z ' + total;
   el_sk.textContent = (_ts === total - 1) ? '✓ Zakończ' : 'Pomiń samouczek';
 
-  // Spotlight
+  // Spotlight na panel kreatora
   const hole = document.getElementById('tutHole');
-  if (hole && s.wStep >= 0) {
+  if (!hole) return;
+  if (s.wStep >= 0) {
     const target = document.getElementById('wStep' + s.wStep);
     if (target) {
-      const r   = target.getBoundingClientRect();
+      const r = target.getBoundingClientRect();
       const pad = 8;
       hole.classList.add('on');
-      hole.style.left   = (r.left - pad) + 'px';
-      hole.style.top    = (r.top  - pad) + 'px';
-      hole.style.width  = (r.width  + pad*2) + 'px';
-      hole.style.height = (r.height + pad*2) + 'px';
+      hole.style.left   = (r.left   - pad) + 'px';
+      hole.style.top    = (r.top    - pad) + 'px';
+      hole.style.width  = (r.width  + pad * 2) + 'px';
+      hole.style.height = (r.height + pad * 2) + 'px';
     } else {
       hole.classList.remove('on');
     }
-  } else if (hole) {
+  } else {
     hole.classList.remove('on');
   }
 }
