@@ -1679,6 +1679,73 @@ body.light #tutBox { background: #fff; }
 /* Uproszczony układ komórki */
 .cell-row-cls  { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 2px; }
 .cell-row-teacher { line-height: 1; }
+
+/* ================================================================
+   EKSPORT / IMPORT / DRAG & DROP
+   ================================================================ */
+
+/* Przyciski outline w topbarze */
+.btn-outline-blue {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-size: 0.75rem;
+  padding: 5px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.btn-outline-blue:hover { background: rgba(99,102,241,0.12); }
+
+/* Drop overlay */
+#dropOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(30,30,50,0.82);
+  z-index: 1100;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+#dropOverlay.show { display: flex; }
+.drop-inner {
+  background: var(--surface);
+  border: 2.5px dashed var(--accent);
+  border-radius: 18px;
+  padding: 48px 64px;
+  text-align: center;
+  color: var(--text);
+  pointer-events: none;
+}
+
+/* Import modal */
+#importModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 900;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+#importModal.show { display: flex; }
+
+/* Statystyki diff */
+.import-stat {
+  font-size: 0.82rem;
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-weight: 500;
+}
+.import-stat.added    { background: rgba(16,185,129,0.12); color: var(--green); }
+.import-stat.conflict { background: rgba(239,68,68,0.10);  color: #ef4444; }
+.import-stat.same     { background: rgba(99,102,241,0.10); color: var(--text-dim); }
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -1963,6 +2030,8 @@ if ('serviceWorker' in navigator) {
       </div>
       <button class="btn btn-green" onclick="exportPDF()">⬇ PDF</button>
       <button class="btn btn-primary" onclick="saveData()">💾 Zapisz</button>
+      <button class="btn btn-outline-blue" onclick="exportJSON()" title="Eksportuj plan do pliku JSON">⬆ JSON</button>
+      <label class="btn btn-outline-blue" title="Importuj plan z pliku JSON" style="cursor:pointer">⬇ Import<input type="file" accept=".json" style="display:none" onchange="handleImportFile(this.files[0]);this.value=''"></label>
       <button class="btn btn-yellow" onclick="openWizardNewYear()">＋ Nowy rok</button>
       <button class="btn btn-red" onclick="clearDay()">🗑 Dzień</button>
       <button class="tut-trigger" id="tutTriggerBtn" onclick="toggleAppHelp()" title="Pomoc">?</button>
@@ -2264,6 +2333,164 @@ function loadAll() {
   if (appState && !appState.buildings) appState.buildings = [];
 }
 
+
+// ================================================================
+//  EKSPORT / IMPORT / SCALANIE (współpraca)
+// ================================================================
+
+// ── Eksport do pliku JSON ──
+function exportJSON() {
+  const data = {
+    _version: 1,
+    _exported: new Date().toISOString(),
+    appState,
+    schedData,
+    validFromDates,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  const school = (appState?.school?.short || appState?.school?.name || 'SalePlan').replace(/\s+/g,'_');
+  a.href     = url;
+  a.download = `${school}_${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  notify('✓ Wyeksportowano plan do pliku JSON');
+}
+
+// ── Wczytaj JSON z pliku (obsługa pliku) ──
+function handleImportFile(file) {
+  if (!file || !file.name.endsWith('.json')) {
+    notify('⚠ Wybierz plik .json', true); return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.schedData) { notify('⚠ Nieprawidłowy format pliku', true); return; }
+      openImportModal(data);
+    } catch(ex) {
+      notify('⚠ Błąd odczytu pliku: ' + ex.message, true);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Otwórz modal porównania/importu ──
+let _importData = null;
+function openImportModal(data) {
+  _importData = data;
+  const modal = document.getElementById('importModal');
+  if (!modal) return;
+
+  const impSched  = data.schedData  || {};
+  const curSched  = schedData       || {};
+  const yk        = appState?.yearKey;
+
+  // Licz różnice
+  let added = 0, conflicts = 0, same = 0;
+  const impYear = impSched[yk] || {};
+  const curYear = curSched[yk] || {};
+
+  Object.keys(impYear).forEach(dayIdx => {
+    const impDay = impYear[dayIdx] || {};
+    const curDay = curYear[dayIdx] || {};
+    Object.keys(impDay).forEach(hr => {
+      const impHr = impDay[hr] || {};
+      const curHr = curDay[hr] || {};
+      Object.keys(impHr).forEach(key => {
+        const impCell = impHr[key];
+        const curCell = curHr[key];
+        const impFilled = !!(impCell?.teacherAbbr || (impCell?.classes||[]).length || impCell?.className);
+        const curFilled = !!(curCell?.teacherAbbr || (curCell?.classes||[]).length || curCell?.className);
+        if (!impFilled) return;
+        if (!curFilled) added++;
+        else if (JSON.stringify(impCell) === JSON.stringify(curCell)) same++;
+        else conflicts++;
+      });
+    });
+  });
+
+  // Wypełnij info w modalu
+  document.getElementById('importInfo').innerHTML =
+    `<div class="import-stat added">＋ ${added} nowych wpisów (zostaną dodane)</div>` +
+    `<div class="import-stat conflict">${conflicts > 0 ? '⚠' : '✓'} ${conflicts} konfliktów (istniejące wpisy)</div>` +
+    `<div class="import-stat same">= ${same} identycznych wpisów</div>`;
+
+  document.getElementById('importModeOverwrite').checked = false;
+  document.getElementById('importModeMerge').checked     = true;
+
+  modal.classList.add('show');
+}
+function closeImportModal() {
+  document.getElementById('importModal').classList.remove('show');
+  _importData = null;
+}
+function confirmImport() {
+  if (!_importData) return;
+  const merge = document.getElementById('importModeMerge').checked;
+  const impSched = _importData.schedData || {};
+  const yk = appState?.yearKey;
+
+  if (merge) {
+    // Scalanie: tylko puste komórki
+    Object.keys(impSched).forEach(yk2 => {
+      if (!schedData[yk2]) schedData[yk2] = {};
+      Object.keys(impSched[yk2]).forEach(dayIdx => {
+        if (!schedData[yk2][dayIdx]) schedData[yk2][dayIdx] = {};
+        Object.keys(impSched[yk2][dayIdx]).forEach(hr => {
+          if (!schedData[yk2][dayIdx][hr]) schedData[yk2][dayIdx][hr] = {};
+          Object.keys(impSched[yk2][dayIdx][hr]).forEach(key => {
+            const impCell = impSched[yk2][dayIdx][hr][key];
+            const curCell = schedData[yk2][dayIdx][hr][key];
+            const impFilled = !!(impCell?.teacherAbbr || (impCell?.classes||[]).length || impCell?.className);
+            const curFilled = !!(curCell?.teacherAbbr || (curCell?.classes||[]).length || curCell?.className);
+            if (impFilled && !curFilled) {
+              schedData[yk2][dayIdx][hr][key] = impCell;
+            }
+          });
+        });
+      });
+    });
+    notify('✓ Scalono — dodano brakujące wpisy');
+  } else {
+    // Nadpisz całkowicie
+    schedData = impSched;
+    if (_importData.validFromDates) validFromDates = _importData.validFromDates;
+    notify('✓ Plan zastąpiony danymi z pliku');
+  }
+  persistAll();
+  closeImportModal();
+  renderSchedule();
+}
+
+// ── Drag & drop na całą aplikację ──
+function initImportDragDrop() {
+  // drag target: całe body
+  let _dragOver = false;
+
+  document.body.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!_dragOver) {
+      _dragOver = true;
+      document.getElementById('dropOverlay').classList.add('show');
+    }
+  });
+  document.body.addEventListener('dragleave', e => {
+    if (e.relatedTarget === null || !document.body.contains(e.relatedTarget)) {
+      _dragOver = false;
+      document.getElementById('dropOverlay').classList.remove('show');
+    }
+  });
+  document.body.addEventListener('drop', e => {
+    e.preventDefault();
+    _dragOver = false;
+    document.getElementById('dropOverlay').classList.remove('show');
+    const file = e.dataTransfer.files[0];
+    if (file) handleImportFile(file);
+  });
+}
 function persistAll() {
   localStorage.setItem('sp_sched', JSON.stringify(schedData));
   localStorage.setItem('sp_vfdates', JSON.stringify(validFromDates));
@@ -2667,12 +2894,7 @@ function removeTeacher(i) {
 }
 
 // ── Teacher import from TXT ──
-function handleImportFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  readTxtFile(file);
-  input.value = ''; // reset so same file can be re-imported
-}
+
 
 function handleImportDrop(e) {
   e.preventDefault();
@@ -3204,9 +3426,8 @@ function saveCellData() {
   if (!schedData[yk]) schedData[yk]={};
   if (!schedData[yk][_mDay]) schedData[yk][_mDay]={};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour]={};
-  // Zbierz klasy z listy międzyoddziałowej
-  const _clsChips = document.querySelectorAll('#multiClassList .mc-chip-val');
-  const _clsList  = Array.from(_clsChips).map(el => el.dataset.val).filter(Boolean);
+  // Zbierz klasy z listy międzyoddziałowej (z globalnego stanu)
+  const _clsList = (window._mcClasses || []).filter(Boolean);
   schedData[yk][_mDay][_mHour][_mKey]={
     teacherAbbr: document.getElementById('inpTeacher').value,
     classes:     _clsList,
@@ -3351,6 +3572,7 @@ function toggleTheme() {
 //  INIT
 // ================================================================
 loadAll();
+initImportDragDrop();
 applyTheme(localStorage.getItem('sp_theme') || 'dark');
 if (!appState) {
   openWizardFirst();
@@ -3600,8 +3822,12 @@ function qaAddClass() {
   appState.classes.push(entry);
   persistAll();
 
-  // Refresh select and pick the new entry
-  document.getElementById('inpClass').innerHTML = buildClassSelectOptions(abbr);
+  // Po dodaniu — dodaj też do multiClassList (zajęcia międzyoddziałowe)
+  const _curList = window._mcClasses || [];
+  if (!_curList.includes(abbr)) {
+    _curList.push(abbr);
+    renderMultiClassList(_curList);
+  }
   toggleQuickAdd('class');
   notify('✓ Dodano: ' + name + ' — ' + group);
 }
@@ -3646,17 +3872,6 @@ window.addEventListener('appinstalled', () => {
 
 
 
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  _pwaPrompt = e;
-  // Show banner after a short delay so app has time to load
-  setTimeout(() => {
-    if (!localStorage.getItem('sp_pwa_dismissed')) {
-      document.getElementById('pwaInstallBanner').classList.add('show');
-    }
-  }, 3000);
-});
-
 function pwaInstall() {
   document.getElementById('pwaInstallBanner').classList.remove('show');
   if (_pwaPrompt) {
@@ -3673,10 +3888,6 @@ function pwaDismiss() {
   localStorage.setItem('sp_pwa_dismissed', '1');
 }
 
-window.addEventListener('appinstalled', () => {
-  document.getElementById('pwaInstallBanner').classList.remove('show');
-  notify('✓ SalePlan zainstalowany na urządzeniu!');
-});
 
 
 // ================================================================
@@ -3738,6 +3949,37 @@ window.addEventListener('appinstalled', () => {
     <h4>⬇ PDF</h4>
     <p>Drukuje plan bieżącego dnia. Użyj opcji przeglądarki <strong>Drukuj do PDF</strong> żeby zapisać plik.</p>
     <p>Orientacja: <strong>pozioma</strong>, marginesy: minimalne.</p>
+  </div>
+</div>
+
+
+<!-- ── Drag & Drop overlay ── -->
+<div id="dropOverlay">
+  <div class="drop-inner">
+    <div style="font-size:2.5rem">📂</div>
+    <div style="font-size:1.1rem;font-weight:600;margin-top:8px">Upuść plik JSON</div>
+    <div style="font-size:0.8rem;color:var(--text-dim);margin-top:4px">aby zaimportować plan</div>
+  </div>
+</div>
+
+<!-- ── Modal porównania importu ── -->
+<div id="importModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">📥 Import planu</div>
+    <div id="importInfo" style="margin:12px 0;display:flex;flex-direction:column;gap:6px"></div>
+    <div style="margin:14px 0 6px;font-size:0.8rem;font-weight:600;color:var(--text-dim)">Tryb importu:</div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;margin-bottom:6px;cursor:pointer">
+      <input type="radio" name="importMode" id="importModeMerge" value="merge" checked>
+      <span><strong>Scalaj</strong> — dodaj tylko brakujące wpisy (nie nadpisuje istniejących)</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;cursor:pointer">
+      <input type="radio" name="importMode" id="importModeOverwrite" value="overwrite">
+      <span><strong>Zastąp</strong> — nadpisz cały plan danymi z pliku</span>
+    </label>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn btn-primary" onclick="confirmImport()">✓ Importuj</button>
+      <button class="btn btn-ghost" onclick="closeImportModal()">Anuluj</button>
+    </div>
   </div>
 </div>
 
