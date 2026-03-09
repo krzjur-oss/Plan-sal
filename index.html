@@ -1619,6 +1619,13 @@ body.light #tutBox { background: #fff; }
   cursor: pointer;
 }
 #collisionCount.none { display: none; }
+
+/* ── Nowy układ komórki (pionowy) ── */
+.cell-row-cls     { margin-bottom: 1px; }
+.cell-abbr-cls    { background: rgba(16,185,129,0.15); color: var(--green); border-color: rgba(16,185,129,0.3); }
+.cell-row-teacher { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; margin-bottom: 1px; }
+.cell-teacher-name { font-size: 0.65rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.cell-row-subject { font-size: 0.7rem; color: var(--text); line-height: 1.2; word-break: break-word; }
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -2924,7 +2931,7 @@ function renderSchedule() {
       c => c.floor.buildingIdx||0,
       c => { const bld = buildings[c.floor.buildingIdx||0]; return esc(bld?.name||'—'); },
       c => { const color = BUILDING_COLORS[(c.floor.buildingIdx||0) % BUILDING_COLORS.length]; return `color:${color};border-top:3px solid ${color};border-bottom:2px solid ${color}`; },
-      'th-building', '', _rowTop
+      'th-building', 'Budynek', _rowTop
     );
     _rowTop += ROW_H;
   }
@@ -2935,7 +2942,7 @@ function renderSchedule() {
       c => c.floorIdx,
       c => esc(c.floor.name),
       c => `color:${c.floor.color};border-bottom:1px solid ${c.floor.color}40`,
-      'th-floor', '', _rowTop
+      'th-floor', 'Piętro', _rowTop
     );
     _rowTop += ROW_H;
   }
@@ -2946,7 +2953,7 @@ function renderSchedule() {
       c => c.floorIdx+'-'+c.segIdx,
       c => esc(c.seg.name||'—'),
       c => `border-top:2px solid ${c.floor.color}60`,
-      'th-seg-row', '', _rowTop
+      'th-seg-row', 'Segment', _rowTop
     );
     _rowTop += ROW_H;
   }
@@ -3006,12 +3013,9 @@ function renderSchedule() {
       const errTip   = cellErrs.join('\n');
       tbody += `<td><div class="cell-inner ${filled?'filled':''} ${hasErr?'collision':''}" onclick="openEditModal(${currentDay},'${h}','${key}')" ${hasErr?`data-collision-tip="${esc(errTip)}"`:''}>${hasErr?'<span class="cell-collision-icon">⚠</span>':''}${
         filled
-          ? `<div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap">
-               ${entry.teacherAbbr ? `<span class="cell-abbr" title="${esc(teacherDisplayName(teacher))}">${esc(entry.teacherAbbr)}</span>` : ''}
-               ${entry.className ? `<span class="cell-abbr" style="background:rgba(16,185,129,0.15);color:var(--green);border-color:rgba(16,185,129,0.3)" title="${esc(resolveClassName(entry.className))}">${esc(entry.className)}</span>` : ''}
-               ${entry.subject ? `<span class="cell-subject" style="flex:1">${esc(entry.subject)}</span>` : ''}
-             </div>
-             ${teacher ? `<div class="cell-teacher">${esc(teacherDisplayName(teacher))}</div>` : ''}
+          ? `${entry.className ? `<div class="cell-row-cls"><span class="cell-abbr cell-abbr-cls" title="${esc(resolveClassName(entry.className))}">${esc(entry.className)}</span></div>` : ''}
+             ${teacher ? `<div class="cell-row-teacher"><span class="cell-abbr" title="${esc(teacherDisplayName(teacher))}">${esc(entry.teacherAbbr)}</span> <span class="cell-teacher-name">${esc(teacherDisplayName(teacher))}</span></div>` : ''}
+             ${entry.subject ? `<div class="cell-row-subject">${esc(entry.subject)}</div>` : ''}
              ${entry.note ? `<div class="cell-note">${esc(entry.note)}</div>` : ''}`
           : '<div class="cell-plus">＋</div>'
       }</div></td>`;
