@@ -2271,6 +2271,18 @@ function wizardNext() {
   }
   if (wStep === 2) {
     if (wFloors.length === 0) { notify('⚠ Dodaj przynajmniej jedno piętro', true); return; }
+    // Sprawdź czy wszystkie sale mają unikalny numer
+    const allKeys = [];
+    let dupFound = false, emptyFound = false;
+    wFloors.forEach((fl,fi) => fl.segments.forEach((sg,si) => sg.rooms.forEach((r,ri) => {
+      const n = (r.num||'').trim();
+      if (!n) { emptyFound = true; return; }
+      const k = `f${fi}_s${si}_${n}`;
+      if (allKeys.includes(k)) dupFound = true;
+      allKeys.push(k);
+    })));
+    if (emptyFound) { notify('⚠ Każda sala musi mieć numer', true); return; }
+    if (dupFound)   { notify('⚠ Numery sal muszą być unikalne w segmencie', true); return; }
   }
   if (wStep === 3) {
     wClasses = getClassesFromDOM();
@@ -2444,7 +2456,13 @@ function addFloor() {
 function removeFloor(fi) { wFloors.splice(fi,1); renderFloorList(); renderBuildingList(); }
 function addSegment(fi) { wFloors[fi].segments.push({name:'',rooms:[{num:'1',sub:''}]}); renderFloorList(); }
 function removeSeg(fi,si) { wFloors[fi].segments.splice(si,1); renderFloorList(); }
-function addRoom(fi,si) { wFloors[fi].segments[si].rooms.push({num:'',sub:''}); renderFloorList(); }
+function addRoom(fi,si) {
+  const existing = wFloors[fi].segments[si].rooms;
+  const nums = existing.map(r => parseInt(r.num)||0).filter(n=>n>0);
+  const nextNum = nums.length ? Math.max(...nums)+1 : existing.length+1;
+  wFloors[fi].segments[si].rooms.push({num: String(nextNum), sub:''});
+  renderFloorList();
+}
 function removeRoom(fi,si,ri) { wFloors[fi].segments[si].rooms.splice(ri,1); renderFloorList(); }
 
 // ── Classes ──
@@ -2746,7 +2764,7 @@ function getAssignmentsFromDOM() { return wAssignments; }
 // ================================================================
 //  COLUMN UTILS
 // ================================================================
-function colKey(col) { return `f${col.floorIdx}_s${col.segIdx}_${col.room.num}`; }
+function colKey(col) { const n = (col.room.num||'').trim(); return n ? `f${col.floorIdx}_s${col.segIdx}_${n}` : `f${col.floorIdx}_s${col.segIdx}_r${col.roomIdx}`; }
 function flattenColumns(floors) {
   const cols = [];
   floors.forEach((floor,fi) => floor.segments.forEach((seg,si) => seg.rooms.forEach((room,ri) => cols.push({floorIdx:fi,segIdx:si,roomIdx:ri,floor,seg,room}))));
