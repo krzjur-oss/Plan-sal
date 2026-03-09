@@ -2044,7 +2044,7 @@ function openWizardNewYear(preload) {
   document.getElementById('wizardOverlay').classList.add('show');
 }
 
-function openWizardFirst() { openWizardNewYear(); tutAutoShow(); }
+function openWizardFirst() { openWizardNewYear(); }
 
 function wizardNext() {
   if (wStep === 0) {
@@ -2183,7 +2183,7 @@ function updateFloorBuildingSelects() {
     const cur = wFloors[fi]?.buildingIdx || 0;
     sel.innerHTML = wBuildings.map((b,bi) => `<option value="${bi}" ${bi===cur?'selected':''}>${BUILDING_LETTERS[bi]||bi+1}: ${b.name||'Budynek '+(bi+1)}</option>`).join('');
   });
-  renderBuildingList();
+  // Nie wywołuj renderBuildingList() — zniszczyłoby focus w polach input
 }
 
 // ── Floor builder ──
@@ -2861,7 +2861,7 @@ function clearCellData() {
 }
 document.getElementById('editModal').addEventListener('click',e=>{if(e.target===document.getElementById('editModal'))closeEditModal();});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){closeEditModal();tutClose();}
+  if(e.key==='Escape'){closeEditModal();}
   if(e.key==='Enter'&&e.ctrlKey&&document.getElementById('editModal').classList.contains('show'))saveCellData();
 });
 
@@ -3001,7 +3001,6 @@ if (!appState) {
     (appState.hours||[]).forEach(h=>{if(!schedData[yk][i][h])schedData[yk][i][h]={};});
   });
   mountApp();
-  tutAutoShow();
 }
 
 // ================================================================
@@ -3297,111 +3296,12 @@ window.addEventListener('appinstalled', () => {
 // ================================================================
  // current step index
 
-function tutPhase() {
-  return document.getElementById('wizardOverlay').classList.contains('show') ? 'wizard' : 'app';
-}
 
-function tutOpen() {
-  const phase = tutPhase();
-  _ts = TUT_STEPS.findIndex(s => s.phase === phase);
-  if (_ts < 0) _ts = 0;
-  const ov = document.getElementById('tutOverlay');
-  ov.style.display = 'block'; // force show regardless of CSS
-  ov.classList.add('on');
-  tutDraw();
-}
 
-function tutClose() {
-  document.getElementById('tutOverlay').classList.remove('on');
-  localStorage.setItem(TUT_DONE_KEY, '1');
-}
 
-function tutNext() {
-  const phase = tutPhase();
-  let next = _ts + 1;
-  // Skip steps of wrong phase
-  while (next < TUT_STEPS.length && TUT_STEPS[next].phase !== phase) next++;
-  if (next >= TUT_STEPS.length) { tutClose(); return; }
-  _ts = next;
-  tutDraw();
-}
 
-function tutPrev() {
-  const phase = tutPhase();
-  let prev = _ts - 1;
-  while (prev >= 0 && TUT_STEPS[prev].phase !== phase) prev--;
-  if (prev < 0) return;
-  _ts = prev;
-  tutDraw();
-}
 
-function tutDraw() {
-  const s = TUT_STEPS[_ts];
-  const phase = tutPhase();
-  const phaseSteps = TUT_STEPS.filter(x => x.phase === phase);
-  const phaseIdx   = phaseSteps.indexOf(s);
 
-  document.getElementById('tutH').innerHTML = s.h;
-  document.getElementById('tutP').innerHTML = s.p;
-  document.getElementById('tutProgress').textContent = `Krok ${phaseIdx+1} z ${phaseSteps.length}`;
-  document.getElementById('tutPrevBtn').style.display = phaseIdx > 0 ? 'block' : 'none';
-  document.getElementById('tutNextBtn').textContent = phaseIdx === phaseSteps.length - 1 ? '✓ Zakończ' : 'Dalej →';
-
-  const hole = document.getElementById('tutHole');
-  const box  = document.getElementById('tutBox');
-
-  if (!s.target) {
-    // Centered — no hole, box centered
-    hole.style.cssText = 'display:none';
-    box.style.display  = 'block';
-    box.style.left     = '50%';
-    box.style.top      = '50%';
-    box.style.transform = 'translate(-50%,-50%)';
-    return;
-  }
-
-  const el = document.querySelector(s.target);
-  if (!el) {
-    hole.style.cssText = 'display:none';
-    box.style.cssText  = 'top:50%;left:50%;transform:translate(-50%,-50%)';
-    return;
-  }
-
-  const r   = el.getBoundingClientRect();
-  const pad = 6;
-  hole.style.cssText = [
-    'display:block',
-    `left:${r.left - pad}px`,
-    `top:${r.top - pad}px`,
-    `width:${r.width + pad*2}px`,
-    `height:${r.height + pad*2}px`,
-  ].join(';');
-
-  // Place box below or above
-  const bw = 300, bh = 250;
-  const vw = window.innerWidth, vh = window.innerHeight;
-  let bx = Math.max(8, Math.min(r.left, vw - bw - 8));
-  let by, transform = 'none';
-
-  if (r.bottom + bh + 16 < vh) {
-    by = r.bottom + 12;
-  } else if (r.top - bh - 12 > 60) {
-    by = r.top - bh - 12;
-  } else {
-    by = Math.max(70, (vh - bh) / 2);
-    bx = Math.min(r.right + 12, vw - bw - 8);
-    bx = Math.max(8, bx);
-  }
-  box.style.cssText = `left:${bx}px;top:${by}px;transform:${transform}`;
-}
-
-function tutAutoShow() {
-  // Clear old tutorial keys from previous versions
-  ['sp_tut_done','sp_tut_ver','sp_tut2_done'].forEach(k => localStorage.removeItem(k));
-  if (!localStorage.getItem(TUT_DONE_KEY)) {
-    setTimeout(tutOpen, 600);
-  }
-}
 
 </script>
 
