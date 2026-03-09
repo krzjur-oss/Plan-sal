@@ -1483,6 +1483,93 @@ body.light #tutBox { background: #fff; }
 .wp-step strong { color: var(--text); font-weight: 700; }
 .wp-step code { font-family: var(--mono); font-size: 0.69rem; background: var(--surface3,rgba(255,255,255,0.07)); border-radius: 3px; padding: 1px 4px; color: var(--accent); }
 @media (max-width: 900px) { #wizardPanel { display: none !important; } }
+
+/* ================================================================
+   PANEL POMOCY APLIKACJI
+   ================================================================ */
+#appHelpPanel {
+  display: none;
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: 260px;
+  z-index: 800;
+  background: var(--surface2);
+  border-left: 1px solid var(--border2);
+  box-shadow: -8px 0 32px rgba(0,0,0,0.35);
+  overflow-y: auto;
+  padding: 20px 16px 32px;
+  flex-direction: column;
+}
+#appHelpPanel.open { display: flex; }
+#appHelpPanel h3 {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#appHelpPanel h3 button {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 4px;
+}
+#appHelpPanel h3 button:hover { color: var(--text); }
+.ah-section {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.ah-section:last-child { border-bottom: none; margin-bottom: 0; }
+.ah-section h4 {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ah-section p {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0 0 6px;
+}
+.ah-section p:last-child { margin-bottom: 0; }
+.ah-section strong { color: var(--text); }
+.ah-section code {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  background: var(--surface3, rgba(255,255,255,0.07));
+  border-radius: 3px;
+  padding: 1px 4px;
+  color: var(--accent);
+}
+/* Przycisk ? w topbarze */
+#tutTriggerBtn {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+#tutTriggerBtn:hover, #tutTriggerBtn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -1769,7 +1856,7 @@ if ('serviceWorker' in navigator) {
       <button class="btn btn-primary" onclick="saveData()">💾 Zapisz</button>
       <button class="btn btn-yellow" onclick="openWizardNewYear()">＋ Nowy rok</button>
       <button class="btn btn-red" onclick="clearDay()">🗑 Dzień</button>
-      <button class="tut-trigger" id="tutTriggerBtn" onclick="tutOpen()" title="Samouczek">?</button>
+      <button class="tut-trigger" id="tutTriggerBtn" onclick="toggleAppHelp()" title="Pomoc">?</button>
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
     </div>
   </div>
@@ -1911,6 +1998,24 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <script>
+// ================================================================
+//  PANEL POMOCY APLIKACJI
+// ================================================================
+function toggleAppHelp() {
+  var panel = document.getElementById('appHelpPanel');
+  var btn   = document.getElementById('tutTriggerBtn');
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  if (btn) btn.classList.toggle('active', !isOpen);
+}
+function closeAppHelp() {
+  var panel = document.getElementById('appHelpPanel');
+  var btn   = document.getElementById('tutTriggerBtn');
+  if (panel) panel.classList.remove('open');
+  if (btn)   btn.classList.remove('active');
+}
+
 // ================================================================
 //  PANEL INSTRUKCJI KREATORA
 // ================================================================
@@ -3304,6 +3409,54 @@ window.addEventListener('appinstalled', () => {
 
 
 </script>
+
+
+<!-- PANEL POMOCY APLIKACJI -->
+<div id="appHelpPanel">
+  <h3>📖 Pomoc <button onclick="closeAppHelp()">✕</button></h3>
+
+  <div class="ah-section">
+    <h4>🗓 Zakładki dni</h4>
+    <p>Kliknij dzień tygodnia w górnym pasku żeby przełączać między planami każdego dnia.</p>
+    <p>Pole <strong>Od:</strong> ustawia datę obowiązywania planu — widoczną w nagłówku wydruku.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>✏️ Edycja komórki</h4>
+    <p>Kliknij dowolną komórkę w tabeli planu żeby otworzyć okno edycji.</p>
+    <p>Możesz wpisać <strong>klasę/grupę</strong> i przypisać <strong>nauczyciela</strong>. Przycisk <strong>Wyczyść</strong> usuwa dane z komórki.</p>
+    <p>Szybkie dodawanie klasy lub nauczyciela bezpośrednio z okna edycji — bez wychodzenia do kreatora.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>🏠 Gospodarz sali</h4>
+    <p>Kliknij ikonę 🏠 w nagłówku kolumny żeby przypisać <strong>klasę-gospodarz</strong> do sali.</p>
+    <p>Gospodarz pojawia się w wierszu <strong>Gospod.</strong> i ułatwia identyfikację sali.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>🗑 Czyszczenie</h4>
+    <p><strong>🗑 Dzień</strong> — czyści wszystkie komórki bieżącego dnia.</p>
+    <p>Przycisk <strong>Wyczyść</strong> w oknie edycji czyści tylko jedną komórkę.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>💾 Zapis i archiwum</h4>
+    <p><strong>💾 Zapisz</strong> — zapisuje plan w pamięci przeglądarki (localStorage).</p>
+    <p>Kliknij <strong>rok szkolny</strong> w topbarze żeby otworzyć archiwum. Możesz przechowywać plany wielu lat i przywracać je.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>＋ Nowy rok</h4>
+    <p>Tworzy nowy plan na kolejny rok szkolny. Dane budynków, klas i nauczycieli można przenieść z istniejącego planu.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>⬇ PDF</h4>
+    <p>Drukuje plan bieżącego dnia. Użyj opcji przeglądarki <strong>Drukuj do PDF</strong> żeby zapisać plik.</p>
+    <p>Orientacja: <strong>pozioma</strong>, marginesy: minimalne.</p>
+  </div>
+</div>
 
 </body>
 </html>
