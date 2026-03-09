@@ -1626,6 +1626,59 @@ body.light #tutBox { background: #fff; }
 .cell-row-teacher { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; margin-bottom: 1px; }
 .cell-teacher-name { font-size: 0.65rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .cell-row-subject { font-size: 0.7rem; color: var(--text); line-height: 1.2; word-break: break-word; }
+
+/* ── Zajęcia międzyoddziałowe — lista klas ── */
+.mc-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-height: 32px;
+  padding: 4px 0;
+}
+.mc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.35);
+  border-radius: 12px;
+  padding: 2px 4px 2px 7px;
+  font-size: 0.72rem;
+  color: var(--green);
+  font-family: var(--mono);
+}
+.mc-chip-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: 0.65rem;
+  padding: 0 2px;
+  line-height: 1;
+}
+.mc-chip-del:hover { color: #ef4444; }
+.mc-add-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mc-add-select {
+  font-size: 0.72rem !important;
+  padding: 3px 6px !important;
+  height: 26px;
+  min-width: 90px;
+  max-width: 140px;
+}
+.mc-add-btn {
+  font-size: 0.75rem !important;
+  padding: 3px 8px !important;
+  height: 26px;
+  line-height: 1;
+}
+/* Uproszczony układ komórki */
+.cell-row-cls  { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 2px; }
+.cell-row-teacher { line-height: 1; }
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -1962,10 +2015,11 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
 
-    <!-- Class/group select + quick-add -->
+    <!-- Klasy/grupy — zajęcia międzyoddziałowe -->
     <div class="form-group">
-      <label class="form-label">Klasa / Grupa</label>
-      <select class="teacher-select" id="inpClass"></select>
+      <label class="form-label">Klasa / Grupa <span style="font-size:0.6rem;color:var(--text-dim);font-weight:400">(można dodać kilka)</span></label>
+      <select class="teacher-select" id="inpClass" style="display:none"></select>
+      <div id="multiClassList" class="mc-list"></div>
       <button class="quick-add-toggle" onclick="toggleQuickAdd('class')" id="qaToggleClass">
         <span class="qa-icon">＋</span> Dodaj nową klasę / grupę
       </button>
@@ -2083,13 +2137,16 @@ function detectCollisions(dayData, hours, cols) {
       });
     });
 
-    // Sprawdź kolizje klasy/grupy
+    // Sprawdź kolizje klasy/grupy (obsługa entry.classes i entry.className)
     const byClass = {};
     entries.forEach(function(e) {
-      if (!e.entry.className) return;
-      const cls = e.entry.className;
-      if (!byClass[cls]) byClass[cls] = [];
-      byClass[cls].push(e);
+      const clsList = (e.entry.classes && e.entry.classes.length)
+        ? e.entry.classes
+        : e.entry.className ? [e.entry.className] : [];
+      clsList.forEach(function(cls) {
+        if (!byClass[cls]) byClass[cls] = [];
+        byClass[cls].push(e);
+      });
     });
     Object.keys(byClass).forEach(function(cls) {
       if (byClass[cls].length < 2) return;
@@ -3005,7 +3062,7 @@ function renderSchedule() {
     cols.forEach(col => {
       const key   = colKey(col);
       const entry = dayData[h]?.[key]||{};
-      const filled = !!(entry.teacherAbbr || entry.subject || entry.className);
+      const filled = !!(entry.teacherAbbr || entry.subject || entry.className || (entry.classes && entry.classes.length));
       const teacher = entry.teacherAbbr ? getTeacherByAbbr(entry.teacherAbbr) : null;
       const cellId   = h + '|' + key;
       const cellErrs = collisions[cellId] || [];
@@ -3013,10 +3070,13 @@ function renderSchedule() {
       const errTip   = cellErrs.join('\n');
       tbody += `<td><div class="cell-inner ${filled?'filled':''} ${hasErr?'collision':''}" onclick="openEditModal(${currentDay},'${h}','${key}')" ${hasErr?`data-collision-tip="${esc(errTip)}"`:''}>${hasErr?'<span class="cell-collision-icon">⚠</span>':''}${
         filled
-          ? `${entry.className ? `<div class="cell-row-cls"><span class="cell-abbr cell-abbr-cls" title="${esc(resolveClassName(entry.className))}">${esc(entry.className)}</span></div>` : ''}
-             ${teacher ? `<div class="cell-row-teacher"><span class="cell-abbr" title="${esc(teacherDisplayName(teacher))}">${esc(entry.teacherAbbr)}</span> <span class="cell-teacher-name">${esc(teacherDisplayName(teacher))}</span></div>` : ''}
-             ${entry.subject ? `<div class="cell-row-subject">${esc(entry.subject)}</div>` : ''}
-             ${entry.note ? `<div class="cell-note">${esc(entry.note)}</div>` : ''}`
+          ? `<div class="cell-row-cls">${
+               (entry.classes && entry.classes.length
+                 ? entry.classes
+                 : entry.className ? [entry.className] : []
+               ).map(cls => `<span class="cell-abbr cell-abbr-cls" title="${esc(resolveClassName(cls))}">${esc(cls)}</span>`).join('')
+             }</div>
+             ${entry.teacherAbbr ? `<div class="cell-row-teacher"><span class="cell-abbr">${esc(entry.teacherAbbr)}</span></div>` : ''}`
           : '<div class="cell-plus">＋</div>'
       }</div></td>`;
     });
@@ -3077,9 +3137,13 @@ function openEditModal(day, hour, key) {
   const selT = document.getElementById('inpTeacher');
   selT.innerHTML = buildTeacherSelectOptions(entry.teacherAbbr||'');
 
-  // Class select — pre-select saved value, fallback to assignment default
-  const selC = document.getElementById('inpClass');
-  selC.innerHTML = buildClassSelectOptions(entry.className || defaultCls || '');
+  // Klasy/grupy — multi (zajęcia międzyoddziałowe)
+  const _initClasses = entry.classes && entry.classes.length
+    ? entry.classes
+    : (entry.className || defaultCls) ? [entry.className || defaultCls] : [];
+  renderMultiClassList(_initClasses);
+  // Ukryj stary select (zastąpiony przez multiClassList)
+  document.getElementById('inpClass').value = '';
 
   document.getElementById('inpSubject').value = entry.subject||'';
   document.getElementById('inpNote').value = entry.note||'';
@@ -3098,14 +3162,55 @@ function closeEditModal() {
   document.getElementById('qaToggleTeacher').style.color = '';
   document.getElementById('qaToggleClass').style.color = '';
 }
+
+// ================================================================
+//  ZAJĘCIA MIĘDZYODDZIAŁOWE — wielokrotny wybór klas
+// ================================================================
+function renderMultiClassList(selected) {
+  const container = document.getElementById('multiClassList');
+  if (!container) return;
+  container.innerHTML = selected.map((cls, i) =>
+    `<span class="mc-chip">
+       <span class="mc-chip-val" data-val="${esc(cls)}">${esc(cls)}</span>
+       <button class="mc-chip-del" onclick="mcRemoveClass(${i})" title="Usuń">✕</button>
+     </span>`
+  ).join('') +
+  `<span class="mc-add-wrap">
+     <select id="mcAddSelect" class="teacher-select mc-add-select">
+       ${buildClassSelectOptions('')}
+     </select>
+     <button class="btn btn-green mc-add-btn" onclick="mcAddClass()" title="Dodaj klasę">＋</button>
+   </span>`;
+  // Store current list in a temp global
+  window._mcClasses = selected.slice();
+}
+function mcAddClass() {
+  const sel = document.getElementById('mcAddSelect');
+  const val = sel ? sel.value : '';
+  if (!val) return;
+  const list = window._mcClasses || [];
+  if (!list.includes(val)) {
+    list.push(val);
+    renderMultiClassList(list);
+  }
+}
+function mcRemoveClass(idx) {
+  const list = window._mcClasses || [];
+  list.splice(idx, 1);
+  renderMultiClassList(list);
+}
 function saveCellData() {
   const yk = appState.yearKey;
   if (!schedData[yk]) schedData[yk]={};
   if (!schedData[yk][_mDay]) schedData[yk][_mDay]={};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour]={};
+  // Zbierz klasy z listy międzyoddziałowej
+  const _clsChips = document.querySelectorAll('#multiClassList .mc-chip-val');
+  const _clsList  = Array.from(_clsChips).map(el => el.dataset.val).filter(Boolean);
   schedData[yk][_mDay][_mHour][_mKey]={
     teacherAbbr: document.getElementById('inpTeacher').value,
-    className:   document.getElementById('inpClass').value,
+    classes:     _clsList,
+    className:   _clsList[0] || '',   // kompatybilność wsteczna
     subject:     document.getElementById('inpSubject').value.trim(),
     note:        document.getElementById('inpNote').value.trim(),
   };
