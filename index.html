@@ -1570,6 +1570,55 @@ body.light #tutBox { background: #fff; }
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* ================================================================
+   WALIDACJA KOLIZJI
+   ================================================================ */
+.cell-inner.collision {
+  outline: 2px solid #ef4444;
+  outline-offset: -2px;
+  border-radius: 6px;
+  position: relative;
+}
+.cell-collision-icon {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  font-size: 0.7rem;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 2;
+}
+/* Tooltip z opisem kolizji */
+.cell-inner.collision::after {
+  content: attr(data-collision-tip);
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e1e2e;
+  color: #f8d7da;
+  font-size: 0.68rem;
+  line-height: 1.4;
+  padding: 5px 8px;
+  border-radius: 6px;
+  white-space: pre;
+  z-index: 999;
+  pointer-events: none;
+  min-width: 140px;
+  max-width: 220px;
+  border: 1px solid #ef4444;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.cell-inner.collision:hover::after { display: block; }
+/* Licznik kolizji w statusbarze */
+#collisionCount {
+  color: #ef4444;
+  font-weight: 700;
+  cursor: pointer;
+}
+#collisionCount.none { display: none; }
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -1871,6 +1920,8 @@ if ('serviceWorker' in navigator) {
     <span id="sbText">Gotowy</span>
     <span class="sb-sep">|</span>
     <span id="sbCount">0 wpisów</span>
+    <span class="sb-sep" id="collisionSep" style="display:none">|</span>
+    <span id="collisionCount" class="none" onclick="scrollToFirstCollision()" title="Kliknij żeby przejść do pierwszej kolizji" style="cursor:pointer"></span>
     <span class="sb-sep">|</span>
     <span id="sbYear" style="color:var(--accent)"></span>
   </div>
@@ -1965,15 +2016,16 @@ if ('serviceWorker' in navigator) {
       <select class="teacher-select" id="hrTeacher"></select>
     </div>
     <div class="modal-hint">Gospodarz widoczny w nagłówku tabeli dla każdej sali</div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeHomeroomModal()">Anuluj</button>
-      <button class="btn btn-red" onclick="clearHomeroom()">Wyczyść</button>
-      <button class="btn btn-primary" onclick="saveHomeroom()">Zapisz</button>
+    <div id="archivePanel">
+  <div class="archive-modal">
+    <div class="archive-header">
+      <h2>📁 Archiwum planów</h2>
+      <button class="btn btn-ghost" onclick="closeArchive()">✕ Zamknij</button>
     </div>
+    <div class="archive-body" id="archiveBody"></div>
   </div>
 </div>
 
-<!-- PWA Install Banner -->
 <div id="pwaInstallBanner">
   <div class="pwa-banner-icon">📲</div>
   <div class="pwa-banner-text">
@@ -1986,18 +2038,72 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
-<!-- Archive Panel -->
-<div id="archivePanel">
-  <div class="archive-modal">
-    <div class="archive-header">
-      <h2>📁 Archiwum planów</h2>
-      <button class="btn btn-ghost" onclick="closeArchive()">✕ Zamknij</button>
-    </div>
-    <div class="archive-body" id="archiveBody"></div>
-  </div>
-</div>
-
 <script>
+// ================================================================
+//  WALIDACJA KOLIZJI
+// ================================================================
+function detectCollisions(dayData, hours, cols) {
+  const result = {};  // 'h|key' -> [string, ...]
+
+  hours.forEach(function(h) {
+    const row = dayData[h] || {};
+    // Zbierz wszystkie wpisy tej godziny
+    const entries = [];
+    cols.forEach(function(col) {
+      const key   = colKey(col);
+      const entry = row[key] || {};
+      if (entry.teacherAbbr || entry.className) {
+        entries.push({ key, entry, col });
+      }
+    });
+
+    // Sprawdź kolizje nauczyciela
+    const byTeacher = {};
+    entries.forEach(function(e) {
+      if (!e.entry.teacherAbbr) return;
+      const abbr = e.entry.teacherAbbr;
+      if (!byTeacher[abbr]) byTeacher[abbr] = [];
+      byTeacher[abbr].push(e);
+    });
+    Object.keys(byTeacher).forEach(function(abbr) {
+      if (byTeacher[abbr].length < 2) return;
+      byTeacher[abbr].forEach(function(e) {
+        const cellId = h + '|' + e.key;
+        if (!result[cellId]) result[cellId] = [];
+        const others = byTeacher[abbr].filter(x => x.key !== e.key)
+          .map(x => x.col.room.num || x.key).join(', ');
+        result[cellId].push('Nauczyciel ' + abbr + ' jednocześnie w: ' + others);
+      });
+    });
+
+    // Sprawdź kolizje klasy/grupy
+    const byClass = {};
+    entries.forEach(function(e) {
+      if (!e.entry.className) return;
+      const cls = e.entry.className;
+      if (!byClass[cls]) byClass[cls] = [];
+      byClass[cls].push(e);
+    });
+    Object.keys(byClass).forEach(function(cls) {
+      if (byClass[cls].length < 2) return;
+      byClass[cls].forEach(function(e) {
+        const cellId = h + '|' + e.key;
+        if (!result[cellId]) result[cellId] = [];
+        const others = byClass[cls].filter(x => x.key !== e.key)
+          .map(x => x.col.room.num || x.key).join(', ');
+        result[cellId].push('Klasa ' + cls + ' jednocześnie w: ' + others);
+      });
+    });
+  });
+
+  return result;
+}
+
+function scrollToFirstCollision() {
+  const first = document.querySelector('.cell-inner.collision');
+  if (first) first.closest('td').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
 // ================================================================
 //  PANEL POMOCY APLIKACJI
 // ================================================================
@@ -2865,6 +2971,9 @@ function renderSchedule() {
   thead += '</thead>';
 
   // ── Body ──
+  // ── Kolizje ──
+  const collisions = detectCollisions(dayData, hours, cols);
+
   let tbody = '<tbody>';
   hours.forEach(h => {
     tbody += `<tr><td class="time-cell">${h}</td>`;
@@ -2873,8 +2982,12 @@ function renderSchedule() {
       const entry = dayData[h]?.[key]||{};
       const filled = !!(entry.teacherAbbr || entry.subject || entry.className);
       const teacher = entry.teacherAbbr ? getTeacherByAbbr(entry.teacherAbbr) : null;
-      tbody += `<td><div class="cell-inner ${filled?'filled':''}" onclick="openEditModal(${currentDay},'${h}','${key}')">
-        ${filled
+      const cellId   = h + '|' + key;
+      const cellErrs = collisions[cellId] || [];
+      const hasErr   = cellErrs.length > 0;
+      const errTip   = cellErrs.join('\n');
+      tbody += `<td><div class="cell-inner ${filled?'filled':''} ${hasErr?'collision':''}" onclick="openEditModal(${currentDay},'${h}','${key}')" ${hasErr?`data-collision-tip="${esc(errTip)}"`:''}>${hasErr?'<span class="cell-collision-icon">⚠</span>':''}${
+        filled
           ? `<div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap">
                ${entry.teacherAbbr ? `<span class="cell-abbr" title="${esc(teacherDisplayName(teacher))}">${esc(entry.teacherAbbr)}</span>` : ''}
                ${entry.className ? `<span class="cell-abbr" style="background:rgba(16,185,129,0.15);color:var(--green);border-color:rgba(16,185,129,0.3)" title="${esc(resolveClassName(entry.className))}">${esc(entry.className)}</span>` : ''}
@@ -2882,12 +2995,28 @@ function renderSchedule() {
              </div>
              ${teacher ? `<div class="cell-teacher">${esc(teacherDisplayName(teacher))}</div>` : ''}
              ${entry.note ? `<div class="cell-note">${esc(entry.note)}</div>` : ''}`
-          : '<div class="cell-plus">＋</div>'}
-      </div></td>`;
+          : '<div class="cell-plus">＋</div>'
+      }</div></td>`;
     });
     tbody += '</tr>';
   });
   tbody += '</tbody>';
+
+  // Licznik kolizji w statusbarze
+  const totalCollisions = Object.keys(collisions).length;
+  const ccEl  = document.getElementById('collisionCount');
+  const sepEl = document.getElementById('collisionSep');
+  if (ccEl) {
+    if (totalCollisions > 0) {
+      const suf = totalCollisions === 1 ? 'a' : totalCollisions < 5 ? 'e' : 'i';
+      ccEl.textContent = '⚠ ' + totalCollisions + ' kolizj' + suf;
+      ccEl.classList.remove('none');
+      if (sepEl) sepEl.style.display = '';
+    } else {
+      ccEl.classList.add('none');
+      if (sepEl) sepEl.style.display = 'none';
+    }
+  }
 
   document.getElementById('scheduleWrap').innerHTML =
     `<table class="schedule-table">${thead}${tbody}</table>`;
@@ -3362,6 +3491,33 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.warn('SW registration failed:', err));
   });
 }
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _pwaPrompt = e;
+  // Show banner after a short delay so app has time to load
+  setTimeout(() => {
+    if (!localStorage.getItem('sp_pwa_dismissed')) {
+      document.getElementById('pwaInstallBanner').classList.add('show');
+    }
+  }, 3000);
+});
+
+
+
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwaInstallBanner').classList.remove('show');
+  notify('✓ SalePlan zainstalowany na urządzeniu!');
+});
+
+
+// ================================================================
+//  SAMOUCZEK
+// ================================================================
+ // current step index
+
+
 
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
