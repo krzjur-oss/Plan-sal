@@ -2222,7 +2222,7 @@ if ('serviceWorker' in navigator) {
     <p>Drukuje plan bieżącego dnia. Użyj opcji przeglądarki <strong>Drukuj do PDF</strong> żeby zapisać plik.</p>
     <p>Orientacja: <strong>pozioma</strong>, marginesy: minimalne.</p>
   </div>
-</div
+</div>
 <!-- ── Drag & Drop overlay ── -->
 <div id="dropOverlay">
   <div class="drop-inner">
@@ -2230,7 +2230,7 @@ if ('serviceWorker' in navigator) {
     <div style="font-size:1.1rem;font-weight:600;margin-top:8px">Upuść plik JSON</div>
     <div style="font-size:0.8rem;color:var(--text-dim);margin-top:4px">aby zaimportować plan</div>
   </div>
-</div
+</div>
 <!-- ── Modal porównania importu ── -->
 <div id="importModal">
   <div class="modal" style="max-width:420px">
@@ -2250,7 +2250,8 @@ if ('serviceWorker' in navigator) {
       <button class="btn btn-ghost" onclick="closeImportModal()">Anuluj</button>
     </div>
   </div>
-</div<script>
+</div>
+<script>
 // ================================================================
 //  WALIDACJA KOLIZJI
 // ================================================================
@@ -3523,7 +3524,7 @@ function clearCellData() {
   if (schedData[appState.yearKey]?.[_mDay]?.[_mHour]) schedData[appState.yearKey][_mDay][_mHour][_mKey]={};
   closeEditModal(); renderSchedule();
 }
-document.getElementById('editModal').addEventListener('click',e=>{if(e.target===document.getElementById('editModal'))closeEditModal();});
+(function(){var _em=document.getElementById('editModal');if(_em)_em.addEventListener('click',e=>{if(e.target===_em)closeEditModal();});})();
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeEditModal();}
   if(e.key==='Enter'&&e.ctrlKey&&document.getElementById('editModal').classList.contains('show'))saveCellData();
@@ -3582,7 +3583,7 @@ function deleteArchive(yearKey) {
   archive=archive.filter(a=>a.yearKey!==yearKey); delete schedData[yearKey];
   persistAll(); renderArchiveBody(); notify('🗑 Usunięto archiwum');
 }
-document.getElementById('archivePanel').addEventListener('click',e=>{if(e.target===document.getElementById('archivePanel'))closeArchive();});
+(function(){var _ap=document.getElementById('archivePanel');if(_ap)_ap.addEventListener('click',e=>{if(e.target===_ap)closeArchive();});})();
 
 // ================================================================
 //  OTHER ACTIONS
@@ -3653,20 +3654,22 @@ function toggleTheme() {
 // ================================================================
 //  INIT
 // ================================================================
-loadAll();
-initImportDragDrop();
-applyTheme(localStorage.getItem('sp_theme') || 'dark');
-if (!appState) {
-  openWizardFirst();
-} else {
-  const yk=appState.yearKey;
-  if (!schedData[yk]) schedData[yk]={};
-  (appState.days||DAYS_DEFAULT).forEach((_,i)=>{
-    if (!schedData[yk][i]) schedData[yk][i]={};
-    (appState.hours||[]).forEach(h=>{if(!schedData[yk][i][h])schedData[yk][i][h]={};});
-  });
-  mountApp();
-}
+document.addEventListener('DOMContentLoaded', function() {
+  loadAll();
+  initImportDragDrop();
+  applyTheme(localStorage.getItem('sp_theme') || 'dark');
+  if (!appState) {
+    openWizardFirst();
+  } else {
+    const yk=appState.yearKey;
+    if (!schedData[yk]) schedData[yk]={};
+    (appState.days||DAYS_DEFAULT).forEach((_,i)=>{
+      if (!schedData[yk][i]) schedData[yk][i]={};
+      (appState.hours||[]).forEach(h=>{if(!schedData[yk][i][h])schedData[yk][i][h]={};});
+    });
+    mountApp();
+  }
+});
 
 // ================================================================
 //  HOMEROOM (gospodarz sali)
@@ -3730,9 +3733,7 @@ function clearHomeroom() {
   notify('🗑 Gospodarz sali usunięty');
 }
 
-document.getElementById('homeroomModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('homeroomModal')) closeHomeroomModal();
-});
+(function(){var _hm=document.getElementById('homeroomModal');if(_hm)_hm.addEventListener('click',e=>{if(e.target===_hm)closeHomeroomModal();});})();
 
 // ================================================================
 //  FLOOR / ROOM IMPORT (step 3)
@@ -3985,11 +3986,5 @@ function pwaDismiss() {
 
 
 </script>
-
->
-
->
->
-
 </body>
 </html>
