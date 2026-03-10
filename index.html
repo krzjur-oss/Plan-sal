@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v43');
+          const hasNew = keys.some(k => k === 'sp-v44');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -2049,6 +2049,12 @@ body.light #tutBox { background: #fff; }
 }
 .draft-resume-btns .btn { justify-content: flex-start; font-size: 0.82rem; }
 
+
+/* Podwójny gospodarz sali */
+.hr-pair { display:flex; flex-direction:column; align-items:center; gap:1px; }
+.hr-sep { width:55%; height:1px; background:var(--border2); margin:2px auto; opacity:0.6; }
+.th-homeroom.hr-two { padding:2px 1px; }
+.hr-class-2 { opacity:0.85; }
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -2564,17 +2570,37 @@ if ('serviceWorker' in navigator) {
 
 <!-- Homeroom Modal -->
 <div class="modal-overlay" id="homeroomModal">
-  <div class="modal" style="max-width:380px">
+  <div class="modal" style="max-width:420px">
     <div class="modal-title">🏠 Gospodarz sali</div>
     <div class="modal-sub" id="hrModalSub"></div>
+
     <div class="form-group">
-      <label class="form-label">Klasa gospodarz</label>
+      <label class="form-label">Klasa gospodarz <span style="font-size:0.7rem;color:var(--text-dim)">(1. para)</span></label>
       <select class="teacher-select" id="hrClass"></select>
     </div>
     <div class="form-group">
-      <label class="form-label">Nauczyciel wychowawca</label>
+      <label class="form-label">Nauczyciel wychowawca <span style="font-size:0.7rem;color:var(--text-dim)">(1. para)</span></label>
       <select class="teacher-select" id="hrTeacher"></select>
     </div>
+
+    <div style="margin:10px 0 6px;display:flex;align-items:center;gap:8px">
+      <button type="button" class="btn btn-ghost" id="hrToggle2Btn"
+        onclick="hrToggleSecond()" style="font-size:0.75rem;padding:3px 10px">
+        ＋ Dodaj drugiego gospodarza
+      </button>
+    </div>
+
+    <div id="hrSecondSection" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Klasa gospodarz <span style="font-size:0.7rem;color:var(--text-dim)">(2. para)</span></label>
+        <select class="teacher-select" id="hrClass2"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nauczyciel wychowawca <span style="font-size:0.7rem;color:var(--text-dim)">(2. para)</span></label>
+        <select class="teacher-select" id="hrTeacher2"></select>
+      </div>
+    </div>
+
     <div class="modal-hint">Gospodarz widoczny w nagłówku tabeli dla każdej sali</div>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button class="btn btn-primary" onclick="saveHomeroom()">✓ Zapisz</button>
@@ -2665,19 +2691,7 @@ if ('serviceWorker' in navigator) {
 <div id="importModal">
   <div class="modal" style="max-width:420px">
     <div class="modal-title">📥 Import planu</div>
-    <div id="importInfo" style="margin:12px 0;display:flex;flex-direction:column;gap:6px"></div>
-    <div style="margin:14px 0 6px;font-size:0.8rem;font-weight:600;color:var(--text-dim)">Tryb importu:</div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;margin-bottom:6px;cursor:pointer">
-      <input type="radio" name="importMode" id="importModeMerge" value="merge" checked>
-      <span><strong>Scalaj</strong> — dodaj tylko brakujące wpisy (nie nadpisuje istniejących)</span>
-    </label>
-    <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;cursor:pointer">
-      <input type="radio" name="importMode" id="importModeOverwrite" value="overwrite">
-      <span><strong>Zastąp</strong> — nadpisz cały plan danymi z pliku</span>
-    </label>
-    <div style="display:flex;gap:8px;margin-top:18px">
-      <button class="btn btn-primary" onclick="confirmImport()">✓ Importuj</button>
-      <button class="btn btn-ghost" onclick="closeImportModal()">Anuluj</button>
+    <div id="importInfo" style="margin:12px 0;display:flex;flex-direction:column;gap:6px">
     </div>
   </div>
 </div>
@@ -4213,7 +4227,10 @@ function resolveClassName(abbr) {
 }
 
 function buildTeacherSelectOptions(selectedAbbr) {
-  const teachers = appState?.teachers || [];
+  const teachers = (appState?.teachers || [])
+    .slice()
+    .sort((a,b) => (a.last||'').localeCompare(b.last||'', 'pl', {sensitivity:'base'})
+                || (a.first||'').localeCompare(b.first||'', 'pl', {sensitivity:'base'}));
   let opts = '<option value="">— brak —</option>';
   teachers.forEach(t => {
     const name = teacherDisplayName(t);
@@ -4226,13 +4243,19 @@ function buildTeacherSelectOptions(selectedAbbr) {
 function buildClassSelectOptions(selectedVal) {
   const classes = appState?.classes || [];
   let opts = '<option value="">— brak —</option>';
-  // Group by class name for optgroup display
+  // Grupuj po nazwie klasy, posortowane alfabetycznie
   const byClass = {};
   classes.filter(c=>c.name).forEach(c => {
     if (!byClass[c.name]) byClass[c.name] = [];
     byClass[c.name].push(c);
   });
-  Object.entries(byClass).forEach(([clsName, entries]) => {
+  // Sortuj nazwy klas alfabetycznie (naturalny porządek: 1A < 1B < 2A)
+  const sortedNames = Object.keys(byClass).sort((a,b) =>
+    a.localeCompare(b, 'pl', {numeric: true, sensitivity: 'base'}));
+  sortedNames.forEach(clsName => {
+    const entries = byClass[clsName];
+    // Sortuj grupy w klasie
+    entries.sort((a,b) => (a.group||'').localeCompare(b.group||'', 'pl', {sensitivity:'base'}));
     if (entries.length === 1) {
       const c = entries[0];
       const val = c.abbr || c.name;
@@ -4766,7 +4789,10 @@ function openHomeroomModal(key) {
     `${bld ? bld.name+' · ' : ''}${col?.floor.name||''} › Sala ${col?.room.num||'?'}`;
 
   // Build class options — only "cała klasa" or whole-class entries
-  const classes = (appState.classes||[]);
+  const classes = (appState.classes||[])
+    .slice()
+    .sort((a,b) => a.name.localeCompare(b.name,'pl',{numeric:true,sensitivity:'base'})
+                || (a.group||'').localeCompare(b.group||'','pl',{sensitivity:'base'}));
   let clsOpts = '<option value="">— brak —</option>';
   const seen = new Set();
   classes.filter(c=>c.name).forEach(c => {
@@ -4781,6 +4807,20 @@ function openHomeroomModal(key) {
   document.getElementById('hrClass').innerHTML = clsOpts;
   document.getElementById('hrTeacher').innerHTML = buildTeacherSelectOptions(hr.teacherAbbr||'');
 
+  // Drugi gospodarz
+  // Klonuj listę dla drugiego selecta
+  document.getElementById('hrClass2').innerHTML = '<option value="">— brak —</option>' + clsOpts.replace('<option value="">— brak —</option>','');
+  document.getElementById('hrTeacher2').innerHTML = buildTeacherSelectOptions(hr.teacherAbbr2||'');
+
+  // Ustaw wartości drugiego
+  document.getElementById('hrClass2').value   = hr.className2   || '';
+  document.getElementById('hrTeacher2').value = hr.teacherAbbr2 || '';
+
+  // Pokaż/ukryj sekcję drugiego
+  const hasSecond = !!(hr.className2 || hr.teacherAbbr2);
+  document.getElementById('hrSecondSection').style.display = hasSecond ? '' : 'none';
+  document.getElementById('hrToggle2Btn').textContent = hasSecond ? '− Usuń drugiego gospodarza' : '＋ Dodaj drugiego gospodarza';
+
   document.getElementById('homeroomModal').classList.add('show');
   document.getElementById('hrClass').focus();
 }
@@ -4793,14 +4833,34 @@ function closeHomeroomModal() {
 function saveHomeroom() {
   if (!_hrKey) return;
   if (!appState.homerooms) appState.homerooms = {};
+  const cls2  = document.getElementById('hrClass2').value;
+  const tch2  = document.getElementById('hrTeacher2').value;
   appState.homerooms[_hrKey] = {
-    className:   document.getElementById('hrClass').value,
-    teacherAbbr: document.getElementById('hrTeacher').value,
+    className:    document.getElementById('hrClass').value,
+    teacherAbbr:  document.getElementById('hrTeacher').value,
+    className2:   cls2  || undefined,
+    teacherAbbr2: tch2  || undefined,
   };
   persistAll();
   closeHomeroomModal();
   renderSchedule();
   notify('✓ Gospodarz sali zapisany');
+}
+
+function hrToggleSecond() {
+  const sec = document.getElementById('hrSecondSection');
+  const btn = document.getElementById('hrToggle2Btn');
+  const visible = sec.style.display !== 'none';
+  if (visible) {
+    // Ukryj i wyczyść dane drugiego
+    sec.style.display = 'none';
+    btn.textContent = '＋ Dodaj drugiego gospodarza';
+    document.getElementById('hrClass2').value   = '';
+    document.getElementById('hrTeacher2').value = '';
+  } else {
+    sec.style.display = '';
+    btn.textContent = '− Usuń drugiego gospodarza';
+  }
 }
 
 function clearHomeroom() {
@@ -5058,6 +5118,20 @@ function pwaDismiss() {
 //  SAMOUCZEK
 // ================================================================
  // current step index
+
+EventListener('appinstalled', () => {
+  document.getElementById('pwaInstallBanner').classList.remove('show');
+  notify('✓ SalePlan zainstalowany na urządzeniu!');
+});
+
+
+// ================================================================
+//  SAMOUCZEK
+// ================================================================
+ // current step index
+
+
+
 
 </script>
 </body>
