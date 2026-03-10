@@ -1928,6 +1928,65 @@ body.light #tutBox { background: #fff; }
   margin-bottom: 24px;
 }
 
+
+/* Panel wyboru trybu importu na stronie powitalnej */
+#wlImportPanel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  background: rgba(30,58,138,0.55);
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#wlImportPanel.show { display: flex; }
+.wl-import-choice {
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px 28px;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.wl-import-choice h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: #1e3a8a;
+  font-weight: 700;
+}
+.wl-import-choice .wl-ic-file {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-bottom: 20px;
+  padding: 6px 10px;
+  background: #f1f5f9;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.wl-ic-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.wl-ic-option {
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+}
+.wl-ic-option:hover { border-color: #3b82f6; background: #eff6ff; }
+.wl-ic-option.disabled { opacity: 0.4; pointer-events: none; }
+.wl-ic-option-title { font-size: 0.88rem; font-weight: 700; color: #1e3a8a; margin-bottom: 3px; }
+.wl-ic-option-desc  { font-size: 0.76rem; color: #6b7280; line-height: 1.4; }
+.wl-ic-cancel { font-size: 0.78rem; color: #9ca3af; cursor: pointer; text-align: center; }
+.wl-ic-cancel:hover { color: #6b7280; }
+
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -1966,10 +2025,10 @@ if ('serviceWorker' in navigator) {
         <span class="wl-card-tag green">Kreator krok po kroku</span>
       </div>
 
-      <div class="wl-card" id="wlCardCopy" onclick="welcomeCopyYear()" style="display:none">
+      <div class="wl-card" id="wlCardCopy" onclick="welcomeCopyYear()">
         <div class="wl-card-icon">📋</div>
         <div class="wl-card-title">Nowy rok szkolny</div>
-        <div class="wl-card-desc">Skopiuj konfigurację szkoły, sale, nauczycieli i klasy z bieżącego roku.</div>
+        <div class="wl-card-desc" id="wlCardCopyDesc">Skopiuj konfigurację szkoły, sale, nauczycieli i klasy z bieżącego roku.</div>
         <span class="wl-card-tag orange">Na podstawie istniejącego</span>
       </div>
 
@@ -2006,6 +2065,30 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 <!-- /STRONA POWITALNA -->
+
+<!-- ── Panel wyboru trybu importu (welcome) ── -->
+<div id="wlImportPanel">
+  <div class="wl-import-choice">
+    <h3>📂 Jak wczytać ten plan?</h3>
+    <div class="wl-ic-file" id="wlIcFileName">📄 plik.json</div>
+    <div class="wl-ic-btn">
+      <div class="wl-ic-option" onclick="wlImportConfirm('replace')">
+        <div class="wl-ic-option-title">🔄 Zastąp bieżący plan</div>
+        <div class="wl-ic-option-desc">Nadpisz wszystkie dane danymi z pliku. Bieżący plan trafi do archiwum.</div>
+      </div>
+      <div class="wl-ic-option" id="wlIcMergeBtn" onclick="wlImportConfirm('merge')">
+        <div class="wl-ic-option-title">⊕ Scal z bieżącym planem</div>
+        <div class="wl-ic-option-desc">Dodaj tylko brakujące wpisy — nie nadpisuje istniejących komórek. Przydatne gdy dwie osoby układają plan dla różnych grup.</div>
+      </div>
+      <div class="wl-ic-option" id="wlIcFreshBtn" onclick="wlImportConfirm('fresh')">
+        <div class="wl-ic-option-title">✨ Wczytaj jako nowy plan</div>
+        <div class="wl-ic-option-desc">Załaduj plan z pliku jako punkt startowy — bez scalania z istniejącymi danymi.</div>
+      </div>
+    </div>
+    <div class="wl-ic-cancel" onclick="wlImportCancel()">↩ Anuluj</div>
+  </div>
+</div>
+
 
 
 <!-- ═══════════════════════════════════════════
@@ -2515,6 +2598,7 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 <script>
+
 // ================================================================
 //  WALIDACJA KOLIZJI
 // ================================================================
@@ -2687,9 +2771,19 @@ function loadAll() {
 let _demoMode = false;
 
 function showWelcomeScreen() {
-  // Pokaż/ukryj kartę "nowy rok" jeśli jest istniejący plan
   const cardCopy = document.getElementById('wlCardCopy');
-  if (cardCopy) cardCopy.style.display = appState ? 'flex' : 'none';
+  const descCopy = document.getElementById('wlCardCopyDesc');
+  if (cardCopy) {
+    if (appState) {
+      cardCopy.classList.remove('disabled');
+      cardCopy.style.cursor = 'pointer';
+      if (descCopy) descCopy.textContent = 'Skopiuj konfigurację szkoły, sale, nauczycieli i klasy z bieżącego roku.';
+    } else {
+      cardCopy.classList.add('disabled');
+      cardCopy.style.cursor = 'not-allowed';
+      if (descCopy) descCopy.textContent = 'Niedostępne — najpierw utwórz plan lub wczytaj go z pliku.';
+    }
+  }
   document.getElementById('welcomeScreen').classList.add('show');
 }
 
@@ -2706,9 +2800,9 @@ function welcomeStartNew() {
 
 // ── Nowy rok na bazie istniejącego ──
 function welcomeCopyYear() {
+  if (!appState) { notify('⚠ Brak planu do skopiowania — najpierw utwórz nowy plan', true); return; }
   _demoMode = false;
   hideWelcomeScreen();
-  // openWizardNewYear automatycznie kopiuje dane z appState
   openWizardNewYear();
 }
 
@@ -2716,6 +2810,9 @@ function welcomeCopyYear() {
 function welcomeImportClick() {
   document.getElementById('wlFileInput').click();
 }
+
+// Dane wczytanego pliku — czekają na wybór trybu
+let _wlPendingImport = null;
 
 function welcomeHandleFile(file) {
   if (!file || !file.name.endsWith('.json')) {
@@ -2728,33 +2825,70 @@ function welcomeHandleFile(file) {
       if (!data.schedData && !data.appState) {
         notify('⚠ Nieprawidłowy format pliku', true); return;
       }
-      // Jeśli nie ma jeszcze appState — załaduj bezpośrednio
-      if (!appState && data.appState) {
-        appState       = data.appState;
-        schedData      = data.schedData      || {};
-        validFromDates = data.validFromDates  || {};
-        archive        = data.archive         || [];
-        if (!appState.homerooms) appState.homerooms = {};
-        persistAll();
-        hideWelcomeScreen();
-        const yk = appState.yearKey;
-        if (!schedData[yk]) schedData[yk] = {};
-        (appState.days||DAYS_DEFAULT).forEach((_,i) => {
-          if (!schedData[yk][i]) schedData[yk][i] = {};
-          (appState.hours||[]).forEach(h => { if(!schedData[yk][i][h]) schedData[yk][i][h]={}; });
-        });
-        mountApp();
-        notify('✓ Plan wczytany z pliku');
-      } else {
-        // Mamy już appState — użyj istniejącego modal porównania
-        hideWelcomeScreen();
-        openImportModal(data);
-      }
+      _wlPendingImport = data;
+      // Pokaż panel wyboru trybu
+      const fnEl = document.getElementById('wlIcFileName');
+      if (fnEl) fnEl.textContent = '📄 ' + file.name;
+      // Opcja "scal" i "zastąp" tylko gdy jest bieżący plan
+      const mergeBtn = document.getElementById('wlIcMergeBtn');
+      const freshBtn = document.getElementById('wlIcFreshBtn');
+      if (mergeBtn) mergeBtn.classList.toggle('disabled', !appState);
+      if (freshBtn) freshBtn.style.display = appState ? 'none' : 'block';
+      // "zastąp" dostępna zawsze gdy jest appState
+      document.getElementById('wlImportPanel').classList.add('show');
     } catch(ex) {
       notify('⚠ Błąd odczytu pliku: ' + ex.message, true);
     }
   };
   reader.readAsText(file);
+}
+
+function wlImportCancel() {
+  _wlPendingImport = null;
+  document.getElementById('wlImportPanel').classList.remove('show');
+}
+
+function wlImportConfirm(mode) {
+  const data = _wlPendingImport;
+  if (!data) return;
+  document.getElementById('wlImportPanel').classList.remove('show');
+
+  if (mode === 'fresh' || (mode === 'replace' && !appState)) {
+    // Wczytaj jako świeży plan (brak bieżącego lub wybrano fresh)
+    appState       = data.appState       || null;
+    schedData      = data.schedData      || {};
+    validFromDates = data.validFromDates  || {};
+    archive        = data.archive         || [];
+    if (appState && !appState.homerooms) appState.homerooms = {};
+    persistAll();
+    hideWelcomeScreen();
+    if (appState) {
+      const yk = appState.yearKey;
+      if (!schedData[yk]) schedData[yk] = {};
+      (appState.days||DAYS_DEFAULT).forEach((_,i) => {
+        if (!schedData[yk][i]) schedData[yk][i] = {};
+        (appState.hours||[]).forEach(h => { if(!schedData[yk][i][h]) schedData[yk][i][h]={}; });
+      });
+      mountApp();
+    } else {
+      showWelcomeScreen();
+    }
+    notify('✓ Plan wczytany z pliku');
+
+  } else if (mode === 'replace' && appState) {
+    // Zastąp — archiwizuj bieżący, wczytaj nowy
+    hideWelcomeScreen();
+    _importData = data;
+    document.getElementById('importModeOverwrite').checked = true;
+    document.getElementById('importModeMerge').checked = false;
+    confirmImport();
+
+  } else if (mode === 'merge' && appState) {
+    // Scal — użyj istniejącego modal z podglądem diff
+    hideWelcomeScreen();
+    openImportModal(data);
+  }
+  _wlPendingImport = null;
 }
 
 // ── Drag & drop na stronę powitalną ──
@@ -4487,14 +4621,6 @@ function pwaDismiss() {
 //  SAMOUCZEK
 // ================================================================
  // current step index
-
-
-
-
-
-
-
-
 </script>
 </body>
 </html>
