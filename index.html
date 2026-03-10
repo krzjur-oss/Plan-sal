@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v45');
+          const hasNew = keys.some(k => k === 'sp-v46');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -1090,9 +1090,31 @@ body {
 .sb-sep { color: var(--border2); }
 
 /* PRINT */
+/* PDF header — widoczny tylko przy druku */
+#pdfHeader {
+  display: none;
+  padding: 6px 10px 4px;
+  border-bottom: 2px solid #333;
+  margin-bottom: 6px;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.pdf-school {
+  font-size: 1rem; font-weight: 700; color: #111;
+  margin-bottom: 2px;
+}
+.pdf-meta {
+  font-size: 0.72rem; color: #444;
+  display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+}
+.pdf-year  { font-weight: 600; }
+.pdf-day   { }
+.pdf-from  { color: #1a56db; font-weight: 600; }
+.pdf-from::before { content: 'Od: '; font-weight: 400; color: #555; }
+
 @media print {
   .topbar, .statusbar, .modal-overlay, #wizardOverlay, #archivePanel, #pwaInstallBanner,
   #homeroomModal, .notif, .pwa-install-banner { display: none !important; }
+  #pdfHeader { display: block !important; }
   body, body.light { background: #fff !important; color: #000 !important; }
   .main { padding: 0 !important; overflow: visible !important; }
   .schedule-wrap { min-width: unset !important; overflow: visible !important; }
@@ -2475,6 +2497,14 @@ if ('serviceWorker' in navigator) {
     </div>
   </div>
 
+  <div id="pdfHeader" style="display:none">
+    <div class="pdf-school"></div>
+    <div class="pdf-meta">
+      <span class="pdf-year"></span>
+      <span class="pdf-day"></span>
+      <span class="pdf-from"></span>
+    </div>
+  </div>
   <div class="main">
     <div class="schedule-wrap" id="scheduleWrap"></div>
   </div>
@@ -2673,27 +2703,6 @@ if ('serviceWorker' in navigator) {
     <p>Tworzy nowy plan na kolejny rok szkolny. Dane budynków, klas i nauczycieli można przenieść z istniejącego planu.</p>
   </div>
 
-  <div class="ah-section">
-    <h4>⬇ PDF</h4>
-    <p>Drukuje plan bieżącego dnia. Użyj opcji przeglądarki <strong>Drukuj do PDF</strong> żeby zapisać plik.</p>
-    <p>Orientacja: <strong>pozioma</strong>, marginesy: minimalne.</p>
-  </div>
-</div>
-<!-- ── Drag & Drop overlay ── -->
-<div id="dropOverlay">
-  <div class="drop-inner">
-    <div style="font-size:2.5rem">📂</div>
-    <div style="font-size:1.1rem;font-weight:600;margin-top:8px">Upuść plik JSON</div>
-    <div style="font-size:0.8rem;color:var(--text-dim);margin-top:4px">aby zaimportować plan</div>
-  </div>
-</div>
-<!-- ── Modal porównania importu ── -->
-<div id="importModal">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-title">📥 Import planu</div>
-    <div id="importInfo" style="margin:12px 0;display:flex;flex-direction:column;gap:6px">
-    </div>
-  </div>
 </div>
 
 <script>
@@ -4699,14 +4708,29 @@ function exportPDF() {
   if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey] = {};
   validFromDates[appState.yearKey][currentDay] = vf;
 
-  // Build filename: ps_(rok)_(YYYY-MM-DD)
-  const year   = (appState.yearLabel || appState.yearKey).replace(/\//g, '-');
+  // Wypełnij nagłówek PDF
+  const schoolFull = appState.school?.name || appState.school?.short || '';
+  const schoolShort = appState.school?.short || '';
+  const schoolLabel = schoolFull && schoolShort && schoolFull !== schoolShort
+    ? `${schoolFull} (${schoolShort})`
+    : schoolFull || schoolShort || 'SalePlan';
+  const yearLabel  = appState.yearLabel || appState.yearKey || '';
+  const dayLabel   = (appState.days || [])[currentDay] || '';
+  const vfFormatted = vf
+    ? new Date(vf).toLocaleDateString('pl-PL', {day:'2-digit', month:'long', year:'numeric'})
+    : 'nie podano';
+
+  const hdr = document.getElementById('pdfHeader');
+  hdr.querySelector('.pdf-school').textContent = schoolLabel;
+  hdr.querySelector('.pdf-year').textContent   = `Rok szkolny ${yearLabel}`;
+  hdr.querySelector('.pdf-day').textContent    = `· ${dayLabel}`;
+  hdr.querySelector('.pdf-from').textContent   = vfFormatted;
+
+  // Build filename
+  const year   = yearLabel.replace(/\//g, '-');
   const today  = new Date().toISOString().slice(0, 10);
-  const school = appState.school?.short || appState.school?.name || 'plan';
-  const safeSchool = school.replace(/[^a-zA-Z0-9ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/g, '_').toLowerCase();
   document.title = `ps_${year}_${today}`;
 
-  // Print — browser uses document.title as default filename
   window.print();
   document.title = 'SalePlan — Plan Sal Zajęciowych';
 }
@@ -5111,14 +5135,12 @@ window.addEventListener('appinstalled', () => {
 
 
 function pwaInstall() {
-  document.getElementById('pwaInstallBanner').classList.remove('show');
-  if (_pwaPrompt) {
-    _pwaPrompt.prompt();
-    _pwaPrompt.userChoice.then(result => {
-      if (result.outcome === 'accepted') notify('✓ SalePlan zainstalowany!');
-      _pwaPrompt = null;
-    });
-  }
+  if (!_pwaPrompt) return;
+  _pwaPrompt.prompt();
+  _pwaPrompt.userChoice.then(result => {
+    if (result.outcome === 'accepted') notify('✓ SalePlan zainstalowany!');
+    _pwaPrompt = null;
+  });
 }
 
 function pwaDismiss() {
