@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v51');
+          const hasNew = keys.some(k => k === 'sp-v52');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -4409,6 +4409,25 @@ function switchDay(idx) {
   renderSchedule();
 }
 
+
+// Skrót nazwy przedmiotu: wielowyrazowe → inicjały, jednowyrazowe → 3 litery
+function subjectAbbr(subject) {
+  if (!subject) return '';
+  const s = subject.trim();
+  if (s.length <= 4) return s; // już krótki (WF, PE, EW...)
+  const IGNORE = new Set(['i','w','z','na','dla','ze','lub','a','o','do','po','od','as']);
+  const words = s.split(/\s+/).filter(w => w.length > 0);
+  if (words.length === 1) {
+    // Jedno słowo → pierwsze 3 litery z wielką literą
+    return s.charAt(0).toUpperCase() + s.slice(1, 3).toLowerCase();
+  }
+  // Wielowyrazowe → inicjały znaczących słów
+  const initials = words
+    .filter(w => !IGNORE.has(w.toLowerCase()))
+    .map(w => w.charAt(0).toUpperCase());
+  return initials.join('');
+}
+
 function renderSchedule() {
   if (!appState) return;
   const cols       = flattenColumns(appState.floors);
@@ -4559,7 +4578,7 @@ function renderSchedule() {
                  : entry.className ? [entry.className] : []
                ).map(cls => `<span class="cell-abbr cell-abbr-cls" title="${esc(resolveClassName(cls))}">${esc(cls)}</span>`).join('')
              }</div>
-             ${entry.subject ? `<div class="cell-row-subject">${esc(entry.subject)}</div>` : ''}
+             ${entry.subject ? `<div class="cell-row-subject" title="${esc(entry.subject)}">${esc(subjectAbbr(entry.subject))}</div>` : ''}
              ${entry.teacherAbbr ? `<div class="cell-row-teacher"><span class="cell-abbr">${esc(entry.teacherAbbr)}</span></div>` : ''}`
           : '<div class="cell-plus">＋</div>'
       }</div></td>`;
