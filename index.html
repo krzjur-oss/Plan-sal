@@ -1987,6 +1987,67 @@ body.light #tutBox { background: #fff; }
 .wl-ic-cancel { font-size: 0.78rem; color: #9ca3af; cursor: pointer; text-align: center; }
 .wl-ic-cancel:hover { color: #6b7280; }
 
+
+/* ================================================================
+   KREATOR — AUTOSAVE SZKICU
+   ================================================================ */
+#wizardDraftStatus {
+  font-size: 0.68rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 4px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+#wizardDraftStatus.visible { opacity: 1; }
+#wizardDraftStatus .ds-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #10b981; flex-shrink: 0;
+}
+#wizardDraftStatus .ds-dot.saving { background: #f59e0b; animation: dsPulse 0.8s infinite; }
+@keyframes dsPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* Modal wznowienia szkicu */
+#draftResumeModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+#draftResumeModal.show { display: flex; }
+.draft-resume-box {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 28px 28px 22px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+}
+.draft-resume-box h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: var(--accent);
+}
+.draft-resume-meta {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+.draft-resume-meta strong { color: var(--text); }
+.draft-resume-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.draft-resume-btns .btn { justify-content: flex-start; font-size: 0.82rem; }
+
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -2105,6 +2166,21 @@ if ('serviceWorker' in navigator) {
     background:#92400e;color:#fff;border:none;cursor:pointer;font-size:0.75rem;font-weight:600;">
     ✕ Wyjdź z demo
   </button>
+</div>
+
+
+<!-- ── Modal wznowienia szkicu kreatora ── -->
+<div id="draftResumeModal">
+  <div class="draft-resume-box">
+    <h3>📝 Znaleziono niezakończony kreator</h3>
+    <div class="draft-resume-meta" id="draftResumeMeta">
+      Ostatni zapis: —
+    </div>
+    <div class="draft-resume-btns">
+      <button class="btn btn-primary" onclick="draftResume()">↩ Wznów — kontynuuj od miejsca przerwania</button>
+      <button class="btn btn-ghost" onclick="draftDiscard()">🗑 Zacznij od nowa — usuń szkic</button>
+    </div>
+  </div>
 </div>
 
 <div id="wizardOverlay">
@@ -2343,7 +2419,13 @@ if ('serviceWorker' in navigator) {
 
   <!-- Footer -->
   <div class="wizard-footer">
-    <div class="wizard-footer-info" id="wFooterInfo">Krok 1 z 6</div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="wizard-footer-info" id="wFooterInfo">Krok 1 z 6</div>
+      <div id="wizardDraftStatus">
+        <span class="ds-dot"></span>
+        <span id="dsDraftText">Szkic zapisany</span>
+      </div>
+    </div>
     <div class="wizard-btns">
       <button class="btn btn-ghost" id="wBtnBack" onclick="wizardBack()" style="display:none">← Wstecz</button>
       <button class="btn btn-primary" id="wBtnNext" onclick="wizardNext()">Dalej →</button>
@@ -3049,6 +3131,181 @@ function exitDemo() {
   }
 }
 
+
+// ================================================================
+//  KREATOR — AUTOSAVE SZKICU
+//  localStorage key: sp_wiz_draft
+//  Format: { savedAt, step, school, year, hours, buildings,
+//            floors, classes, teachers, assignments }
+// ================================================================
+const DRAFT_KEY = 'sp_wiz_draft';
+let _draftTimer = null;
+
+// ── Zbierz aktualny stan kreatora do obiektu ──
+function wizardCollectDraft() {
+  // Synchronizuj DOM → zmienne zanim zbierzemy
+  try { syncBuildingsFromDOM(); } catch(e) {}
+  try { syncTeachersFromDOM();  } catch(e) {}
+  try { wClasses = getClassesFromDOM(); } catch(e) {}
+
+  return {
+    savedAt:   new Date().toISOString(),
+    step:      wStep,
+    school: {
+      name:  (document.getElementById('wSchoolName')?.value  || '').trim(),
+      short: (document.getElementById('wSchoolShort')?.value || '').trim(),
+      phone: (document.getElementById('wSchoolPhone')?.value || '').trim(),
+      web:   (document.getElementById('wSchoolWeb')?.value   || '').trim(),
+    },
+    year:      (document.getElementById('wYear')?.value  || '').trim(),
+    hours:     (document.getElementById('wHours')?.value || '').trim(),
+    buildings: JSON.parse(JSON.stringify(wBuildings  || [])),
+    floors:    JSON.parse(JSON.stringify(wFloors     || [])),
+    classes:   JSON.parse(JSON.stringify(wClasses    || [])),
+    teachers:  JSON.parse(JSON.stringify(wTeachers   || [])),
+    assignments: JSON.parse(JSON.stringify(wAssignments || {})),
+  };
+}
+
+// ── Zapisz szkic do localStorage ──
+function wizardSaveDraft() {
+  const statusEl = document.getElementById('wizardDraftStatus');
+  const dotEl    = statusEl?.querySelector('.ds-dot');
+  const textEl   = document.getElementById('dsDraftText');
+
+  // Pokaż animację "zapisuję..."
+  if (dotEl)  dotEl.classList.add('saving');
+  if (statusEl) statusEl.classList.add('visible');
+  if (textEl) textEl.textContent = 'Zapisuję szkic…';
+
+  try {
+    const draft = wizardCollectDraft();
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+
+    // Zaktualizuj status
+    const t = new Date(draft.savedAt);
+    const ts = t.toLocaleTimeString('pl-PL', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if (dotEl)  dotEl.classList.remove('saving');
+    if (textEl) textEl.textContent = `Szkic zapisany ${ts}`;
+
+    // Ukryj po 4 sekundach
+    clearTimeout(_draftTimer);
+    _draftTimer = setTimeout(() => {
+      if (statusEl) statusEl.classList.remove('visible');
+    }, 4000);
+  } catch(e) {
+    if (dotEl)  dotEl.classList.remove('saving');
+    if (textEl) textEl.textContent = 'Błąd zapisu szkicu';
+    console.warn('wizardSaveDraft error:', e);
+  }
+}
+
+// ── Usuń szkic (po zakończeniu lub odrzuceniu) ──
+function wizardClearDraft() {
+  localStorage.removeItem(DRAFT_KEY);
+  const statusEl = document.getElementById('wizardDraftStatus');
+  if (statusEl) statusEl.classList.remove('visible');
+}
+
+// ── Sprawdź czy istnieje szkic i pokaż modal ──
+function wizardCheckDraft() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return false;
+    const draft = JSON.parse(raw);
+    if (!draft || !draft.savedAt) return false;
+
+    // Uzupełnij info w modalu
+    const t   = new Date(draft.savedAt);
+    const ts  = t.toLocaleString('pl-PL', {dateStyle:'short', timeStyle:'short'});
+    const step = (draft.step || 0) + 1;
+    const school = draft.school?.name || '(bez nazwy)';
+    const year   = draft.year || '(bez roku)';
+    const metaEl = document.getElementById('draftResumeMeta');
+    if (metaEl) metaEl.innerHTML =
+      `Ostatni zapis: <strong>${ts}</strong><br>` +
+      `Szkoła: <strong>${school}</strong>, rok: <strong>${year}</strong><br>` +
+      `Zapisano na kroku <strong>${step} z ${TOTAL_STEPS}</strong> — klucz: <code>sp_wiz_draft</code>`;
+
+    document.getElementById('draftResumeModal').classList.add('show');
+    return true;
+  } catch(e) {
+    localStorage.removeItem(DRAFT_KEY);
+    return false;
+  }
+}
+
+// ── Wznów szkic ──
+function draftResume() {
+  document.getElementById('draftResumeModal').classList.remove('show');
+  try {
+    const draft = JSON.parse(localStorage.getItem(DRAFT_KEY));
+    if (!draft) return;
+
+    // Przywróć zmienne
+    wStep        = draft.step || 0;
+    wBuildings   = draft.buildings  || [{ name:'', address:'' }];
+    wFloors      = draft.floors     || [];
+    wClasses     = draft.classes    || [];
+    wTeachers    = draft.teachers   || [];
+    wAssignments = draft.assignments || {};
+
+    // Przywróć pola formularza
+    if (document.getElementById('wSchoolName'))  document.getElementById('wSchoolName').value  = draft.school?.name  || '';
+    if (document.getElementById('wSchoolShort')) document.getElementById('wSchoolShort').value = draft.school?.short || '';
+    if (document.getElementById('wSchoolPhone')) document.getElementById('wSchoolPhone').value = draft.school?.phone || '';
+    if (document.getElementById('wSchoolWeb'))   document.getElementById('wSchoolWeb').value   = draft.school?.web   || '';
+    if (document.getElementById('wYear'))        document.getElementById('wYear').value         = draft.year  || '';
+    if (document.getElementById('wHours'))       document.getElementById('wHours').value        = draft.hours || '';
+    if (document.getElementById('wTitleYear'))   document.getElementById('wTitleYear').textContent = draft.year || '';
+
+    renderBuildingList();
+    renderFloorList();
+    renderClassGrid();
+    renderTeacherList();
+    if (wStep === 5) renderAssignmentsStep();
+    updateWizardStep();
+    wpUpdate(wStep);
+
+    document.getElementById('wizardOverlay').classList.add('show');
+
+    // Pokaż status
+    const t = new Date(draft.savedAt);
+    const ts = t.toLocaleTimeString('pl-PL', {hour:'2-digit',minute:'2-digit'});
+    const statusEl = document.getElementById('wizardDraftStatus');
+    const textEl   = document.getElementById('dsDraftText');
+    if (textEl)   textEl.textContent = `Wznowiono (szkic z ${ts})`;
+    if (statusEl) statusEl.classList.add('visible');
+
+    notify('↩ Wznowiono kreator z zapisanego szkicu');
+  } catch(e) {
+    notify('⚠ Błąd wczytywania szkicu', true);
+    wizardClearDraft();
+  }
+}
+
+// ── Odrzuć szkic i zacznij od nowa ──
+function draftDiscard() {
+  document.getElementById('draftResumeModal').classList.remove('show');
+  wizardClearDraft();
+  // openWizardNewYear już jest wywołane przed checkDraft — kontynuuj normalnie
+  document.getElementById('wizardOverlay').classList.add('show');
+}
+
+// ── Podpięcie autosave — co 30 sekund gdy kreator jest otwarty ──
+let _autosaveInterval = null;
+function startWizardAutosave() {
+  stopWizardAutosave();
+  _autosaveInterval = setInterval(() => {
+    if (document.getElementById('wizardOverlay')?.classList.contains('show')) {
+      wizardSaveDraft();
+    }
+  }, 30000);
+}
+function stopWizardAutosave() {
+  if (_autosaveInterval) { clearInterval(_autosaveInterval); _autosaveInterval = null; }
+}
+
 // ================================================================
 //  EKSPORT / IMPORT / SCALANIE (współpraca)
 // ================================================================
@@ -3270,7 +3527,14 @@ function openWizardNewYear(preload) {
   renderClassGrid();
   renderTeacherList();
   updateWizardStep();
+  // Sprawdź czy istnieje szkic — jeśli tak pokaż modal zamiast od razu otwierać
+  if (wizardCheckDraft()) {
+    // Modal przejął kontrolę — nie otwieraj overlaya jeszcze
+    startWizardAutosave();
+    return;
+  }
   document.getElementById('wizardOverlay').classList.add('show');
+  startWizardAutosave();
 }
 
 function openWizardFirst() { showWelcomeScreen(); }
@@ -3314,11 +3578,11 @@ function wizardNext() {
   wStep++;
   if (wStep === 5) renderAssignmentsStep();
   updateWizardStep();
-
   wpUpdate(wStep);
+  wizardSaveDraft(); // autosave przy każdym kroku
 }
 
-function wizardBack() { if (wStep > 0) { wStep--; updateWizardStep();  wpUpdate(wStep); } }
+function wizardBack() { if (wStep > 0) { wStep--; updateWizardStep(); wpUpdate(wStep); wizardSaveDraft(); } }
 
 function updateWizardStep() {
   for (let i = 0; i < TOTAL_STEPS; i++) {
@@ -3370,6 +3634,8 @@ function finishWizard() {
   }
 
   persistAll();
+  wizardClearDraft();    // usuń szkic po pomyślnym zakończeniu
+  stopWizardAutosave();
   document.getElementById('wizardOverlay').classList.remove('show');
   currentDay = 0;
   mountApp();
@@ -4301,6 +4567,14 @@ function toggleTheme() {
 document.addEventListener('DOMContentLoaded', function() {
   loadAll();
   initImportDragDrop();
+  // Autosave szkicu przy zmianie pól kreatora (krok 0 i 1)
+  ['wSchoolName','wSchoolShort','wSchoolPhone','wSchoolWeb','wYear','wHours'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => {
+      clearTimeout(_draftTimer);
+      _draftTimer = setTimeout(wizardSaveDraft, 3000);
+    });
+  });
   applyTheme(localStorage.getItem('sp_theme') || 'dark');
   if (!appState) {
     openWizardFirst();
