@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v56');
+          const hasNew = keys.some(k => k === 'sp-v57');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -2937,22 +2937,8 @@ function loadAll() {
       .filter(h => h !== '')
       .sort((a, b) => Number(a) - Number(b));
   }
-  // Normalizacja schedData: klucze godzin muszą być stringami
-  if (schedData && appState) {
-    const yk = appState.yearKey;
-    if (schedData[yk]) {
-      Object.keys(schedData[yk]).forEach(day => {
-        const dayObj = schedData[yk][day];
-        const numericKeys = Object.keys(dayObj).filter(k => !isNaN(k) && k !== String(Number(k)) || false);
-        // Jeśli klucze są liczbami (0,1,2) zamiast stringów ("0","1","2") — JSON.parse zawsze zwraca string dla kluczy obiektu
-        // Ale na wszelki wypadek upewnij się że wartości są dostępne przez String(h)
-        // (w JS klucze obiektów są zawsze stringami, więc dayObj["0"] === dayObj[0])
-      });
-    }
-  }
+
 }
-
-
 
 // ================================================================
 //  STRONA POWITALNA
@@ -3243,8 +3229,6 @@ function exitDemo() {
     mountApp();
   }
 }
-
-
 
 // ================================================================
 //  KREATOR — TRYB EDYCJI BIEŻĄCEGO ROKU
@@ -4317,37 +4301,6 @@ function buildTeacherSelectOptions(selectedAbbr) {
   return opts;
 }
 
-function buildClassSelectOptionsNoBlank(selectedVal) {
-  // Identyczna jak buildClassSelectOptions ale bez opcji "brak"
-  const classes = appState?.classes || [];
-  let opts = '';
-  const byClass = {};
-  classes.filter(c=>c.name).forEach(c => {
-    if (!byClass[c.name]) byClass[c.name] = [];
-    byClass[c.name].push(c);
-  });
-  const sortedNames = Object.keys(byClass).sort((a,b) =>
-    a.localeCompare(b, 'pl', {numeric: true, sensitivity: 'base'}));
-  sortedNames.forEach(clsName => {
-    const entries = byClass[clsName];
-    entries.sort((a,b) => (a.group||'').localeCompare(b.group||'', 'pl', {sensitivity:'base'}));
-    if (entries.length === 1) {
-      const c = entries[0];
-      const val = c.abbr || c.name;
-      const label = c.group && c.group.toLowerCase() !== 'cała klasa' ? `${c.name} — ${c.group}` : c.name;
-      opts += `<option value="${esc(val)}"${val===selectedVal?' selected':''}>${esc(label)}</option>`;
-    } else {
-      opts += `<optgroup label="${esc(clsName)}">`;
-      entries.forEach(c => {
-        const val = c.abbr || c.name;
-        opts += `<option value="${esc(val)}"${val===selectedVal?' selected':''}>${esc(c.name)} — ${esc(c.group||c.name)}</option>`;
-      });
-      opts += '</optgroup>';
-    }
-  });
-  return opts;
-}
-
 function buildClassSelectOptions(selectedVal) {
   const classes = appState?.classes || [];
   let opts = '<option value="">— brak —</option>';
@@ -4704,8 +4657,6 @@ function closeEditModal() {
 function renderMultiClassList(selected) {
   // Zawsze aktualizuj moduł stanu
   _selectedClasses = Array.isArray(selected) ? selected.slice() : [];
-  // Usuń też stary window._mcClasses dla kompatybilności
-  window._mcClasses = _selectedClasses;
 
   const container = document.getElementById('multiClassList');
   if (!container) return;
@@ -4789,7 +4740,7 @@ function mcRemoveClass(idx) {
 }
 function clearCellData() {
   if (schedData[appState.yearKey]?.[_mDay]?.[_mHour]) schedData[appState.yearKey][_mDay][_mHour][_mKey]={};
-  closeEditModal(); renderSchedule();
+  persistAll(); closeEditModal(); renderSchedule(); sbSet('Wpis wyczyszczony');
 }
 (function(){var _em=document.getElementById('editModal');if(_em)_em.addEventListener('click',e=>{if(e.target===_em)closeEditModal();});})();
 document.addEventListener('keydown',e=>{
@@ -5250,10 +5201,9 @@ function qaAddClass() {
   persistAll();
 
   // Po dodaniu — dodaj też do multiClassList (zajęcia międzyoddziałowe)
-  const _curList = window._mcClasses || [];
-  if (!_curList.includes(abbr)) {
-    _curList.push(abbr);
-    renderMultiClassList(_curList);
+  if (!_selectedClasses.includes(abbr)) {
+    _selectedClasses.push(abbr);
+    renderMultiClassList(_selectedClasses);
   }
   toggleQuickAdd('class');
   notify('✓ Dodano: ' + name + ' — ' + group);
@@ -5283,9 +5233,6 @@ window.addEventListener('beforeinstallprompt', e => {
   }, 3000);
 });
 
-
-
-
 window.addEventListener('appinstalled', () => {
   document.getElementById('pwaInstallBanner').classList.remove('show');
   notify('✓ SalePlan zainstalowany na urządzeniu!');
@@ -5293,11 +5240,8 @@ window.addEventListener('appinstalled', () => {
 
 
 // ================================================================
-//  SAMOUCZEK
+//  PWA — INSTALL
 // ================================================================
- // current step index
-
-
 
 function pwaInstall() {
   if (!_pwaPrompt) return;
@@ -5312,23 +5256,6 @@ function pwaDismiss() {
   document.getElementById('pwaInstallBanner').classList.remove('show');
   localStorage.setItem('sp_pwa_dismissed', '1');
 }
-
-
-
-// ================================================================
-//  SAMOUCZEK
-// ================================================================
- // current step index
-
-
-
-// ================================================================
-//  SAMOUCZEK
-// ================================================================
- // current step index
-
-
-
 
 
 // ================================================================
