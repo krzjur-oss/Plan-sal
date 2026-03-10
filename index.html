@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v50');
+          const hasNew = keys.some(k => k === 'sp-v51');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -4559,6 +4559,7 @@ function renderSchedule() {
                  : entry.className ? [entry.className] : []
                ).map(cls => `<span class="cell-abbr cell-abbr-cls" title="${esc(resolveClassName(cls))}">${esc(cls)}</span>`).join('')
              }</div>
+             ${entry.subject ? `<div class="cell-row-subject">${esc(entry.subject)}</div>` : ''}
              ${entry.teacherAbbr ? `<div class="cell-row-teacher"><span class="cell-abbr">${esc(entry.teacherAbbr)}</span></div>` : ''}`
           : '<div class="cell-plus">＋</div>'
       }</div></td>`;
