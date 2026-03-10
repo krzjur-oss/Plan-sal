@@ -2222,8 +2222,8 @@ if ('serviceWorker' in navigator) {
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
       <div>
         <div class="wizard-badge">✦ Kreator konfiguracji</div>
-        <div class="wizard-title">Nowy rok szkolny<br><span id="wTitleYear">2025/2026</span></div>
-        <div class="wizard-subtitle">Skonfiguruj szkołę, budynki, nauczycieli i klasy — zajmie to tylko chwilę.</div>
+        <div class="wizard-title" id="wizardTitle">Nowy rok szkolny<br><span id="wTitleYear">2025/2026</span></div>
+        <div class="wizard-subtitle" id="wizardSubtitle">Skonfiguruj szkołę, budynki, nauczycieli i klasy — zajmie to tylko chwilę.</div>
       </div>
       <button class="theme-toggle" id="themeToggleWizard" onclick="toggleTheme()" title="Przełącz motyw" style="flex-shrink:0;margin-top:4px">🌙</button>
     </div>
@@ -2679,8 +2679,8 @@ if ('serviceWorker' in navigator) {
     </div>
   </div>
 </div>
-<script>
 
+<script>
 // ================================================================
 //  WALIDACJA KOLIZJI
 // ================================================================
@@ -3131,6 +3131,47 @@ function exitDemo() {
   }
 }
 
+
+
+// ================================================================
+//  KREATOR — TRYB EDYCJI BIEŻĄCEGO ROKU
+// ================================================================
+let _wizardEditMode = false; // true = edytujemy istniejący rok (nie nowy)
+
+function openEditWizard() {
+  if (!appState) return;
+  _wizardEditMode = true;
+  wStep = 0;
+  wAssignments = appState.assignments ? JSON.parse(JSON.stringify(appState.assignments)) : {};
+  wBuildings = JSON.parse(JSON.stringify(appState.buildings || [{ name:'', address:'' }]));
+  wFloors    = JSON.parse(JSON.stringify(appState.floors    || []));
+  wClasses   = JSON.parse(JSON.stringify(appState.classes   || []));
+  wTeachers  = JSON.parse(JSON.stringify(appState.teachers  || []));
+
+  document.getElementById('wSchoolName').value  = appState.school?.name  || '';
+  document.getElementById('wSchoolShort').value = appState.school?.short || '';
+  document.getElementById('wSchoolPhone').value = appState.school?.phone || '';
+  document.getElementById('wSchoolWeb').value   = appState.school?.web   || '';
+  document.getElementById('wYear').value        = appState.yearLabel || '';
+  document.getElementById('wTitleYear').textContent = appState.yearLabel || '';
+  document.getElementById('wHours').value       = (appState.hours || []).join(',');
+
+  renderBuildingList();
+  renderFloorList();
+  renderClassGrid();
+  renderTeacherList();
+  updateWizardStep();
+  wpUpdate(0);
+
+  // Zmień nagłówek kreatora na "Edycja roku"
+  const titleEl = document.getElementById('wizardTitle');
+  if (titleEl) titleEl.innerHTML = '✏️ Edycja roku szkolnego<br><span id="wTitleYear">' + (appState.yearLabel||'') + '</span>';
+  const subEl = document.getElementById('wizardSubtitle');
+  if (subEl) subEl.textContent = 'Zmień sale, klasy, nauczycieli lub godziny lekcyjne. Istniejący plan zostanie zachowany.';
+
+  document.getElementById('wizardOverlay').classList.add('show');
+  startWizardAutosave();
+}
 
 // ================================================================
 //  KREATOR — AUTOSAVE SZKICU
@@ -3652,7 +3693,7 @@ function updateWizardStep() {
   }
   document.getElementById('wFooterInfo').textContent = `Krok ${wStep+1} z ${TOTAL_STEPS}`;
   document.getElementById('wBtnBack').style.display = wStep > 0 ? 'flex' : 'none';
-  document.getElementById('wBtnNext').textContent = wStep === TOTAL_STEPS-1 ? '✓ Zakończ i przejdź do planu' : 'Dalej →';
+  document.getElementById('wBtnNext').textContent = wStep === TOTAL_STEPS-1 ? (_wizardEditMode ? '✓ Zapisz zmiany' : '✓ Zakończ i przejdź do planu') : 'Dalej →';
 }
 
 function finishWizard() {
@@ -3671,30 +3712,42 @@ function finishWizard() {
   const teachers = wTeachers.filter(t => t.first || t.last);
   const assignments = getAssignmentsFromDOM();
 
-  if (appState) {
+  if (appState && !_wizardEditMode) {
+    // Nowy rok — archiwizuj poprzedni tylko jeśli to nie edycja
     const existing = archive.find(a => a.yearKey === appState.yearKey);
-    if (!existing) {
+    if (!existing && appState.yearKey !== yearKey) {
       archive.push({ yearKey: appState.yearKey, label: appState.yearLabel, savedAt: new Date().toISOString(), config: JSON.parse(JSON.stringify(appState)) });
     }
   }
 
-  appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, days: DAYS_DEFAULT, school, homerooms: (appState?.homerooms||{}) };
+  const prevHomerooms = appState?.homerooms || {};
+  appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, days: DAYS_DEFAULT, school, homerooms: prevHomerooms };
+  _wizardEditMode = false; // reset flagi
 
-  if (!schedData[yearKey]) {
-    schedData[yearKey] = {};
-    DAYS_DEFAULT.forEach((d,i) => {
-      schedData[yearKey][i] = {};
-      hours.forEach(h => { schedData[yearKey][i][h] = {}; });
+  // Zawsze uzupełnij brakujące godziny i dni (bez kasowania istniejących wpisów)
+  if (!schedData[yearKey]) schedData[yearKey] = {};
+  DAYS_DEFAULT.forEach((d,i) => {
+    if (!schedData[yearKey][i]) schedData[yearKey][i] = {};
+    hours.forEach(h => {
+      if (!schedData[yearKey][i][h]) schedData[yearKey][i][h] = {};
     });
-  }
+  });
 
   persistAll();
-  wizardClearDraft();    // usuń szkic po pomyślnym zakończeniu
+  wizardClearDraft();
   stopWizardAutosave();
   document.getElementById('wizardOverlay').classList.remove('show');
-  currentDay = 0;
+  if (!_wizardEditMode) currentDay = 0; // edycja zachowuje bieżący dzień
   mountApp();
-  notify('🎉 Rok szkolny ' + yearLabel + ' utworzony!');
+  const msg = (appState.yearKey === yearKey && document.getElementById('wizardTitle')?.textContent?.includes('Edycja'))
+    ? '✓ Zmiany zapisane dla roku ' + yearLabel
+    : '🎉 Rok szkolny ' + yearLabel + ' utworzony!';
+  notify(msg);
+  // Przywróć nagłówek i podtytuł kreatora
+  const titleEl2 = document.getElementById('wizardTitle');
+  if (titleEl2) titleEl2.innerHTML = 'Nowy rok szkolny<br><span id="wTitleYear">' + yearLabel + '</span>';
+  const subEl2 = document.getElementById('wizardSubtitle');
+  if (subEl2) subEl2.textContent = 'Skonfiguruj szkołę, budynki, nauczycieli i klasy — zajmie to tylko chwilę.';
 }
 
 // ── Building builder ──

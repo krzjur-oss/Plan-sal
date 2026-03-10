@@ -1,5 +1,5 @@
 // SalePlan Service Worker
-const CACHE = 'sp-v40';
+const CACHE = 'sp-v41';
 const ASSETS = [
   './',
   './index.html',
