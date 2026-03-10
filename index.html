@@ -7,10 +7,9 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
     regs.forEach(reg => {
       reg.update();
-      // If SW is not sp-v10, unregister and reload
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v10');
+          const hasNew = keys.some(k => k === 'sp-v42');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -2461,6 +2460,7 @@ if ('serviceWorker' in navigator) {
       <button class="btn btn-outline-blue" onclick="exportJSON()" title="Eksportuj plan do pliku JSON">⬆ JSON</button>
       <label class="btn btn-outline-blue" title="Importuj plan z pliku JSON" style="cursor:pointer">⬇ Import<input type="file" accept=".json" style="display:none" onchange="handleImportFile(this.files[0]);this.value=''"></label>
       <button class="btn btn-yellow" onclick="openWizardNewYear()">＋ Nowy rok</button>
+      <button class="btn btn-outline-orange" onclick="openEditWizard()" title="Edytuj sale, klasy, nauczycieli lub godziny bieżącego roku">✏️ Edytuj rok</button>
       <button class="btn btn-red" onclick="clearDay()">🗑 Dzień</button>
       <button class="tut-trigger" id="tutTriggerBtn" onclick="toggleAppHelp()" title="Pomoc">?</button>
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
@@ -2843,6 +2843,26 @@ function loadAll() {
   if (appState && !appState.teachers)  appState.teachers  = [];
   if (appState && !appState.classes)   appState.classes   = [];
   if (appState && !appState.buildings) appState.buildings = [];
+  // Normalizacja: hours muszą być stringami i posortowane numerycznie
+  if (appState && appState.hours) {
+    appState.hours = appState.hours
+      .map(h => String(h).trim())
+      .filter(h => h !== '')
+      .sort((a, b) => Number(a) - Number(b));
+  }
+  // Normalizacja schedData: klucze godzin muszą być stringami
+  if (schedData && appState) {
+    const yk = appState.yearKey;
+    if (schedData[yk]) {
+      Object.keys(schedData[yk]).forEach(day => {
+        const dayObj = schedData[yk][day];
+        const numericKeys = Object.keys(dayObj).filter(k => !isNaN(k) && k !== String(Number(k)) || false);
+        // Jeśli klucze są liczbami (0,1,2) zamiast stringów ("0","1","2") — JSON.parse zawsze zwraca string dla kluczy obiektu
+        // Ale na wszelki wypadek upewnij się że wartości są dostępne przez String(h)
+        // (w JS klucze obiektów są zawsze stringami, więc dayObj["0"] === dayObj[0])
+      });
+    }
+  }
 }
 
 
