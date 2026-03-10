@@ -2533,7 +2533,7 @@ if ('serviceWorker' in navigator) {
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;flex:2">
             <span class="quick-add-label">Grupa</span>
-            <input class="quick-add-inp" id="qaClassGroup" placeholder="np. gr ez, WF gr1, cała klasa">
+            <input class="quick-add-inp" id="qaClassGroup" placeholder="np. gr ez, WF gr1, cała klasa" oninput="qaAutoClassAbbr()">
           </div>
         </div>
         <div class="quick-add-row">
@@ -3306,6 +3306,61 @@ function stopWizardAutosave() {
   if (_autosaveInterval) { clearInterval(_autosaveInterval); _autosaveInterval = null; }
 }
 
+
+// ================================================================
+//  AUTOMATYCZNY SKRÓT KLASY
+// ================================================================
+const CLASS_ABBR_IGNORE = new Set(['i','w','z','na','dla','ze','lub','a','of','and','the','or','im']);
+
+function autoClassAbbr(className, groupName) {
+  const cls   = (className  || '').trim().toUpperCase();
+  const grp   = (groupName  || '').trim().toLowerCase();
+
+  // Brak grupy lub "cała klasa" → sam skrót klasy
+  if (!grp || grp === 'cała klasa' || grp === 'cala klasa') {
+    return cls;
+  }
+
+  // Podziel grupę na słowa, filtruj spójniki
+  const words = grp.split(/\s+/).filter(w => w.length > 0);
+  const meaningful = words.filter(w => !CLASS_ABBR_IGNORE.has(w.toLowerCase()));
+
+  let grpAbbr;
+  if (meaningful.length === 0) {
+    // same spójniki — użyj całości skróconej do 3 znaków
+    grpAbbr = words[0].slice(0,3);
+  } else if (meaningful.length === 1) {
+    // jeden wyraz: pierwsze 3 litery z wielką, reszta mała
+    const w = meaningful[0];
+    grpAbbr = w[0].toUpperCase() + w.slice(1, 3).toLowerCase();
+  } else {
+    // wiele wyrazów: inicjały
+    // Pierwsza litera każdego znaczącego słowa
+    // Jeśli słowo zaczyna się małą → inicjał wielki
+    // Jeśli słowo zaczyna się wielką (skrót) → zostaw
+    grpAbbr = meaningful.map(w => {
+      // Wykryj skrót np. "HiKN" — zachowaj pierwszą literę
+      return w[0].toUpperCase() + (w.length > 1 && w[1] === w[1].toUpperCase() && w[1] !== w[1].toLowerCase()
+        ? w[1]  // np. "HiKN" → "HK" — ale lepiej inicjał z każdego słowa
+        : '');
+    }).join('');
+
+    // Jeśli wyszło za krótko (tylko 1 char) — daj 3 pierwsze litery pierwszego słowa
+    if (grpAbbr.length < 2) grpAbbr = meaningful[0].slice(0,3);
+  }
+
+  const full = cls + ' ' + grpAbbr.toUpperCase();
+  return full.slice(0, 12);  // max 12 znaków
+}
+
+// Testuj kilka przykładów (usunąć po weryfikacji)
+// autoClassAbbr('1A', 'cała klasa')          → '1A'
+// autoClassAbbr('1A', 'religia')             → '1A REL'
+// autoClassAbbr('1A', 'mniejszość niemiecka')→ '1A MN'
+// autoClassAbbr('1A', 'historia i kultura Niemiec') → '1A HKN'
+// autoClassAbbr('4A', 'gr ez')               → '4A GE'
+// autoClassAbbr('2B', '')                    → '2B'
+
 // ================================================================
 //  EKSPORT / IMPORT / SCALANIE (współpraca)
 // ================================================================
@@ -3754,14 +3809,25 @@ function renderClassGrid() {
   document.getElementById('classGrid').innerHTML = wClasses.map((c,i) => `
     <div class="class-item">
       <input class="class-input" value="${esc(c.name)}" placeholder="np. 1A"
-        oninput="wClasses[${i}].name=this.value">
-      <input class="class-abbr-inp" value="${esc(c.abbr)}" placeholder="skrót" maxlength="8"
-        oninput="wClasses[${i}].abbr=this.value.toUpperCase();this.value=this.value.toUpperCase()">
+        oninput="wClasses[${i}].name=this.value; wClassAutoAbbr(${i})">
+      <input class="class-abbr-inp" id="wca${i}" value="${esc(c.abbr)}" placeholder="skrót (auto)" maxlength="12"
+        oninput="wClasses[${i}].abbr=this.value.toUpperCase();this.value=this.value.toUpperCase()"
+        title="Edytuj ręcznie aby nadpisać auto-skrót">
       <input class="class-group-inp" value="${esc(c.group)}" placeholder="np. gr1 lub cała klasa"
-        oninput="wClasses[${i}].group=this.value">
+        oninput="wClasses[${i}].group=this.value; wClassAutoAbbr(${i})">
       <button class="icon-btn danger" onclick="removeClassAt(${i})">✕</button>
     </div>`).join('');
   updateClassCountBadge();
+}
+
+function wClassAutoAbbr(i) {
+  const cls = wClasses[i];
+  if (!cls) return;
+  const generated = autoClassAbbr(cls.name, cls.group);
+  cls.abbr = generated;
+  // Zaktualizuj input jeśli istnieje
+  const inp = document.getElementById('wca' + i);
+  if (inp) { inp.value = generated; }
 }
 function addClass() {
   wClasses.push({name:'', abbr:'', group:'cała klasa'});
@@ -4772,11 +4838,13 @@ function qaAutoAbbr() {
 }
 
 function qaAutoClassAbbr() {
-  const name = document.getElementById('qaClassName').value.trim();
-  // auto-fill abbr from class name if still empty or matches previous auto
+  const name    = document.getElementById('qaClassName').value.trim();
+  const group   = document.getElementById('qaClassGroup')?.value.trim() || '';
   const abbrInp = document.getElementById('qaClassAbbr');
+  // Autouzupełnij jeśli pole jest puste lub poprzednio auto-wygenerowane
   if (!abbrInp.value || abbrInp.dataset.auto === '1') {
-    abbrInp.value = name.replace(/\s+/g,'').toUpperCase().slice(0,8);
+    const generated = autoClassAbbr(name, group);
+    abbrInp.value       = generated;
     abbrInp.dataset.auto = '1';
   }
 }
@@ -4811,7 +4879,7 @@ function qaAddClass() {
   const group = document.getElementById('qaClassGroup').value.trim() || 'cała klasa';
 
   if (!name) { notify('⚠ Wpisz nazwę klasy', true); return; }
-  if (!abbr) abbr = name.replace(/\s+/g,'').toUpperCase().slice(0,8);
+  if (!abbr) abbr = autoClassAbbr(name, group);
 
   // Check duplicate (same name + group)
   if ((appState.classes||[]).some(c => c.name.toLowerCase()===name.toLowerCase() && c.group.toLowerCase()===group.toLowerCase())) {
