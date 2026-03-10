@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v44');
+          const hasNew = keys.some(k => k === 'sp-v45');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -4441,9 +4441,14 @@ function renderSchedule() {
       const assignedCls = assignments[key]||'';
       const displayCls  = hr.className || assignedCls || '';
       const hrTeacher   = hr.teacherAbbr ? getTeacherByAbbr(hr.teacherAbbr) : null;
-      row += `<th class="th-homeroom" onclick="openHomeroomModal('${key}')" style="cursor:pointer;${topStyle}" title="Kliknij aby ustawić gospodarza">
-        ${displayCls ? `<div class="hr-class">${esc(displayCls)}</div>` : '<div style="color:var(--text-dim);font-size:0.55rem">—</div>'}
-        ${hrTeacher ? `<div class="hr-teacher">${esc(hrTeacher.abbr)}</div>` : ''}
+      const hrTeacher2  = hr.teacherAbbr2 ? getTeacherByAbbr(hr.teacherAbbr2) : null;
+      const displayCls2 = hr.className2 || '';
+      const hasTwo = !!(displayCls2 || hrTeacher2);
+      row += `<th class="th-homeroom${hasTwo?' hr-two':''}" onclick="openHomeroomModal('${key}')" style="cursor:pointer;${topStyle}" title="Kliknij aby ustawić gospodarza">
+        ${displayCls || hasTwo
+          ? `<div class="hr-pair"><div class="hr-class">${esc(displayCls||'?')}</div>${hrTeacher ? `<div class="hr-teacher">${esc(hrTeacher.abbr)}</div>` : ''}</div>`
+          : '<div style="color:var(--text-dim);font-size:0.55rem">—</div>'}
+        ${hasTwo ? `<div class="hr-sep"></div><div class="hr-pair"><div class="hr-class hr-class-2">${esc(displayCls2)}</div>${hrTeacher2 ? `<div class="hr-teacher">${esc(hrTeacher2.abbr)}</div>` : ''}</div>` : ''}
       </th>`;
     });
     thead += row + '</tr>';
@@ -4807,12 +4812,21 @@ function openHomeroomModal(key) {
   document.getElementById('hrClass').innerHTML = clsOpts;
   document.getElementById('hrTeacher').innerHTML = buildTeacherSelectOptions(hr.teacherAbbr||'');
 
-  // Drugi gospodarz
-  // Klonuj listę dla drugiego selecta
-  document.getElementById('hrClass2').innerHTML = '<option value="">— brak —</option>' + clsOpts.replace('<option value="">— brak —</option>','');
+  // Drugi gospodarz — niezależna lista opcji
+  let clsOpts2 = '<option value="">— brak —</option>';
+  const seen2 = new Set();
+  classes.filter(cl=>cl.name).forEach(cl => {
+    const val = cl.abbr||cl.name;
+    if (!seen2.has(val)) {
+      seen2.add(val);
+      const lbl = cl.group && cl.group.toLowerCase() !== 'cala klasa' && cl.group.toLowerCase() !== 'ca\u0142a klasa'
+        ? cl.name + ' — ' + cl.group : cl.name;
+      const sel2 = val === (hr.className2||'') ? ' selected' : '';
+      clsOpts2 += '<option value="' + esc(val) + '"' + sel2 + '>' + esc(lbl) + '</option>';
+    }
+  });
+  document.getElementById('hrClass2').innerHTML  = clsOpts2;
   document.getElementById('hrTeacher2').innerHTML = buildTeacherSelectOptions(hr.teacherAbbr2||'');
-
-  // Ustaw wartości drugiego
   document.getElementById('hrClass2').value   = hr.className2   || '';
   document.getElementById('hrTeacher2').value = hr.teacherAbbr2 || '';
 
@@ -4838,8 +4852,8 @@ function saveHomeroom() {
   appState.homerooms[_hrKey] = {
     className:    document.getElementById('hrClass').value,
     teacherAbbr:  document.getElementById('hrTeacher').value,
-    className2:   cls2  || undefined,
-    teacherAbbr2: tch2  || undefined,
+    className2:   cls2  || '',
+    teacherAbbr2: tch2  || '',
   };
   persistAll();
   closeHomeroomModal();
