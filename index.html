@@ -2,22 +2,11 @@
 <html lang="pl">
 <head>
 <script>
-// Force SW update — unregister old cache versions
+// Force SW update when new version deployed
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(reg => {
-      reg.update();
-      if (reg.active && reg.active.scriptURL) {
-        caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v57');
-          if (!hasNew && keys.length > 0) {
-            keys.forEach(k => caches.delete(k));
-            reg.unregister().then(() => location.reload());
-          }
-        });
-      }
-    });
-  });
+  navigator.serviceWorker.getRegistrations().then(regs =>
+    regs.forEach(r => r.update())
+  );
 }
 </script>
 <meta charset="UTF-8">
@@ -5216,8 +5205,20 @@ let _pwaPrompt = null;
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('SW registered, scope:', reg.scope))
+    navigator.serviceWorker.register('./sw.js', { scope: '/Plan-sal/' })
+      .then(reg => {
+        // Sprawdź aktualizację co 60 sekund
+        setInterval(() => reg.update(), 60000);
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              notify('🔄 Dostępna aktualizacja — odśwież stronę');
+            }
+          });
+        });
+      })
       .catch(err => console.warn('SW registration failed:', err));
   });
 }
