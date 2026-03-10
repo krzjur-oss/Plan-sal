@@ -2187,6 +2187,30 @@ body.light #tutBox { background: #fff; }
   margin-bottom: 2px;
 }
 
+
+/* ── Panel pomocy ── */
+.help-section { margin-bottom: 18px; }
+.help-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.help-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.help-list li {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  padding: 2px 0 2px 10px;
+  border-left: 2px solid var(--border2);
+  margin-bottom: 3px;
+  line-height: 1.4;
+}
+.help-list li b { color: var(--text); font-weight: 600; }
+
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -2752,6 +2776,110 @@ if ('serviceWorker' in navigator) {
       <button class="btn btn-primary" onclick="saveHomeroom()">✓ Zapisz</button>
       <button class="btn btn-ghost" onclick="closeHomeroomModal()">Anuluj</button>
     </div>
+  </div>
+</div>
+
+<div id="appHelpPanel">
+  <h3>Pomoc <button onclick="toggleAppHelp()" style="background:none;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:0;line-height:1">✕</button></h3>
+
+  <div class="help-section">
+    <div class="help-title">📋 Tabela planu</div>
+    <ul class="help-list">
+      <li>Kliknij komórkę aby edytować zajęcia</li>
+      <li>Wybierz nauczyciela, klasę/grupę i przedmiot</li>
+      <li>Ctrl+Enter — zapisz &nbsp;·&nbsp; Esc — zamknij</li>
+      <li>Przycisk <b>Wyczyść</b> usuwa wpis z komórki</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">🏠 Gospodarz sali</div>
+    <ul class="help-list">
+      <li>Kliknij nagłówek sali (wiersz <b>Gospod.</b>)</li>
+      <li>Przypisz klasę i wychowawcę do sali</li>
+      <li>Można przypisać dwóch gospodarzy (dla sal dzielonych)</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">📅 Dni i daty</div>
+    <ul class="help-list">
+      <li>Przełączaj dni przyciskami u góry</li>
+      <li>Pole <b>Od:</b> ustawia datę obowiązywania planu</li>
+      <li>Każdy dzień ma niezależną datę</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">⚠️ Kolizje</div>
+    <ul class="help-list">
+      <li>Czerwona ramka + ⚠ oznacza kolizję</li>
+      <li>Ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
+      <li>Kliknij licznik kolizji w pasku dolnym aby przejść do pierwszej</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">➕ Klasy i nauczyciele w locie</div>
+    <ul class="help-list">
+      <li>W oknie edycji komórki kliknij <b>+ Dodaj nowego nauczyciela</b></li>
+      <li>Lub <b>+ Dodaj nową klasę / grupę</b></li>
+      <li>Nowe pozycje są od razu dostępne w planie</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">🔄 Eksport / Import</div>
+    <ul class="help-list">
+      <li><b>Zapisz</b> — zapisuje do localStorage (automatycznie)</li>
+      <li><b>JSON</b> — eksportuje plik do pobrania</li>
+      <li><b>Import</b> — wczytuje plik JSON (lub przeciągnij na okno)</li>
+      <li>Tryby importu: Scalaj / Zastąp / Nowy rok</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">📄 PDF</div>
+    <ul class="help-list">
+      <li>Przycisk <b>PDF</b> — drukuj lub zapisz jako PDF</li>
+      <li>Nagłówek zawiera szkołę, rok, dzień i datę obowiązywania</li>
+      <li>Orientacja pozioma — ustaw w oknie drukowania</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">✏️ Edycja roku</div>
+    <ul class="help-list">
+      <li><b>Nowy rok</b> — kreator nowego roku szkolnego</li>
+      <li><b>Edytuj rok</b> — zmień sale, klasy lub godziny</li>
+      <li>Istniejące wpisy są zachowane</li>
+      <li><b>Strona główna</b> — wróć do ekranu startowego</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">📁 Archiwum</div>
+    <ul class="help-list">
+      <li>Przycisk z rokiem w topbarze → <b>Archiwum</b></li>
+      <li>Poprzednie lata są automatycznie archiwizowane</li>
+      <li>Można przywrócić lub trwale usunąć stary rok</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">🗑️ Wyczyść dzień</div>
+    <ul class="help-list">
+      <li>Przycisk <b>Dzień</b> usuwa wszystkie wpisy bieżącego dnia</li>
+      <li>Operacja jest nieodwracalna</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">📲 Skróty klawiszowe</div>
+    <ul class="help-list">
+      <li><b>Ctrl+Enter</b> — zapisz wpis w komórce</li>
+      <li><b>Escape</b> — zamknij okno / panel</li>
+    </ul>
   </div>
 </div>
 
