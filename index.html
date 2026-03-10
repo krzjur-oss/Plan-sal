@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v48');
+          const hasNew = keys.some(k => k === 'sp-v50');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -2761,7 +2761,12 @@ if ('serviceWorker' in navigator) {
     <div class="modal-hint">Gospodarz widoczny w nagłówku tabeli dla każdej sali</div>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button class="btn btn-primary" onclick="saveHomeroom()">✓ Zapisz</button>
-      <button class="btn btn-ghost" onclick="closeHomeroomModal()">
+      <button class="btn btn-ghost" onclick="closeHomeroomModal()">Anuluj</button>
+    </div>
+  </div>
+</div>
+
+<script>
 // ================================================================
 //  WALIDACJA KOLIZJI
 // ================================================================
@@ -4371,26 +4376,29 @@ function mountApp() {
     appState.hours.forEach(h => { if(!schedData[yk][i][h]) schedData[yk][i][h]={}; });
   });
 
-  // Ustaw wysokość .main = viewport minus topbar
-  function setMainHeight() {
-    const topbar = document.querySelector('.topbar');
-    const mainEl = document.querySelector('.main');
-    const statusbar = document.querySelector('.statusbar');
-    if (topbar && mainEl) {
-      const tbH = topbar.offsetHeight;
-      const sbH = statusbar?.offsetHeight || 32;
-      mainEl.style.height = `calc(100vh - ${tbH}px - ${sbH}px)`;
-      mainEl.style.maxHeight = mainEl.style.height;
-    }
-  }
-  setMainHeight();
-  if (window._topbarResizeObs) window._topbarResizeObs.disconnect();
-  const topbarEl = document.querySelector('.topbar');
-  if (topbarEl && typeof ResizeObserver !== 'undefined') {
-    window._topbarResizeObs = new ResizeObserver(() => { setMainHeight(); });
-    window._topbarResizeObs.observe(topbarEl);
-  }
   renderSchedule();
+
+  // Ustaw wysokość .main po tym jak DOM jest gotowy (rAF gwarantuje że topbar jest widoczny)
+  requestAnimationFrame(() => {
+    function setMainHeight() {
+      const topbar = document.querySelector('.topbar');
+      const mainEl = document.querySelector('.main');
+      const statusbar = document.querySelector('.statusbar');
+      if (topbar && mainEl) {
+        const tbH = topbar.offsetHeight || 110;
+        const sbH = statusbar?.offsetHeight || 32;
+        mainEl.style.height = `calc(100vh - ${tbH}px - ${sbH}px)`;
+        mainEl.style.maxHeight = mainEl.style.height;
+      }
+    }
+    setMainHeight();
+    if (window._topbarResizeObs) window._topbarResizeObs.disconnect();
+    const topbarEl = document.querySelector('.topbar');
+    if (topbarEl && typeof ResizeObserver !== 'undefined') {
+      window._topbarResizeObs = new ResizeObserver(setMainHeight);
+      window._topbarResizeObs.observe(topbarEl);
+    }
+  });
 }
 
 function switchDay(idx) {
@@ -5223,10 +5231,6 @@ function pwaDismiss() {
 // ================================================================
  // current step index
 
-EventListener('appinstalled', () => {
-  document.getElementById('pwaInstallBanner').classList.remove('show');
-  notify('✓ SalePlan zainstalowany na urządzeniu!');
-});
 
 
 // ================================================================
@@ -5333,18 +5337,6 @@ function closeAboutModal() {
   document.getElementById('aboutModal').classList.remove('show');
 }
 
-eżności. Dane: localStorage. Offline: Service Worker (Cache API). Standard: PWA (Web App Manifest + Service Worker).</p>
-    <div class="about-author">
-      <strong>Krzysztof Jureczek</strong>
-      Autor i twórca aplikacji SalePlan
-    </div>
-  `;
-  document.getElementById('aboutModal').classList.add('show');
-}
-
-function closeAboutModal() {
-  document.getElementById('aboutModal').classList.remove('show');
-}
 
 </script>
 
