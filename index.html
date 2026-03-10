@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v42');
+          const hasNew = keys.some(k => k === 'sp-v43');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -784,6 +784,8 @@ body {
 .main {
   padding: 20px 20px 70px;
   overflow-x: auto;
+  overflow-y: auto;
+  /* Wysokość dopasowana dynamicznie przez JS */
 }
 
 .schedule-wrap { min-width: 800px; }
@@ -806,7 +808,7 @@ body {
   text-align: center;
   color: var(--text-muted);
   position: sticky;
-  top: var(--th-top, 57px);
+  top: var(--th-top, 0px);
   z-index: 5;
   vertical-align: middle;
 }
@@ -3561,6 +3563,8 @@ function confirmImport() {
   persistAll();
   closeImportModal();
   renderSchedule();
+
+
 }
 
 // ── Drag & drop na całą aplikację ──
@@ -4273,6 +4277,25 @@ function mountApp() {
     appState.hours.forEach(h => { if(!schedData[yk][i][h]) schedData[yk][i][h]={}; });
   });
 
+  // Ustaw wysokość .main = viewport minus topbar
+  function setMainHeight() {
+    const topbar = document.querySelector('.topbar');
+    const mainEl = document.querySelector('.main');
+    const statusbar = document.querySelector('.statusbar');
+    if (topbar && mainEl) {
+      const tbH = topbar.offsetHeight;
+      const sbH = statusbar?.offsetHeight || 32;
+      mainEl.style.height = `calc(100vh - ${tbH}px - ${sbH}px)`;
+      mainEl.style.maxHeight = mainEl.style.height;
+    }
+  }
+  setMainHeight();
+  if (window._topbarResizeObs) window._topbarResizeObs.disconnect();
+  const topbarEl = document.querySelector('.topbar');
+  if (topbarEl && typeof ResizeObserver !== 'undefined') {
+    window._topbarResizeObs = new ResizeObserver(() => { setMainHeight(); });
+    window._topbarResizeObs.observe(topbarEl);
+  }
   renderSchedule();
 }
 
@@ -4328,11 +4351,10 @@ function renderSchedule() {
     return row + '</tr>';
   }
 
-  // Calculate topbar height dynamically
-  const topbarHeight = document.querySelector('.topbar')?.getBoundingClientRect().bottom || 57;
   // Row heights (approximate, will be refined after render)
+  // th sticky top:0 względem scrollowalnego .main (nie viewport)
   const ROW_H = 26;
-  let _rowTop = topbarHeight;
+  let _rowTop = 0;
 
   let thead = '<thead>';
 
@@ -5036,6 +5058,7 @@ function pwaDismiss() {
 //  SAMOUCZEK
 // ================================================================
  // current step index
+
 </script>
 </body>
 </html>
