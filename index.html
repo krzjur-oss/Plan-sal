@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v54');
+          const hasNew = keys.some(k => k === 'sp-v55');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -4701,40 +4701,56 @@ function closeEditModal() {
 //  ZAJĘCIA MIĘDZYODDZIAŁOWE — wielokrotny wybór klas
 // ================================================================
 function renderMultiClassList(selected) {
+  window._mcClasses = selected ? selected.slice() : [];
   const container = document.getElementById('multiClassList');
   if (!container) return;
-  // Debug: jeśli brak klas w appState — pokaż ostrzeżenie
-  const _dbgClasses = appState?.classes || [];
-  if (_dbgClasses.length === 0) {
-    container.innerHTML = '<span style="color:var(--red);font-size:0.8rem">⚠ Brak klas — dodaj klasy w kreatorze</span>';
-    window._mcClasses = selected.slice();
+
+  const classes = appState?.classes || [];
+  if (classes.length === 0) {
+    container.innerHTML = '<span style="color:var(--red);font-size:0.8rem">⚠ Brak klas w konfiguracji roku</span>';
     return;
   }
-  container.innerHTML = selected.map((cls, i) =>
-    `<span class="mc-chip">
-       <span class="mc-chip-val" data-val="${esc(cls)}">${esc(cls)}</span>
-       <button class="mc-chip-del" onclick="mcRemoveClass(${i})" title="Usuń">✕</button>
-     </span>`
-  ).join('') +
-  `<span class="mc-add-wrap">
-     <select id="mcAddSelect" class="teacher-select mc-add-select">
-       ${buildClassSelectOptionsNoBlank('')}
-     </select>
-     <button class="btn btn-green mc-add-btn" onclick="mcAddClass()" title="Dodaj klasę">＋</button>
-   </span>`;
-  // Store current list in a temp global — musi być przed ewentualnym mcAddClass
-  window._mcClasses = selected.slice();
+
+  // Chipsy dodanych klas
+  const chips = window._mcClasses.map((val, i) => {
+    // Znajdź etykietę dla wartości (abbr lub name)
+    const cls = classes.find(c => (c.abbr || c.name) === val);
+    const label = cls ? (cls.group && cls.group.toLowerCase() !== 'cała klasa' ? `${cls.name} ${cls.group}` : cls.name) : val;
+    return `<span class="mc-chip">
+      <span class="mc-chip-val">${esc(label)}</span>
+      <button class="mc-chip-del" onclick="mcRemoveClass(${i})" title="Usuń">✕</button>
+    </span>`;
+  }).join('');
+
+  // Select z opcjami
+  const opts = classes
+    .slice()
+    .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'pl', {numeric:true}))
+    .map(c => {
+      const val = c.abbr || c.name;
+      const label = c.group && c.group.toLowerCase() !== 'cała klasa' ? `${c.name} — ${c.group}` : c.name;
+      return `<option value="${esc(val)}">${esc(label)}</option>`;
+    }).join('');
+
+  container.innerHTML = chips +
+    `<span class="mc-add-wrap">
+       <select id="mcAddSelect" class="teacher-select mc-add-select">${opts}</select>
+       <button class="btn btn-green mc-add-btn" onclick="mcAddClass()" title="Dodaj klasę">＋</button>
+     </span>`;
 }
+
+
 function mcAddClass() {
   const sel = document.getElementById('mcAddSelect');
-  if (!sel) { notify('⚠ Brak selecta klas', true); return; }
+  if (!sel || !sel.value) return;
   const val = sel.value;
-  if (!val) { notify('⚠ Brak klas do dodania', true); return; }
-  const list = (window._mcClasses || []).slice();
+  const list = window._mcClasses || [];
   if (list.includes(val)) { notify('⚠ Ta klasa jest już na liście', true); return; }
   list.push(val);
   renderMultiClassList(list);
 }
+
+
 function mcRemoveClass(idx) {
   const list = window._mcClasses || [];
   list.splice(idx, 1);
@@ -4754,7 +4770,7 @@ function saveCellData() {
     subject:     document.getElementById('inpSubject').value.trim(),
     note:        document.getElementById('inpNote').value.trim(),
   };
-  closeEditModal(); renderSchedule(); sbSet('Wpis zaktualizowany');
+  persistAll(); closeEditModal(); renderSchedule(); sbSet('Wpis zaktualizowany');
 }
 function clearCellData() {
   if (schedData[appState.yearKey]?.[_mDay]?.[_mHour]) schedData[appState.yearKey][_mDay][_mHour][_mKey]={};
