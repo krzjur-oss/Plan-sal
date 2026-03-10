@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v52');
+          const hasNew = keys.some(k => k === 'sp-v53');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -4316,6 +4316,37 @@ function buildTeacherSelectOptions(selectedAbbr) {
   return opts;
 }
 
+function buildClassSelectOptionsNoBlank(selectedVal) {
+  // Identyczna jak buildClassSelectOptions ale bez opcji "brak"
+  const classes = appState?.classes || [];
+  let opts = '';
+  const byClass = {};
+  classes.filter(c=>c.name).forEach(c => {
+    if (!byClass[c.name]) byClass[c.name] = [];
+    byClass[c.name].push(c);
+  });
+  const sortedNames = Object.keys(byClass).sort((a,b) =>
+    a.localeCompare(b, 'pl', {numeric: true, sensitivity: 'base'}));
+  sortedNames.forEach(clsName => {
+    const entries = byClass[clsName];
+    entries.sort((a,b) => (a.group||'').localeCompare(b.group||'', 'pl', {sensitivity:'base'}));
+    if (entries.length === 1) {
+      const c = entries[0];
+      const val = c.abbr || c.name;
+      const label = c.group && c.group.toLowerCase() !== 'cała klasa' ? `${c.name} — ${c.group}` : c.name;
+      opts += `<option value="${esc(val)}"${val===selectedVal?' selected':''}>${esc(label)}</option>`;
+    } else {
+      opts += `<optgroup label="${esc(clsName)}">`;
+      entries.forEach(c => {
+        const val = c.abbr || c.name;
+        opts += `<option value="${esc(val)}"${val===selectedVal?' selected':''}>${esc(c.name)} — ${esc(c.group||c.name)}</option>`;
+      });
+      opts += '</optgroup>';
+    }
+  });
+  return opts;
+}
+
 function buildClassSelectOptions(selectedVal) {
   const classes = appState?.classes || [];
   let opts = '<option value="">— brak —</option>';
@@ -4672,6 +4703,13 @@ function closeEditModal() {
 function renderMultiClassList(selected) {
   const container = document.getElementById('multiClassList');
   if (!container) return;
+  // Debug: jeśli brak klas w appState — pokaż ostrzeżenie
+  const _dbgClasses = appState?.classes || [];
+  if (_dbgClasses.length === 0) {
+    container.innerHTML = '<span style="color:var(--red);font-size:0.8rem">⚠ Brak klas — dodaj klasy w kreatorze</span>';
+    window._mcClasses = selected.slice();
+    return;
+  }
   container.innerHTML = selected.map((cls, i) =>
     `<span class="mc-chip">
        <span class="mc-chip-val" data-val="${esc(cls)}">${esc(cls)}</span>
@@ -4680,22 +4718,26 @@ function renderMultiClassList(selected) {
   ).join('') +
   `<span class="mc-add-wrap">
      <select id="mcAddSelect" class="teacher-select mc-add-select">
-       ${buildClassSelectOptions('')}
+       <option value="">— wybierz klasę —</option>
+       ${buildClassSelectOptionsNoBlank('')}
      </select>
      <button class="btn btn-green mc-add-btn" onclick="mcAddClass()" title="Dodaj klasę">＋</button>
    </span>`;
-  // Store current list in a temp global
+  // Store current list in a temp global — musi być przed ewentualnym mcAddClass
   window._mcClasses = selected.slice();
 }
 function mcAddClass() {
   const sel = document.getElementById('mcAddSelect');
-  const val = sel ? sel.value : '';
-  if (!val) return;
-  const list = window._mcClasses || [];
-  if (!list.includes(val)) {
-    list.push(val);
-    renderMultiClassList(list);
-  }
+  if (!sel) { notify('⚠ Brak selecta klas', true); return; }
+  const val = sel.value;
+  if (!val) { notify('⚠ Wybierz klasę z listy', true); return; }
+  const list = (window._mcClasses || []).slice();
+  if (list.includes(val)) { notify('⚠ Ta klasa jest już na liście', true); return; }
+  list.push(val);
+  renderMultiClassList(list);
+  // Po re-renderze przywróć select na tę samą pozycję jeśli możliwe
+  const newSel = document.getElementById('mcAddSelect');
+  if (newSel) newSel.value = '';
 }
 function mcRemoveClass(idx) {
   const list = window._mcClasses || [];
