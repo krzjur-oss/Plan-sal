@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v46');
+          const hasNew = keys.some(k => k === 'sp-v47');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -2077,6 +2077,127 @@ body.light #tutBox { background: #fff; }
 .hr-sep { width:55%; height:1px; background:var(--border2); margin:2px auto; opacity:0.6; }
 .th-homeroom.hr-two { padding:2px 1px; }
 .hr-class-2 { opacity:0.85; }
+
+/* ── O programie ── */
+.wl-about-btn {
+  display: inline-block;
+  margin-top: 18px;
+  background: none;
+  border: 1px solid #93c5fd;
+  color: #3b82f6;
+  border-radius: 20px;
+  padding: 6px 20px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.wl-about-btn:hover { background: #eff6ff; color: #1d4ed8; }
+
+#aboutModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  background: rgba(0,0,0,0.55);
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#aboutModal.show { display: flex; }
+.about-box {
+  background: #fff;
+  border-radius: 18px;
+  width: min(700px, 96vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.about-header {
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.about-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e3a8a;
+  margin: 0;
+}
+.about-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: #6b7280;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.about-close:hover { background: #f3f4f6; color: #111; }
+.about-body {
+  overflow-y: auto;
+  padding: 20px 28px 28px;
+  flex: 1;
+  color: #374151;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+.about-body h3 {
+  font-size: 1rem;
+  color: #1e3a8a;
+  margin: 20px 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #dbeafe;
+}
+.about-body h3:first-child { margin-top: 0; }
+.about-body h4 {
+  font-size: 0.88rem;
+  color: #1d4ed8;
+  margin: 14px 0 4px;
+}
+.about-body p { margin: 4px 0 10px; }
+.about-body ul { margin: 4px 0 10px; padding-left: 20px; }
+.about-body li { margin-bottom: 3px; }
+.about-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0 14px;
+  font-size: 0.82rem;
+}
+.about-body th {
+  background: #eff6ff;
+  color: #1e3a8a;
+  padding: 5px 10px;
+  text-align: left;
+  border: 1px solid #bfdbfe;
+}
+.about-body td {
+  padding: 5px 10px;
+  border: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+.about-body tr:nth-child(even) td { background: #f9fafb; }
+.about-author {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 2px solid #dbeafe;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+.about-author strong {
+  display: block;
+  font-size: 1rem;
+  color: #1e3a8a;
+  margin-bottom: 2px;
+}
+
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -2137,6 +2258,8 @@ if ('serviceWorker' in navigator) {
       </div>
 
     </div>
+
+    <button class="wl-about-btn" onclick="showAboutModal()">ℹ️ O programie</button>
 
     <input type="file" id="wlFileInput" accept=".json" style="display:none" onchange="welcomeHandleFile(this.files[0]);this.value=''">
 
@@ -2642,67 +2765,9 @@ if ('serviceWorker' in navigator) {
 
 <div id="archivePanel">
   <div class="archive-modal">
-    <div class="archive-header">
-      <h2>📁 Archiwum planów</h2>
-      <button class="btn btn-ghost" onclick="closeArchive()">✕ Zamknij</button>
-    </div>
-    <div class="archive-body" id="archiveBody"></div>
+    <div class="archive-header"><h3>📁 Archiwum lat szkolnych</h3><button class="arc-close-btn" onclick="hideArchive()">✕</button></div>
+    <div class="archive-list" id="archiveList"></div>
   </div>
-</div>
-
-<div id="pwaInstallBanner">
-  <div class="pwa-banner-icon">📲</div>
-  <div class="pwa-banner-text">
-    <div class="pwa-banner-title">Zainstaluj SalePlan</div>
-    <div class="pwa-banner-sub">Działa offline · Skrót na pulpicie</div>
-  </div>
-  <div class="pwa-banner-btns">
-    <button class="btn btn-primary" style="font-size:0.75rem;padding:6px 12px" onclick="pwaInstall()">Instaluj</button>
-    <button class="btn btn-ghost" style="font-size:0.75rem;padding:6px 10px" onclick="pwaDismiss()">✕</button>
-  </div>
-</div>
-
-
-<!-- PANEL POMOCY APLIKACJI -->
-<div id="appHelpPanel">
-  <h3>📖 Pomoc <button onclick="closeAppHelp()">✕</button></h3>
-
-  <div class="ah-section">
-    <h4>🗓 Zakładki dni</h4>
-    <p>Kliknij dzień tygodnia w górnym pasku żeby przełączać między planami każdego dnia.</p>
-    <p>Pole <strong>Od:</strong> ustawia datę obowiązywania planu — widoczną w nagłówku wydruku.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>✏️ Edycja komórki</h4>
-    <p>Kliknij dowolną komórkę w tabeli planu żeby otworzyć okno edycji.</p>
-    <p>Możesz wpisać <strong>klasę/grupę</strong> i przypisać <strong>nauczyciela</strong>. Przycisk <strong>Wyczyść</strong> usuwa dane z komórki.</p>
-    <p>Szybkie dodawanie klasy lub nauczyciela bezpośrednio z okna edycji — bez wychodzenia do kreatora.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>🏠 Gospodarz sali</h4>
-    <p>Kliknij ikonę 🏠 w nagłówku kolumny żeby przypisać <strong>klasę-gospodarz</strong> do sali.</p>
-    <p>Gospodarz pojawia się w wierszu <strong>Gospod.</strong> i ułatwia identyfikację sali.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>🗑 Czyszczenie</h4>
-    <p><strong>🗑 Dzień</strong> — czyści wszystkie komórki bieżącego dnia.</p>
-    <p>Przycisk <strong>Wyczyść</strong> w oknie edycji czyści tylko jedną komórkę.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>💾 Zapis i archiwum</h4>
-    <p><strong>💾 Zapisz</strong> — zapisuje plan w pamięci przeglądarki (localStorage).</p>
-    <p>Kliknij <strong>rok szkolny</strong> w topbarze żeby otworzyć archiwum. Możesz przechowywać plany wielu lat i przywracać je.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>＋ Nowy rok</h4>
-    <p>Tworzy nowy plan na kolejny rok szkolny. Dane budynków, klas i nauczycieli można przenieść z istniejącego planu.</p>
-  </div>
-
 </div>
 
 <script>
@@ -4642,6 +4707,11 @@ document.addEventListener('keydown',e=>{
 //  ARCHIVE
 // ================================================================
 function showArchive() { renderArchiveBody(); document.getElementById('archivePanel').classList.add('show'); }
+
+function hideArchive() {
+  document.getElementById('archivePanel').classList.remove('show');
+}
+
 function closeArchive() { document.getElementById('archivePanel').classList.remove('show'); }
 function renderArchiveBody() {
   const body = document.getElementById('archiveBody');
@@ -4910,6 +4980,7 @@ function clearHomeroom() {
   notify('🗑 Gospodarz sali usunięty');
 }
 
+(function(){var _am=document.getElementById('aboutModal');if(_am)_am.addEventListener('click',e=>{if(e.target===_am)closeAboutModal();});})();
 (function(){var _hm=document.getElementById('homeroomModal');if(_hm)_hm.addEventListener('click',e=>{if(e.target===_hm)closeHomeroomModal();});})();
 
 // ================================================================
@@ -5169,6 +5240,115 @@ EventListener('appinstalled', () => {
 
 
 
+
+// ================================================================
+//  O PROGRAMIE
+// ================================================================
+function showAboutModal() {
+  document.getElementById('aboutBody').innerHTML = `
+    <h3>🚀 Strona powitalna</h3>
+    <p>Przy pierwszym uruchomieniu wyświetla się strona powitalna z czterema opcjami:</p>
+    <table>
+      <tr><th>Opcja</th><th>Opis</th></tr>
+      <tr><td>✨ Utwórz nowy plan</td><td>Kreator od zera — 6 kroków</td></tr>
+      <tr><td>📋 Nowy rok szkolny</td><td>Kopiuje konfigurację z bieżącego roku</td></tr>
+      <tr><td>📂 Importuj z pliku</td><td>Wczytaj plan z pliku .json — zastąp / scal / nowy</td></tr>
+      <tr><td>🎬 Wersja demo</td><td>Fikcyjna szkoła SP1 — dane nie są zapisywane</td></tr>
+    </table>
+    <h3>🧙 Kreator nowego roku (6 kroków)</h3>
+    <table>
+      <tr><th>Krok</th><th>Opis</th></tr>
+      <tr><td>1 — Szkoła</td><td>Nazwa, skrót, telefon, www, budynki</td></tr>
+      <tr><td>2 — Rok szkolny</td><td>Rok szkolny i numery godzin lekcyjnych</td></tr>
+      <tr><td>3 — Piętra i sale</td><td>Piętra, segmenty i numery sal</td></tr>
+      <tr><td>4 — Klasy i grupy</td><td>Lista klas z podziałem na grupy</td></tr>
+      <tr><td>5 — Nauczyciele</td><td>Lista nauczycieli ze skrótami</td></tr>
+      <tr><td>6 — Przypisania</td><td>Domyślne przypisanie klas do sal</td></tr>
+    </table>
+    <ul>
+      <li><strong>Autosave szkicu</strong> — kreator zapisuje postęp co 30 s; można wznowić po przerwaniu</li>
+      <li><strong>✏️ Edytuj rok</strong> — zmień sale, klasy lub godziny bez utraty wpisów</li>
+    </ul>
+    <h3>🏫 Sale i budynki</h3>
+    <ul>
+      <li>Dowolna liczba budynków, pięter i segmentów</li>
+      <li>Scalony nagłówek tabeli: budynek → piętro → segment → sala → gospodarz</li>
+    </ul>
+    <h3>👨‍🏫 Nauczyciele i klasy</h3>
+    <ul>
+      <li>Automatyczny skrót: Jan Kowalski → JKow</li>
+      <li>Import z pliku .txt, dodawanie w locie z poziomu edycji komórki</li>
+      <li>Listy <strong>sortowane alfabetycznie</strong> — klasy w porządku naturalnym (1A → 2A → 10C)</li>
+    </ul>
+    <h3>📋 Planowanie sal</h3>
+    <ul>
+      <li>Siatka: godziny × sale — kliknij komórkę aby edytować</li>
+      <li>W komórce: nauczyciel, klasy/grupy, przedmiot, uwagi</li>
+      <li><strong>Zajęcia międzyoddziałowe</strong> — wiele klas w jednej sali jednocześnie</li>
+      <li>Data „Obowiązuje od" dla każdego dnia tygodnia</li>
+    </ul>
+    <h3>⚠️ Wykrywanie kolizji</h3>
+    <ul>
+      <li>Automatyczne wykrywanie: ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
+      <li>Czerwona ramka + ikona ⚠ z tooltipem; licznik kolizji w dolnym pasku</li>
+    </ul>
+    <h3>🏠 Gospodarz sali</h3>
+    <ul>
+      <li>Klasa gospodarz + wychowawca widoczne w nagłówku tabeli przez cały rok</li>
+      <li><strong>Podwójny gospodarz</strong> — dwie pary klasa+wychowawca dla sal dzielonych</li>
+    </ul>
+    <h3>🔄 Eksport i import JSON</h3>
+    <ul>
+      <li>Eksport całego planu do pliku JSON (⬆ JSON)</li>
+      <li>Import z pliku lub drag &amp; drop — tryby: Scalaj / Zastąp</li>
+      <li>Umożliwia współpracę dwóch osób układających plan równolegle</li>
+    </ul>
+    <h3>📄 Eksport do PDF</h3>
+    <ul>
+      <li>Przycisk ⬇ PDF — orientacja pozioma, gotowy do wydruku</li>
+      <li>Nagłówek PDF: nazwa szkoły, rok szkolny, dzień, data obowiązywania</li>
+    </ul>
+    <h3>📁 Archiwum</h3>
+    <ul>
+      <li>Każdy nowy rok automatycznie archiwizuje poprzedni</li>
+      <li>Dostęp, przywracanie i usuwanie starych planów</li>
+    </ul>
+    <h3>📲 PWA — instalacja jako aplikacja</h3>
+    <ul>
+      <li><strong>Chrome/Edge:</strong> kliknij baner „Zainstaluj SalePlan" lub ikonę ⊕ w pasku adresu</li>
+      <li><strong>Safari (iOS/macOS):</strong> Udostępnij → Dodaj do ekranu głównego</li>
+      <li>Pełny tryb offline — Service Worker cache'uje wszystkie pliki</li>
+    </ul>
+    <h3>🔒 Prywatność</h3>
+    <p>Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych zewnętrznie.
+    Wszystkie dane zapisywane są wyłącznie w localStorage przeglądarki.</p>
+    <h3>🛠️ Technologie</h3>
+    <p>Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localStorage. Offline: Service Worker (Cache API). Standard: PWA (Web App Manifest + Service Worker).</p>
+    <div class="about-author">
+      <strong>Krzysztof Jureczek</strong>
+      Autor i twórca aplikacji SalePlan
+    </div>
+  `;
+  document.getElementById('aboutModal').classList.add('show');
+}
+
+function closeAboutModal() {
+  document.getElementById('aboutModal').classList.remove('show');
+}
+
 </script>
+
+<div id="aboutModal">
+  <div class="about-box">
+    <div class="about-header">
+      <h2>ℹ️ O programie SalePlan</h2>
+      <button class="about-close" onclick="closeAboutModal()">✕</button>
+    </div>
+    <div class="about-body" id="aboutBody">
+      <!-- wypełniane przez JS -->
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
