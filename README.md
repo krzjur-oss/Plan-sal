@@ -34,6 +34,12 @@ Przy pierwszym uruchomieniu (lub gdy brak zapisanego planu) wyświetla się stro
 
 Panel instrukcji po lewej stronie kreatora wyjaśnia każdy krok.
 
+#### 💾 Autosave szkicu kreatora
+Kreator automatycznie zapisuje postęp co 30 sekund do `localStorage` (`sp_wiz_draft`). Przy przypadkowym zamknięciu — po ponownym otwarciu kreatora pojawi się pytanie o wznowienie przerwanej sesji.
+
+#### ✏️ Edycja bieżącego roku
+Przycisk **✏️ Edytuj rok** w górnym pasku otwiera kreator z danymi bieżącego roku. Można zmienić sale, klasy, nauczycieli lub godziny bez tworzenia nowego roku i bez utraty wpisanych zajęć.
+
 ---
 
 ### 🏫 Obsługa wielu budynków
@@ -48,6 +54,7 @@ Panel instrukcji po lewej stronie kreatora wyjaśnia każdy krok.
 - Skróty edytowalne ręcznie, obsługa duplikatów (`JKow2`)
 - **Import z pliku `.txt`** — format: `Imię Nazwisko` (jeden na linię)
 - **Dodawanie w locie** — bezpośrednio z okna edycji komórki
+- Lista nauczycieli **sortowana alfabetycznie** po nazwisku
 
 ---
 
@@ -55,6 +62,8 @@ Panel instrukcji po lewej stronie kreatora wyjaśnia każdy krok.
 - Każda klasa może mieć dowolną liczbę grup, np. `4A gr ez`, `4A WF gr1`
 - **Import z pliku `.txt`** — format: `klasa;skrót;nazwa grupy`
 - **Dodawanie w locie** — bezpośrednio z okna edycji komórki
+- **Automatyczny skrót** klasy/grupy generowany na bieżąco (edytowalny ręcznie)
+- Lista klas **sortowana alfabetycznie** z naturalnym porządkiem: `1A → 1B → 2A → 10C`
 
 ---
 
@@ -91,7 +100,8 @@ Panel instrukcji po lewej stronie kreatora wyjaśnia każdy krok.
 
 ### 🏠 Gospodarz sali
 - Każdej sali można przypisać klasę gospodarza i nauczyciela wychowawcę
-- Kliknięcie wiersza „Gospod." w nagłówku → modal z przyciskami Zapisz / Anuluj / Usuń
+- **Podwójny gospodarz** — dla sal dzielonych przez dwie klasy można przypisać dwie pary klasa+wychowawca; obie widoczne w nagłówku tabeli oddzielone poziomą linią
+- Kliknięcie wiersza „Gospod." w nagłówku → modal z opcją dodania drugiego gospodarza
 - Widoczny przez cały rok niezależnie od dnia
 
 ---
@@ -128,6 +138,12 @@ Import dostępny też ze **strony powitalnej** (karta „Importuj z pliku") z ty
 
 ### 📄 Eksport do PDF
 Przycisk **⬇ PDF** — orientacja pozioma, gotowy do wydruku lub wysłania.
+
+Wydruk zawiera **nagłówek** z:
+- Nazwą szkoły (pełna + skrót)
+- Rokiem szkolnym
+- Dniem tygodnia
+- Datą obowiązywania planu (pole „Od:")
 
 ---
 
@@ -186,11 +202,13 @@ Otwórz `index.html` w przeglądarce. Offline i PWA wymagają HTTPS.
 2. Wybierz **Utwórz nowy plan** → kreator (6 kroków)
 3. Wypełnij dane szkoły, budynki, piętra, klasy, nauczycieli i przypisania
 4. Kliknij **„Zakończ i przejdź do planu"**
-5. Kliknij wiersz **„Gospod."** — ustaw klasę i wychowawcę każdej sali
+5. Kliknij wiersz **„Gospod."** — ustaw klasę i wychowawcę każdej sali (opcjonalnie drugi gospodarz)
 6. Klikaj komórki w tabeli — wybierz nauczyciela, klasy, wpisz przedmiot
 7. **💾 Zapisz**
 
 **Nowy rok:** strona powitalna → **Nowy rok szkolny** (lub przycisk **＋ Nowy rok** w pasku) → stary rok trafia do archiwum.
+
+**Edycja konfiguracji:** przycisk **✏️ Edytuj rok** → zmień sale, klasy lub godziny bez utraty wpisów.
 
 ---
 
