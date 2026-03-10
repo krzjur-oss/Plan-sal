@@ -2146,7 +2146,15 @@ if ('serviceWorker' in navigator) {
       <select class="teacher-select" id="hrTeacher"></select>
     </div>
     <div class="modal-hint">Gospodarz widoczny w nagłówku tabeli dla każdej sali</div>
-    <div id="archivePanel">
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="saveHomeroom()">✓ Zapisz</button>
+      <button class="btn btn-ghost" onclick="closeHomeroomModal()">Anuluj</button>
+      <button class="btn btn-red" style="margin-left:auto" onclick="clearHomeroom()">🗑 Usuń</button>
+    </div>
+  </div>
+</div>
+
+<div id="archivePanel">
   <div class="archive-modal">
     <div class="archive-header">
       <h2>📁 Archiwum planów</h2>
@@ -2168,7 +2176,81 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
-<script>
+
+<!-- PANEL POMOCY APLIKACJI -->
+<div id="appHelpPanel">
+  <h3>📖 Pomoc <button onclick="closeAppHelp()">✕</button></h3>
+
+  <div class="ah-section">
+    <h4>🗓 Zakładki dni</h4>
+    <p>Kliknij dzień tygodnia w górnym pasku żeby przełączać między planami każdego dnia.</p>
+    <p>Pole <strong>Od:</strong> ustawia datę obowiązywania planu — widoczną w nagłówku wydruku.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>✏️ Edycja komórki</h4>
+    <p>Kliknij dowolną komórkę w tabeli planu żeby otworzyć okno edycji.</p>
+    <p>Możesz wpisać <strong>klasę/grupę</strong> i przypisać <strong>nauczyciela</strong>. Przycisk <strong>Wyczyść</strong> usuwa dane z komórki.</p>
+    <p>Szybkie dodawanie klasy lub nauczyciela bezpośrednio z okna edycji — bez wychodzenia do kreatora.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>🏠 Gospodarz sali</h4>
+    <p>Kliknij ikonę 🏠 w nagłówku kolumny żeby przypisać <strong>klasę-gospodarz</strong> do sali.</p>
+    <p>Gospodarz pojawia się w wierszu <strong>Gospod.</strong> i ułatwia identyfikację sali.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>🗑 Czyszczenie</h4>
+    <p><strong>🗑 Dzień</strong> — czyści wszystkie komórki bieżącego dnia.</p>
+    <p>Przycisk <strong>Wyczyść</strong> w oknie edycji czyści tylko jedną komórkę.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>💾 Zapis i archiwum</h4>
+    <p><strong>💾 Zapisz</strong> — zapisuje plan w pamięci przeglądarki (localStorage).</p>
+    <p>Kliknij <strong>rok szkolny</strong> w topbarze żeby otworzyć archiwum. Możesz przechowywać plany wielu lat i przywracać je.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>＋ Nowy rok</h4>
+    <p>Tworzy nowy plan na kolejny rok szkolny. Dane budynków, klas i nauczycieli można przenieść z istniejącego planu.</p>
+  </div>
+
+  <div class="ah-section">
+    <h4>⬇ PDF</h4>
+    <p>Drukuje plan bieżącego dnia. Użyj opcji przeglądarki <strong>Drukuj do PDF</strong> żeby zapisać plik.</p>
+    <p>Orientacja: <strong>pozioma</strong>, marginesy: minimalne.</p>
+  </div>
+</div
+<!-- ── Drag & Drop overlay ── -->
+<div id="dropOverlay">
+  <div class="drop-inner">
+    <div style="font-size:2.5rem">📂</div>
+    <div style="font-size:1.1rem;font-weight:600;margin-top:8px">Upuść plik JSON</div>
+    <div style="font-size:0.8rem;color:var(--text-dim);margin-top:4px">aby zaimportować plan</div>
+  </div>
+</div
+<!-- ── Modal porównania importu ── -->
+<div id="importModal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">📥 Import planu</div>
+    <div id="importInfo" style="margin:12px 0;display:flex;flex-direction:column;gap:6px"></div>
+    <div style="margin:14px 0 6px;font-size:0.8rem;font-weight:600;color:var(--text-dim)">Tryb importu:</div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;margin-bottom:6px;cursor:pointer">
+      <input type="radio" name="importMode" id="importModeMerge" value="merge" checked>
+      <span><strong>Scalaj</strong> — dodaj tylko brakujące wpisy (nie nadpisuje istniejących)</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;cursor:pointer">
+      <input type="radio" name="importMode" id="importModeOverwrite" value="overwrite">
+      <span><strong>Zastąp</strong> — nadpisz cały plan danymi z pliku</span>
+    </label>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn btn-primary" onclick="confirmImport()">✓ Importuj</button>
+      <button class="btn btn-ghost" onclick="closeImportModal()">Anuluj</button>
+    </div>
+  </div>
+</div<script>
 // ================================================================
 //  WALIDACJA KOLIZJI
 // ================================================================
@@ -3904,84 +3986,10 @@ function pwaDismiss() {
 
 </script>
 
+>
 
-<!-- PANEL POMOCY APLIKACJI -->
-<div id="appHelpPanel">
-  <h3>📖 Pomoc <button onclick="closeAppHelp()">✕</button></h3>
-
-  <div class="ah-section">
-    <h4>🗓 Zakładki dni</h4>
-    <p>Kliknij dzień tygodnia w górnym pasku żeby przełączać między planami każdego dnia.</p>
-    <p>Pole <strong>Od:</strong> ustawia datę obowiązywania planu — widoczną w nagłówku wydruku.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>✏️ Edycja komórki</h4>
-    <p>Kliknij dowolną komórkę w tabeli planu żeby otworzyć okno edycji.</p>
-    <p>Możesz wpisać <strong>klasę/grupę</strong> i przypisać <strong>nauczyciela</strong>. Przycisk <strong>Wyczyść</strong> usuwa dane z komórki.</p>
-    <p>Szybkie dodawanie klasy lub nauczyciela bezpośrednio z okna edycji — bez wychodzenia do kreatora.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>🏠 Gospodarz sali</h4>
-    <p>Kliknij ikonę 🏠 w nagłówku kolumny żeby przypisać <strong>klasę-gospodarz</strong> do sali.</p>
-    <p>Gospodarz pojawia się w wierszu <strong>Gospod.</strong> i ułatwia identyfikację sali.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>🗑 Czyszczenie</h4>
-    <p><strong>🗑 Dzień</strong> — czyści wszystkie komórki bieżącego dnia.</p>
-    <p>Przycisk <strong>Wyczyść</strong> w oknie edycji czyści tylko jedną komórkę.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>💾 Zapis i archiwum</h4>
-    <p><strong>💾 Zapisz</strong> — zapisuje plan w pamięci przeglądarki (localStorage).</p>
-    <p>Kliknij <strong>rok szkolny</strong> w topbarze żeby otworzyć archiwum. Możesz przechowywać plany wielu lat i przywracać je.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>＋ Nowy rok</h4>
-    <p>Tworzy nowy plan na kolejny rok szkolny. Dane budynków, klas i nauczycieli można przenieść z istniejącego planu.</p>
-  </div>
-
-  <div class="ah-section">
-    <h4>⬇ PDF</h4>
-    <p>Drukuje plan bieżącego dnia. Użyj opcji przeglądarki <strong>Drukuj do PDF</strong> żeby zapisać plik.</p>
-    <p>Orientacja: <strong>pozioma</strong>, marginesy: minimalne.</p>
-  </div>
-</div>
-
-
-<!-- ── Drag & Drop overlay ── -->
-<div id="dropOverlay">
-  <div class="drop-inner">
-    <div style="font-size:2.5rem">📂</div>
-    <div style="font-size:1.1rem;font-weight:600;margin-top:8px">Upuść plik JSON</div>
-    <div style="font-size:0.8rem;color:var(--text-dim);margin-top:4px">aby zaimportować plan</div>
-  </div>
-</div>
-
-<!-- ── Modal porównania importu ── -->
-<div id="importModal">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-title">📥 Import planu</div>
-    <div id="importInfo" style="margin:12px 0;display:flex;flex-direction:column;gap:6px"></div>
-    <div style="margin:14px 0 6px;font-size:0.8rem;font-weight:600;color:var(--text-dim)">Tryb importu:</div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;margin-bottom:6px;cursor:pointer">
-      <input type="radio" name="importMode" id="importModeMerge" value="merge" checked>
-      <span><strong>Scalaj</strong> — dodaj tylko brakujące wpisy (nie nadpisuje istniejących)</span>
-    </label>
-    <label style="display:flex;align-items:center;gap:8px;font-size:0.85rem;cursor:pointer">
-      <input type="radio" name="importMode" id="importModeOverwrite" value="overwrite">
-      <span><strong>Zastąp</strong> — nadpisz cały plan danymi z pliku</span>
-    </label>
-    <div style="display:flex;gap:8px;margin-top:18px">
-      <button class="btn btn-primary" onclick="confirmImport()">✓ Importuj</button>
-      <button class="btn btn-ghost" onclick="closeImportModal()">Anuluj</button>
-    </div>
-  </div>
-</div>
+>
+>
 
 </body>
 </html>
