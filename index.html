@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v55');
+          const hasNew = keys.some(k => k === 'sp-v56');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -2888,6 +2888,7 @@ let wAssignments = {};
 let wStep = 0;
 
 let _mDay, _mHour, _mKey;
+let _selectedClasses = [];
 
 // ================================================================
 //  ABBREVIATION GENERATOR
@@ -4671,12 +4672,12 @@ function openEditModal(day, hour, key) {
   const selT = document.getElementById('inpTeacher');
   selT.innerHTML = buildTeacherSelectOptions(entry.teacherAbbr||'');
 
-  // Klasy/grupy — multi (zajęcia międzyoddziałowe)
+  // Klasy/grupy — multi
+  _selectedClasses = [];
   const _initClasses = entry.classes && entry.classes.length
     ? entry.classes
     : (entry.className || defaultCls) ? [entry.className || defaultCls] : [];
   renderMultiClassList(_initClasses);
-  // Ukryj stary select (zastąpiony przez multiClassList)
   document.getElementById('inpClass').value = '';
 
   document.getElementById('inpSubject').value = entry.subject||'';
@@ -4701,68 +4702,82 @@ function closeEditModal() {
 //  ZAJĘCIA MIĘDZYODDZIAŁOWE — wielokrotny wybór klas
 // ================================================================
 function renderMultiClassList(selected) {
-  window._mcClasses = selected ? selected.slice() : [];
+  // Zawsze aktualizuj moduł stanu
+  _selectedClasses = Array.isArray(selected) ? selected.slice() : [];
+  // Usuń też stary window._mcClasses dla kompatybilności
+  window._mcClasses = _selectedClasses;
+
   const container = document.getElementById('multiClassList');
   if (!container) return;
 
   const classes = appState?.classes || [];
   if (classes.length === 0) {
-    container.innerHTML = '<span style="color:var(--red);font-size:0.8rem">⚠ Brak klas w konfiguracji roku</span>';
+    container.innerHTML = '<span style="color:orange;font-size:0.8rem">⚠ Brak klas — dodaj w kreatorze (✏️ Edytuj rok)</span>';
     return;
   }
 
-  // Chipsy dodanych klas
-  const chips = window._mcClasses.map((val, i) => {
-    // Znajdź etykietę dla wartości (abbr lub name)
-    const cls = classes.find(c => (c.abbr || c.name) === val);
-    const label = cls ? (cls.group && cls.group.toLowerCase() !== 'cała klasa' ? `${cls.name} ${cls.group}` : cls.name) : val;
-    return `<span class="mc-chip">
-      <span class="mc-chip-val">${esc(label)}</span>
-      <button class="mc-chip-del" onclick="mcRemoveClass(${i})" title="Usuń">✕</button>
-    </span>`;
-  }).join('');
+  // Pomocnicza: znajdź etykietę dla skrótu
+  function labelFor(val) {
+    const found = classes.find(cl => (cl.abbr || cl.name) === val);
+    if (!found) return val;
+    return (found.group && found.group.toLowerCase() !== 'cała klasa')
+      ? found.name + ' ' + found.group
+      : found.name;
+  }
 
-  // Select z opcjami
-  const opts = classes
-    .slice()
-    .sort((a,b) => (a.name||'').localeCompare(b.name||'', 'pl', {numeric:true}))
-    .map(c => {
-      const val = c.abbr || c.name;
-      const label = c.group && c.group.toLowerCase() !== 'cała klasa' ? `${c.name} — ${c.group}` : c.name;
-      return `<option value="${esc(val)}">${esc(label)}</option>`;
-    }).join('');
+  // Chipsy wybranych klas
+  const chips = _selectedClasses.map((val, i) =>
+    `<span class="mc-chip">
+       <span class="mc-chip-val">${esc(labelFor(val))}</span>
+       <button class="mc-chip-del" onclick="mcRemoveClass(${i})" title="Usuń">✕</button>
+     </span>`
+  ).join('');
+
+  // Opcje selecta (posortowane, bez już wybranych)
+  const sortedClasses = classes.slice().sort((a,b) =>
+    (a.name||'').localeCompare(b.name||'', 'pl', {numeric:true, sensitivity:'base'})
+  );
+  const opts = sortedClasses.map(cl => {
+    const val   = cl.abbr || cl.name;
+    const label = (cl.group && cl.group.toLowerCase() !== 'cała klasa')
+      ? cl.name + ' — ' + cl.group
+      : cl.name;
+    const sel = _selectedClasses.includes(val) ? ' style="color:var(--text-dim)"' : '';
+    return `<option value="${esc(val)}"${sel}>${esc(label)}</option>`;
+  }).join('');
 
   container.innerHTML = chips +
     `<span class="mc-add-wrap">
        <select id="mcAddSelect" class="teacher-select mc-add-select">${opts}</select>
-       <button class="btn btn-green mc-add-btn" onclick="mcAddClass()" title="Dodaj klasę">＋</button>
+       <button class="btn btn-green mc-add-btn" onclick="mcAddClass()">＋ Dodaj</button>
      </span>`;
 }
 
 
 function mcAddClass() {
   const sel = document.getElementById('mcAddSelect');
-  if (!sel || !sel.value) return;
+  if (!sel) return;
   const val = sel.value;
-  const list = window._mcClasses || [];
-  if (list.includes(val)) { notify('⚠ Ta klasa jest już na liście', true); return; }
-  list.push(val);
-  renderMultiClassList(list);
+  if (!val) return;
+  if (_selectedClasses.includes(val)) {
+    notify('⚠ Ta klasa jest już na liście', true);
+    return;
+  }
+  _selectedClasses.push(val);
+  renderMultiClassList(_selectedClasses);
 }
 
 
 function mcRemoveClass(idx) {
-  const list = window._mcClasses || [];
-  list.splice(idx, 1);
-  renderMultiClassList(list);
-}
-function saveCellData() {
+  _selectedClasses.splice(idx, 1);
+  renderMultiClassList(_selectedClasses);
+}function saveCellData() {
   const yk = appState.yearKey;
   if (!schedData[yk]) schedData[yk]={};
   if (!schedData[yk][_mDay]) schedData[yk][_mDay]={};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour]={};
   // Zbierz klasy z listy międzyoddziałowej (z globalnego stanu)
-  const _clsList = (window._mcClasses || []).filter(Boolean);
+  const _clsList = (_selectedClasses || []).filter(Boolean);
   schedData[yk][_mDay][_mHour][_mKey]={
     teacherAbbr: document.getElementById('inpTeacher').value,
     classes:     _clsList,
