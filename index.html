@@ -1746,6 +1746,188 @@ body.light #tutBox { background: #fff; }
 .import-stat.added    { background: rgba(16,185,129,0.12); color: var(--green); }
 .import-stat.conflict { background: rgba(239,68,68,0.10);  color: #ef4444; }
 .import-stat.same     { background: rgba(99,102,241,0.10); color: var(--text-dim); }
+
+/* ================================================================
+   STRONA POWITALNA
+   ================================================================ */
+#welcomeScreen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: #f0f4ff;
+  overflow-y: auto;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+#welcomeScreen.show { display: flex; flex-direction: column; align-items: center; }
+
+.wl-hero {
+  width: 100%;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 60%, #60a5fa 100%);
+  padding: 52px 24px 40px;
+  text-align: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.wl-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 70% 50%, rgba(255,255,255,0.08) 0%, transparent 70%);
+}
+.wl-hero-logo {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 6px;
+}
+.wl-hero-logo span { color: #bfdbfe; }
+.wl-hero-tagline {
+  font-size: 1rem;
+  opacity: 0.85;
+  max-width: 420px;
+  margin: 0 auto 28px;
+  line-height: 1.5;
+}
+.wl-hero-badges {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.wl-badge {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  padding: 5px 13px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.wl-body {
+  width: 100%;
+  max-width: 720px;
+  padding: 36px 20px 60px;
+}
+
+.wl-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin: 0 0 14px;
+}
+
+/* Karty akcji */
+.wl-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+@media (max-width: 520px) { .wl-cards { grid-template-columns: 1fr; } }
+
+.wl-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px 20px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wl-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 6px 24px rgba(59,130,246,0.18);
+  transform: translateY(-2px);
+}
+.wl-card.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.wl-card-icon { font-size: 1.6rem; margin-bottom: 4px; }
+.wl-card-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+.wl-card-desc {
+  font-size: 0.78rem;
+  color: #6b7280;
+  line-height: 1.45;
+}
+.wl-card-tag {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: #eff6ff;
+  color: #3b82f6;
+  padding: 2px 8px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+.wl-card-tag.green { background: #f0fdf4; color: #16a34a; }
+.wl-card-tag.orange { background: #fff7ed; color: #ea580c; }
+.wl-card-tag.purple { background: #faf5ff; color: #7c3aed; }
+
+/* Sekcja opisu */
+.wl-features {
+  background: #fff;
+  border-radius: 14px;
+  padding: 22px 22px 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  margin-bottom: 24px;
+}
+.wl-feature-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.82rem;
+  color: #374151;
+  line-height: 1.4;
+}
+.wl-feature-row:last-child { border-bottom: none; }
+.wl-feature-icon { font-size: 1.1rem; margin-top: 1px; flex-shrink: 0; }
+
+/* Import strefa drag&drop na welcome */
+.wl-import-zone {
+  border: 2px dashed #93c5fd;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  background: #fff;
+  margin-bottom: 8px;
+}
+.wl-import-zone:hover { background: #eff6ff; border-color: #3b82f6; }
+.wl-import-zone p { margin: 4px 0; font-size: 0.8rem; color: #6b7280; }
+.wl-import-zone strong { color: #1e3a8a; font-size: 0.88rem; }
+
+/* Demo banner */
+.wl-demo-bar {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.78rem;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -1757,10 +1939,91 @@ if ('serviceWorker' in navigator) {
 </script>
 </head>
 <body>
+<!-- ================================================================
+     STRONA POWITALNA
+     ================================================================ -->
+<div id="welcomeScreen">
+  <div class="wl-hero">
+    <div class="wl-hero-logo">Sale<span>Plan</span></div>
+    <p class="wl-hero-tagline">Aplikacja do zarządzania planem sal zajęciowych dla szkół. Przypisuj nauczycieli, klasy i grupy do sal — szybko i przejrzyście.</p>
+    <div class="wl-hero-badges">
+      <span class="wl-badge">📱 PWA — działa offline</span>
+      <span class="wl-badge">🏫 Wiele budynków i pięter</span>
+      <span class="wl-badge">👥 Zajęcia międzyoddziałowe</span>
+      <span class="wl-badge">⚠ Wykrywanie kolizji</span>
+    </div>
+  </div>
+
+  <div class="wl-body">
+
+    <p class="wl-section-title">Co chcesz zrobić?</p>
+    <div class="wl-cards">
+
+      <div class="wl-card" onclick="welcomeStartNew()">
+        <div class="wl-card-icon">✨</div>
+        <div class="wl-card-title">Utwórz nowy plan</div>
+        <div class="wl-card-desc">Skonfiguruj szkołę, budynki, sale, nauczycieli i klasy od zera.</div>
+        <span class="wl-card-tag green">Kreator krok po kroku</span>
+      </div>
+
+      <div class="wl-card" id="wlCardCopy" onclick="welcomeCopyYear()" style="display:none">
+        <div class="wl-card-icon">📋</div>
+        <div class="wl-card-title">Nowy rok szkolny</div>
+        <div class="wl-card-desc">Skopiuj konfigurację szkoły, sale, nauczycieli i klasy z bieżącego roku.</div>
+        <span class="wl-card-tag orange">Na podstawie istniejącego</span>
+      </div>
+
+      <div class="wl-card" id="wlCardImport" onclick="welcomeImportClick()">
+        <div class="wl-card-icon">📂</div>
+        <div class="wl-card-title">Importuj z pliku</div>
+        <div class="wl-card-desc">Wczytaj plan z pliku .json — od innej osoby lub z poprzedniej sesji.</div>
+        <span class="wl-card-tag purple">Współpraca</span>
+      </div>
+
+      <div class="wl-card" onclick="welcomeDemo()">
+        <div class="wl-card-icon">🎬</div>
+        <div class="wl-card-title">Wersja demo</div>
+        <div class="wl-card-desc">Zapoznaj się z możliwościami na przykładowych danych fikcyjnej szkoły.</div>
+        <span class="wl-card-tag">Podgląd bez zapisu</span>
+      </div>
+
+    </div>
+
+    <input type="file" id="wlFileInput" accept=".json" style="display:none" onchange="welcomeHandleFile(this.files[0]);this.value=''">
+
+    <p class="wl-section-title">Co możesz robić w SalePlan?</p>
+    <div class="wl-features">
+      <div class="wl-feature-row"><span class="wl-feature-icon">🏫</span><span>Definiuj dowolną strukturę szkoły — wiele budynków, pięter, segmentów i sal z numerami</span></div>
+      <div class="wl-feature-row"><span class="wl-feature-icon">👩‍🏫</span><span>Przypisuj nauczycieli i klasy do sal godzina po godzinie, dla każdego dnia tygodnia</span></div>
+      <div class="wl-feature-row"><span class="wl-feature-icon">👥</span><span>Obsługa zajęć międzyoddziałowych — jedna sala, wiele klas jednocześnie</span></div>
+      <div class="wl-feature-row"><span class="wl-feature-icon">⚠</span><span>Automatyczne wykrywanie kolizji — ten sam nauczyciel lub klasa w dwóch salach jednocześnie</span></div>
+      <div class="wl-feature-row"><span class="wl-feature-icon">🏠</span><span>Gospodarz sali — przypisz klasę i wychowawcę widocznych w nagłówku tabeli</span></div>
+      <div class="wl-feature-row"><span class="wl-feature-icon">📁</span><span>Archiwum lat szkolnych — przełączaj się między rokami bez utraty danych</span></div>
+      <div class="wl-feature-row"><span class="wl-feature-icon">🔄</span><span>Eksport i import JSON — współpracuj z innymi, twórz kopie zapasowe</span></div>
+      <div class="wl-feature-row"><span class="wl-feature-icon">📄</span><span>Eksport do PDF — gotowy plan do wydruku lub wysłania mailem</span></div>
+    </div>
+
+  </div>
+</div>
+<!-- /STRONA POWITALNA -->
+
 
 <!-- ═══════════════════════════════════════════
      WIZARD
 ═══════════════════════════════════════════ -->
+
+<!-- DEMO BANNER -->
+<div id="demoBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:1500;
+  background:#fef3c7;border-bottom:2px solid #fcd34d;padding:8px 16px;
+  align-items:center;gap:12px;font-size:0.8rem;color:#92400e;font-weight:600;">
+  <span>🎬 Tryb demo — dane nie są zapisywane</span>
+  <span style="font-weight:400;opacity:0.8">Dane fikcyjnej szkoły SP1 z przykładowym planem i demonstracyjną kolizją</span>
+  <button onclick="exitDemo()" style="margin-left:auto;padding:4px 14px;border-radius:6px;
+    background:#92400e;color:#fff;border:none;cursor:pointer;font-size:0.75rem;font-weight:600;">
+    ✕ Wyjdź z demo
+  </button>
+</div>
+
 <div id="wizardOverlay">
 <div class="wizard-wrap">
 <div id="wizardPanel">
@@ -2417,6 +2680,241 @@ function loadAll() {
 }
 
 
+
+// ================================================================
+//  STRONA POWITALNA
+// ================================================================
+let _demoMode = false;
+
+function showWelcomeScreen() {
+  // Pokaż/ukryj kartę "nowy rok" jeśli jest istniejący plan
+  const cardCopy = document.getElementById('wlCardCopy');
+  if (cardCopy) cardCopy.style.display = appState ? 'flex' : 'none';
+  document.getElementById('welcomeScreen').classList.add('show');
+}
+
+function hideWelcomeScreen() {
+  document.getElementById('welcomeScreen').classList.remove('show');
+}
+
+// ── Nowy plan od zera ──
+function welcomeStartNew() {
+  _demoMode = false;
+  hideWelcomeScreen();
+  openWizardNewYear();
+}
+
+// ── Nowy rok na bazie istniejącego ──
+function welcomeCopyYear() {
+  _demoMode = false;
+  hideWelcomeScreen();
+  // openWizardNewYear automatycznie kopiuje dane z appState
+  openWizardNewYear();
+}
+
+// ── Import z pliku — kliknięcie karty ──
+function welcomeImportClick() {
+  document.getElementById('wlFileInput').click();
+}
+
+function welcomeHandleFile(file) {
+  if (!file || !file.name.endsWith('.json')) {
+    notify('⚠ Wybierz plik .json', true); return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.schedData && !data.appState) {
+        notify('⚠ Nieprawidłowy format pliku', true); return;
+      }
+      // Jeśli nie ma jeszcze appState — załaduj bezpośrednio
+      if (!appState && data.appState) {
+        appState       = data.appState;
+        schedData      = data.schedData      || {};
+        validFromDates = data.validFromDates  || {};
+        archive        = data.archive         || [];
+        if (!appState.homerooms) appState.homerooms = {};
+        persistAll();
+        hideWelcomeScreen();
+        const yk = appState.yearKey;
+        if (!schedData[yk]) schedData[yk] = {};
+        (appState.days||DAYS_DEFAULT).forEach((_,i) => {
+          if (!schedData[yk][i]) schedData[yk][i] = {};
+          (appState.hours||[]).forEach(h => { if(!schedData[yk][i][h]) schedData[yk][i][h]={}; });
+        });
+        mountApp();
+        notify('✓ Plan wczytany z pliku');
+      } else {
+        // Mamy już appState — użyj istniejącego modal porównania
+        hideWelcomeScreen();
+        openImportModal(data);
+      }
+    } catch(ex) {
+      notify('⚠ Błąd odczytu pliku: ' + ex.message, true);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Drag & drop na stronę powitalną ──
+(function() {
+  let _wlDrag = false;
+  document.addEventListener('dragover', e => {
+    const ws = document.getElementById('welcomeScreen');
+    if (!ws || !ws.classList.contains('show')) return;
+    e.preventDefault();
+    if (!_wlDrag) {
+      _wlDrag = true;
+      ws.style.background = '#dbeafe';
+    }
+  });
+  document.addEventListener('dragleave', e => {
+    if (e.relatedTarget === null) {
+      _wlDrag = false;
+      const ws = document.getElementById('welcomeScreen');
+      if (ws) ws.style.background = '';
+    }
+  });
+  document.addEventListener('drop', e => {
+    _wlDrag = false;
+    const ws = document.getElementById('welcomeScreen');
+    if (ws && ws.classList.contains('show')) {
+      e.preventDefault();
+      ws.style.background = '';
+      const file = e.dataTransfer.files[0];
+      if (file) welcomeHandleFile(file);
+    }
+  });
+})();
+
+// ── DEMO ──
+function welcomeDemo() {
+  _demoMode = true;
+  hideWelcomeScreen();
+  loadDemoData();
+  const yk = appState.yearKey;
+  (appState.days||DAYS_DEFAULT).forEach((_,i) => {
+    if (!schedData[yk][i]) schedData[yk][i] = {};
+    (appState.hours||[]).forEach(h => { if(!schedData[yk][i][h]) schedData[yk][i][h]={}; });
+  });
+  mountApp();
+  // Pokaż banner demo
+  setTimeout(() => {
+    notify('🎬 Tryb demo — dane nie są zapisywane');
+    const bar = document.getElementById('demoBanner');
+    if (bar) bar.style.display = 'flex';
+  }, 400);
+}
+
+function loadDemoData() {
+  const buildings = [{ name: 'Budynek Główny', address: 'ul. Szkolna 1' }, { name: 'Skrzydło B', address: 'ul. Szkolna 1' }];
+  const floors = [
+    { name: 'Parter',    color: '#f59e0b', buildingIdx: 0, segments: [
+      { name: 'Skrzydło A', rooms: [{num:'1',sub:''},{num:'2',sub:''},{num:'3',sub:''}] },
+      { name: 'Skrzydło B', rooms: [{num:'4',sub:''},{num:'5',sub:''}] },
+    ]},
+    { name: 'Piętro 1',  color: '#3b82f6', buildingIdx: 0, segments: [
+      { name: 'Lewe',    rooms: [{num:'11',sub:''},{num:'12',sub:''}] },
+      { name: 'Prawe',   rooms: [{num:'13',sub:''},{num:'14',sub:''}] },
+    ]},
+    { name: 'Parter',    color: '#10b981', buildingIdx: 1, segments: [
+      { name: 'Główny',  rooms: [{num:'B1',sub:''},{num:'B2',sub:''},{num:'B3',sub:''}] },
+    ]},
+  ];
+  const classes = [
+    {name:'1A',abbr:'1A',group:'cała klasa'},{name:'1B',abbr:'1B',group:'cała klasa'},
+    {name:'2A',abbr:'2A',group:'cała klasa'},{name:'2B',abbr:'2B',group:'cała klasa'},
+    {name:'3A',abbr:'3A',group:'cała klasa'},
+    {name:'1A',abbr:'1A gr.1',group:'gr. 1'},{name:'1A',abbr:'1A gr.2',group:'gr. 2'},
+    {name:'2A',abbr:'2A gr.1',group:'gr. 1'},
+  ];
+  const teachers = [
+    {first:'Anna',    last:'Kowalska',  abbr:'AKOW'},
+    {first:'Piotr',   last:'Nowak',     abbr:'PNOW'},
+    {first:'Maria',   last:'Wiśniewska',abbr:'MWIS'},
+    {first:'Tomasz',  last:'Zając',     abbr:'TZAJ'},
+    {first:'Katarzyna',last:'Lewandowska',abbr:'KLEW'},
+    {first:'Marek',   last:'Wójcik',    abbr:'MWOJ'},
+  ];
+  const hours = ['1','2','3','4','5','6','7','8'];
+  const yearKey = 'y_demo_2024_2025';
+
+  // Kolumny
+  function demoColKey(fi, si, ri) {
+    const room = floors[fi].segments[si].rooms[ri];
+    return `f${fi}_s${si}_${room.num || 'r'+ri}`;
+  }
+
+  const sched = {};
+  DAYS_DEFAULT.forEach((_,di) => {
+    sched[di] = {};
+    hours.forEach(h => { sched[di][h] = {}; });
+  });
+
+  // Kilka przykładowych wpisów
+  const entries = [
+    [0,0,'1',demoColKey(0,0,0), {teacherAbbr:'AKOW',classes:['1A'],className:'1A',subject:'Matematyka',note:''}],
+    [0,0,'2',demoColKey(0,0,1), {teacherAbbr:'PNOW',classes:['2A'],className:'2A',subject:'Fizyka',note:''}],
+    [0,0,'3',demoColKey(0,1,0), {teacherAbbr:'MWIS',classes:['1B'],className:'1B',subject:'Biologia',note:''}],
+    [0,0,'1',demoColKey(1,0,0), {teacherAbbr:'TZAJ',classes:['3A'],className:'3A',subject:'Historia',note:''}],
+    [0,0,'2',demoColKey(1,1,0), {teacherAbbr:'KLEW',classes:['2B'],className:'2B',subject:'Chemia',note:''}],
+    [0,1,'1',demoColKey(0,0,0), {teacherAbbr:'MWOJ',classes:['1A gr.1','1A gr.2'],className:'1A gr.1',subject:'WF',note:'zajęcia łączone'}],
+    [0,1,'2',demoColKey(0,0,2), {teacherAbbr:'AKOW',classes:['2A'],className:'2A',subject:'Matematyka',note:''}],
+    [0,2,'1',demoColKey(2,0,0), {teacherAbbr:'PNOW',classes:['1B'],className:'1B',subject:'Informatyka',note:'pracownia'}],
+    [0,2,'2',demoColKey(2,0,1), {teacherAbbr:'MWIS',classes:['2B'],className:'2B',subject:'Biologia',note:''}],
+    // Wtorek
+    [1,0,'1',demoColKey(0,0,0), {teacherAbbr:'PNOW',classes:['1A'],className:'1A',subject:'Fizyka',note:''}],
+    [1,0,'3',demoColKey(0,1,1), {teacherAbbr:'AKOW',classes:['3A'],className:'3A',subject:'Matematyka',note:''}],
+    [1,1,'2',demoColKey(1,0,1), {teacherAbbr:'TZAJ',classes:['2A'],className:'2A',subject:'Historia',note:''}],
+    // Kolizja demonstracyjna — ten sam nauczyciel w 2 salach
+    [0,0,'4',demoColKey(0,0,0), {teacherAbbr:'AKOW',classes:['1B'],className:'1B',subject:'Algebra',note:''}],
+    [0,0,'4',demoColKey(0,0,1), {teacherAbbr:'AKOW',classes:['2A gr.1'],className:'2A gr.1',subject:'Algebra',note:''}],
+  ];
+
+  entries.forEach(([di, fi_unused, h, key, entry]) => {
+    if (sched[di] && sched[di][h] !== undefined) {
+      sched[di][h][key] = entry;
+    }
+  });
+
+  const homerooms = {};
+  homerooms[demoColKey(0,0,0)] = {className:'1A',teacherAbbr:'AKOW'};
+  homerooms[demoColKey(0,0,1)] = {className:'2A',teacherAbbr:'PNOW'};
+  homerooms[demoColKey(0,1,0)] = {className:'1B',teacherAbbr:'MWIS'};
+
+  appState = {
+    yearKey, yearLabel: '2024/2025 (DEMO)',
+    hours, floors, buildings, classes, teachers,
+    assignments: {}, days: DAYS_DEFAULT,
+    school: { name: 'Szkoła Podstawowa nr 1 (DEMO)', short: 'SP1', phone: '12 345 67 89', web: 'www.sp1.demo.pl' },
+    homerooms,
+  };
+  schedData = { [yearKey]: sched };
+  validFromDates = {};
+}
+
+function exitDemo() {
+  _demoMode = false;
+  const bar = document.getElementById('demoBanner');
+  if (bar) bar.style.display = 'none';
+  appState   = null;
+  schedData  = {};
+  loadAll();
+  if (!appState) {
+    document.getElementById('appOverlay').style.display = 'none';
+    showWelcomeScreen();
+  } else {
+    const yk = appState.yearKey;
+    if (!schedData[yk]) schedData[yk] = {};
+    (appState.days||DAYS_DEFAULT).forEach((_,i) => {
+      if (!schedData[yk][i]) schedData[yk][i] = {};
+      (appState.hours||[]).forEach(h => { if(!schedData[yk][i][h]) schedData[yk][i][h]={}; });
+    });
+    mountApp();
+  }
+}
+
 // ================================================================
 //  EKSPORT / IMPORT / SCALANIE (współpraca)
 // ================================================================
@@ -2424,11 +2922,12 @@ function loadAll() {
 // ── Eksport do pliku JSON ──
 function exportJSON() {
   const data = {
-    _version: 1,
+    _version: 2,
     _exported: new Date().toISOString(),
     appState,
     schedData,
     validFromDates,
+    archive,
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
   const url  = URL.createObjectURL(blob);
@@ -2496,10 +2995,14 @@ function openImportModal(data) {
   });
 
   // Wypełnij info w modalu
+  const hasConfig = !!(data.appState);
+  const hasArchive = !!(data.archive && data.archive.length);
   document.getElementById('importInfo').innerHTML =
     `<div class="import-stat added">＋ ${added} nowych wpisów (zostaną dodane)</div>` +
     `<div class="import-stat conflict">${conflicts > 0 ? '⚠' : '✓'} ${conflicts} konfliktów (istniejące wpisy)</div>` +
-    `<div class="import-stat same">= ${same} identycznych wpisów</div>`;
+    `<div class="import-stat same">= ${same} identycznych wpisów</div>` +
+    `<div class="import-stat same">${hasConfig ? '✓ Zawiera konfigurację szkoły' : '⚠ Brak konfiguracji szkoły'}</div>` +
+    `<div class="import-stat same">${hasArchive ? '✓ Zawiera archiwum (' + data.archive.length + ' lat)' : '— Brak archiwum'}</div>`;
 
   document.getElementById('importModeOverwrite').checked = false;
   document.getElementById('importModeMerge').checked     = true;
@@ -2536,11 +3039,16 @@ function confirmImport() {
         });
       });
     });
+    // Przywróć konfigurację i archiwum jeśli lokalnie brak
+    if (!appState && _importData.appState)   appState = _importData.appState;
+    if ((!archive || !archive.length) && _importData.archive) archive = _importData.archive;
     notify('✓ Scalono — dodano brakujące wpisy');
   } else {
     // Nadpisz całkowicie
     schedData = impSched;
     if (_importData.validFromDates) validFromDates = _importData.validFromDates;
+    if (_importData.appState)       appState       = _importData.appState;
+    if (_importData.archive)        archive        = _importData.archive;
     notify('✓ Plan zastąpiony danymi z pliku');
   }
   persistAll();
@@ -2575,6 +3083,7 @@ function initImportDragDrop() {
   });
 }
 function persistAll() {
+  if (_demoMode) return; // tryb demo — nie zapisuj do localStorage
   localStorage.setItem('sp_sched', JSON.stringify(schedData));
   localStorage.setItem('sp_vfdates', JSON.stringify(validFromDates));
   localStorage.setItem('sp_archive', JSON.stringify(archive));
@@ -2582,6 +3091,7 @@ function persistAll() {
 }
 
 function saveData() {
+  if (_demoMode) { notify('⚠ Tryb demo — dane nie są zapisywane', true); return; }
   validFromDates[appState.yearKey] = validFromDates[appState.yearKey] || {};
   validFromDates[appState.yearKey][currentDay] = document.getElementById('validFrom').value;
   persistAll();
@@ -2629,7 +3139,7 @@ function openWizardNewYear(preload) {
   document.getElementById('wizardOverlay').classList.add('show');
 }
 
-function openWizardFirst() { openWizardNewYear(); }
+function openWizardFirst() { showWelcomeScreen(); }
 
 function wizardNext() {
   if (wStep === 0) {
