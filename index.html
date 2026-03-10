@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v53');
+          const hasNew = keys.some(k => k === 'sp-v54');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -4718,7 +4718,6 @@ function renderMultiClassList(selected) {
   ).join('') +
   `<span class="mc-add-wrap">
      <select id="mcAddSelect" class="teacher-select mc-add-select">
-       <option value="">— wybierz klasę —</option>
        ${buildClassSelectOptionsNoBlank('')}
      </select>
      <button class="btn btn-green mc-add-btn" onclick="mcAddClass()" title="Dodaj klasę">＋</button>
@@ -4730,14 +4729,11 @@ function mcAddClass() {
   const sel = document.getElementById('mcAddSelect');
   if (!sel) { notify('⚠ Brak selecta klas', true); return; }
   const val = sel.value;
-  if (!val) { notify('⚠ Wybierz klasę z listy', true); return; }
+  if (!val) { notify('⚠ Brak klas do dodania', true); return; }
   const list = (window._mcClasses || []).slice();
   if (list.includes(val)) { notify('⚠ Ta klasa jest już na liście', true); return; }
   list.push(val);
   renderMultiClassList(list);
-  // Po re-renderze przywróć select na tę samą pozycję jeśli możliwe
-  const newSel = document.getElementById('mcAddSelect');
-  if (newSel) newSel.value = '';
 }
 function mcRemoveClass(idx) {
   const list = window._mcClasses || [];
