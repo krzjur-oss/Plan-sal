@@ -9,7 +9,7 @@ if ('serviceWorker' in navigator) {
       reg.update();
       if (reg.active && reg.active.scriptURL) {
         caches.keys().then(keys => {
-          const hasNew = keys.some(k => k === 'sp-v47');
+          const hasNew = keys.some(k => k === 'sp-v48');
           if (!hasNew && keys.length > 0) {
             keys.forEach(k => caches.delete(k));
             reg.unregister().then(() => location.reload());
@@ -2259,7 +2259,10 @@ if ('serviceWorker' in navigator) {
 
     </div>
 
-    <button class="wl-about-btn" onclick="showAboutModal()">ℹ️ O programie</button>
+    <div id="wlBottomBtns" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px">
+      <button class="wl-about-btn" id="wlCurrentPlanBtn" onclick="hideWelcomeScreen()" style="display:none">📋 Aktualny plan</button>
+      <button class="wl-about-btn" onclick="showAboutModal()">ℹ️ O programie</button>
+    </div>
 
     <input type="file" id="wlFileInput" accept=".json" style="display:none" onchange="welcomeHandleFile(this.files[0]);this.value=''">
 
@@ -2596,6 +2599,7 @@ if ('serviceWorker' in navigator) {
   <div class="topbar">
     <div class="topbar-left">
       <div class="logo">Sale<span>Plan</span></div>
+      <button class="btn btn-ghost" onclick="showWelcomeScreen()" title="Strona główna" style="font-size:0.75rem;padding:4px 10px">🏠 Strona główna</button>
       <div class="school-name-topbar" id="schoolNameTopbar"></div>
       <div class="year-pill" id="yearPill" onclick="showArchive()">
         <span id="currentYearLabel">—</span>
@@ -2757,20 +2761,7 @@ if ('serviceWorker' in navigator) {
     <div class="modal-hint">Gospodarz widoczny w nagłówku tabeli dla każdej sali</div>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button class="btn btn-primary" onclick="saveHomeroom()">✓ Zapisz</button>
-      <button class="btn btn-ghost" onclick="closeHomeroomModal()">Anuluj</button>
-      <button class="btn btn-red" style="margin-left:auto" onclick="clearHomeroom()">🗑 Usuń</button>
-    </div>
-  </div>
-</div>
-
-<div id="archivePanel">
-  <div class="archive-modal">
-    <div class="archive-header"><h3>📁 Archiwum lat szkolnych</h3><button class="arc-close-btn" onclick="hideArchive()">✕</button></div>
-    <div class="archive-list" id="archiveList"></div>
-  </div>
-</div>
-
-<script>
+      <button class="btn btn-ghost" onclick="closeHomeroomModal()">
 // ================================================================
 //  WALIDACJA KOLIZJI
 // ================================================================
@@ -2976,11 +2967,17 @@ function showWelcomeScreen() {
       if (descCopy) descCopy.textContent = 'Niedostępne — najpierw utwórz plan lub wczytaj go z pliku.';
     }
   }
+  // Pokaż przycisk "Aktualny plan" jeśli plan istnieje
+  const planBtn = document.getElementById('wlCurrentPlanBtn');
+  if (planBtn) planBtn.style.display = appState ? '' : 'none';
+
   document.getElementById('welcomeScreen').classList.add('show');
 }
 
 function hideWelcomeScreen() {
   document.getElementById('welcomeScreen').classList.remove('show');
+  // Jeśli mamy plan, upewnij się że appOverlay jest widoczny
+  if (appState) mountApp();
 }
 
 // ── Nowy plan od zera ──
@@ -5324,6 +5321,19 @@ function showAboutModal() {
     Wszystkie dane zapisywane są wyłącznie w localStorage przeglądarki.</p>
     <h3>🛠️ Technologie</h3>
     <p>Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localStorage. Offline: Service Worker (Cache API). Standard: PWA (Web App Manifest + Service Worker).</p>
+    <div class="about-author">
+      <strong>Krzysztof Jureczek</strong>
+      Autor i twórca aplikacji SalePlan
+    </div>
+  `;
+  document.getElementById('aboutModal').classList.add('show');
+}
+
+function closeAboutModal() {
+  document.getElementById('aboutModal').classList.remove('show');
+}
+
+eżności. Dane: localStorage. Offline: Service Worker (Cache API). Standard: PWA (Web App Manifest + Service Worker).</p>
     <div class="about-author">
       <strong>Krzysztof Jureczek</strong>
       Autor i twórca aplikacji SalePlan
