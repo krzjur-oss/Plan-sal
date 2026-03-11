@@ -5137,9 +5137,10 @@ function renderSchedule() {
             >${hasErr?'<span class="cell-collision-icon">⚠</span>':''}${
         filled
           ? `<div class="cell-row-cls">${
-               (entry.classes && entry.classes.length
-                 ? entry.classes
-                 : entry.className ? [entry.className] : []
+               mergeClassNames(
+                 entry.classes && entry.classes.length
+                   ? entry.classes
+                   : entry.className ? [entry.className] : []
                ).map(cls => `<span class="cell-abbr cell-abbr-cls" title="${esc(resolveClassName(cls))}">${esc(cls)}</span>`).join('')
              }</div>
              ${entry.subject ? `<div class="cell-row-subject" title="${esc(entry.subject)}">${esc(subjectAbbr(entry.subject))}</div>` : ''}
@@ -5436,6 +5437,43 @@ function exportPDF() {
 // ================================================================
 //  HELPERS
 // ================================================================
+// ================================================================
+//  MERGE CLASS NAMES — łączy np. ['4A MN','4B MN','4C MN'] → ['4ABC MN']
+// ================================================================
+function mergeClassNames(classes) {
+  if (!classes || classes.length <= 1) return classes || [];
+
+  // Parsuj każdą klasę na {level, letter, group}
+  // Format: "4A MN" → {level:'4', letter:'A', group:'MN', orig:'4A MN'}
+  // Format: "4A"    → {level:'4', letter:'A', group:'',   orig:'4A'}
+  const parsed = classes.map(cls => {
+    const m = String(cls).trim().match(/^(\d+)([A-Za-z])(?:\s+(.+))?$/);
+    if (m) return { level: m[1], letter: m[2].toUpperCase(), group: (m[3]||'').trim(), orig: cls };
+    return { level: null, letter: null, group: null, orig: cls };
+  });
+
+  // Grupuj po (level + group)
+  const buckets = new Map();
+  const unparsed = [];
+  for (const p of parsed) {
+    if (p.level === null) { unparsed.push(p.orig); continue; }
+    const key = p.level + '|' + p.group;
+    if (!buckets.has(key)) buckets.set(key, { level: p.level, group: p.group, letters: [] });
+    const b = buckets.get(key);
+    if (!b.letters.includes(p.letter)) b.letters.push(p.letter);
+  }
+
+  // Złóż wyniki: posortuj litery, sklej
+  const merged = [];
+  for (const [, b] of buckets) {
+    b.letters.sort();
+    const cls = b.level + b.letters.join('') + (b.group ? ' ' + b.group : '');
+    merged.push(cls);
+  }
+
+  return [...merged, ...unparsed];
+}
+
 function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function sbSet(msg){document.getElementById('sbText').textContent=msg;setTimeout(()=>document.getElementById('sbText').textContent='Gotowy',2500);}
 function notify(msg,warn){
