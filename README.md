@@ -10,14 +10,33 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 ### 🚀 Strona powitalna
 
-Przy pierwszym uruchomieniu (lub gdy brak zapisanego planu) wyświetla się strona powitalna z czterema opcjami:
+Przy pierwszym uruchomieniu wyświetla się strona powitalna z czterema opcjami:
 
 | Opcja | Opis |
 |-------|------|
 | ✨ Utwórz nowy plan | Kreator od zera — 6 kroków |
-| 📋 Nowy rok szkolny | Kopiuje całą konfigurację z bieżącego roku (szkoła, sale, nauczyciele, klasy, plan) |
-| 📂 Importuj z pliku | Wczytaj plan z pliku `.json` z wyborem trybu: zastąp / scal / nowy |
-| 🎬 Wersja demo | Fikcyjna szkoła SP1 z przykładowym planem i demonstracyjną kolizją — dane nie są zapisywane |
+| 📋 Nowy rok szkolny | Kopiuje całą konfigurację z bieżącego roku |
+| 📂 Importuj z pliku | Wczytaj plan z pliku `.json` |
+| 🎬 Wersja demo | Fikcyjna szkoła z przykładowym planem — dane nie są zapisywane |
+
+---
+
+### ☰ Menu nawigacyjne
+
+Wszystkie opcje dostępne są przez przycisk **☰** w lewym górnym rogu. Menu wysuwa się jako panel boczny i zawiera:
+
+| Pozycja | Opis |
+|---------|------|
+| Obowiązuje od | Data obowiązywania planu (osobna dla każdego dnia) |
+| 💾 Zapisz | Ręczny zapis do pamięci przeglądarki |
+| ⬇ Eksportuj PDF | Plan gotowy do wydruku (orientacja pozioma) |
+| ⬆ Eksportuj JSON | Kopia zapasowa całego planu z archiwum |
+| ⬇ Importuj JSON | Wczytaj plan z pliku `.json` |
+| ✏️ Edytuj rok | Zmień sale, klasy, nauczycieli lub godziny |
+| 🗑 Wyczyść dzień | Usuwa wszystkie wpisy bieżącego dnia |
+| ❓ Pomoc | Panel z podpowiedziami |
+| 🌙 Zmień motyw | Przełącz jasny / ciemny motyw |
+| 🏠 Strona główna | Wróć do ekranu startowego |
 
 ---
 
@@ -25,149 +44,85 @@ Przy pierwszym uruchomieniu (lub gdy brak zapisanego planu) wyświetla się stro
 
 | Krok | Opis |
 |------|------|
-| 1 — Szkoła | Nazwa, skrót, telefon, strona www + lista budynków z adresami |
+| 1 — Szkoła | Nazwa, skrót, telefon, strona www + lista budynków |
 | 2 — Rok szkolny | Rok szkolny i numery godzin lekcyjnych |
-| 3 — Piętra i sale | Piętra, segmenty i numery sal — każde piętro przypisane do budynku |
-| 4 — Klasy i grupy | Lista klas z podziałem na grupy, import z pliku `.txt` |
-| 5 — Nauczyciele | Lista nauczycieli ze skrótami, import z pliku `.txt` |
-| 6 — Przypisania | Domyślne przypisanie klas do sal dla każdego dnia tygodnia |
+| 3 — Piętra i sale | Piętra, segmenty i numery sal |
+| 4 — Klasy i grupy | Lista klas z podziałem na grupy |
+| 5 — Nauczyciele | Lista nauczycieli ze skrótami |
+| 6 — Przypisania | Domyślne przypisanie klas do sal |
 
-Panel instrukcji po lewej stronie kreatora wyjaśnia każdy krok.
-
-#### 💾 Autosave szkicu kreatora
-Kreator automatycznie zapisuje postęp co 30 sekund do `localStorage` (`sp_wiz_draft`). Przy przypadkowym zamknięciu — po ponownym otwarciu kreatora pojawi się pytanie o wznowienie przerwanej sesji.
-
-#### ✏️ Edycja bieżącego roku
-Przycisk **✏️ Edytuj rok** w górnym pasku otwiera kreator z danymi bieżącego roku. Można zmienić sale, klasy, nauczycieli lub godziny bez tworzenia nowego roku i bez utraty wpisanych zajęć.
+Kreator automatycznie zapisuje postęp (autosave co 30 s). Menu ☰ → **✏️ Edytuj rok** otwiera kreator z danymi bieżącego roku bez utraty wpisanych zajęć.
 
 ---
 
 ### 🏫 Obsługa wielu budynków
-- Dowolna liczba budynków z nazwą i adresem
-- Każde piętro przypisane do konkretnego budynku
-- Nazwy budynków widoczne w scalonych nagłówkach tabeli
-
----
-
-### 👨‍🏫 Nauczyciele
-- Automatycznie generowany skrót: `Jan Kowalski` → `JKow`, `Anna Nowak-Wiśniewska` → `ANoW`
-- Skróty edytowalne ręcznie, obsługa duplikatów (`JKow2`)
-- **Import z pliku `.txt`** — format: `Imię Nazwisko` (jeden na linię)
-- **Dodawanie w locie** — bezpośrednio z okna edycji komórki
-- Lista nauczycieli **sortowana alfabetycznie** po nazwisku
+Dowolna liczba budynków z nazwą i adresem. Każde piętro przypisane do budynku. Nazwy budynków widoczne w scalonych nagłówkach tabeli.
 
 ---
 
 ### 🎓 Klasy i grupy
-- Każda klasa może mieć dowolną liczbę grup, np. `4A gr ez`, `4A WF gr1`
-- **Import z pliku `.txt`** — format: `klasa;skrót;nazwa grupy`
-- **Dodawanie w locie** — bezpośrednio z okna edycji komórki
-- **Automatyczny skrót** klasy/grupy generowany na bieżąco (edytowalny ręcznie)
-- Lista klas **sortowana alfabetycznie** z naturalnym porządkiem: `1A → 1B → 2A → 10C`
+- Klasy z opcjonalnym podziałem na grupy
+- Kilka klas tego samego poziomu i grupy **automatycznie scala się** w komórce: `4A MN + 4B MN + 4C MN → 4ABC MN`
+- Grupy różnych klas lub różnych poziomów pozostają osobno
 
 ---
 
 ### 📋 Planowanie sal
-- Interaktywna siatka: godziny lekcyjne × sale
-- W każdej komórce: nauczyciel (lista), klasy/grupy (chipy), przedmiot, uwagi
-- Skrót nauczyciela i badge klasy widoczne w komórce
-- Data „Obowiązuje od" dla każdego dnia tygodnia
+- Kliknij komórkę aby edytować zajęcia — wybierz nauczyciela, klasę/grupę i wpisz przedmiot
+- Skróty klasy, przedmiotu i inicjały nauczyciela widoczne bezpośrednio w komórce
+- **Ctrl+Enter** — zapisz wpis · **Esc** — zamknij okno
 
-#### 👥 Zajęcia międzyoddziałowe
-- Jedna sala — wiele klas/grup jednocześnie (np. `1A gr.1` + `2A gr.1`)
-- Klasy dodawane jako chipy (＋ / ✕)
+---
+
+### 🖱️ Przeciąganie zajęć
+- Przeciągnij wypełnioną komórkę na inną godzinę lub salę — kopiuje wpis
+- Aby przenieść: przeciągnij + wyczyść oryginał
+- Gdy cel jest zajęty — pojawi się pytanie przed nadpisaniem
 
 ---
 
 ### ⚠ Wykrywanie kolizji
-- Automatyczne wykrywanie gdy ten sam nauczyciel lub klasa jest w dwóch salach jednocześnie
-- Komórka z kolizją: czerwona ramka + ikona ⚠ z tooltipem
-- Licznik kolizji w dolnym pasku — kliknięcie przewija do pierwszej
-
----
-
-### 🗂 Scalony nagłówek tabeli
-
-| Wiersz | Zawartość | Kiedy widoczny |
-|--------|-----------|----------------|
-| Budynek | Scalony na wszystkie sale budynku | Gdy ≥ 2 budynki |
-| Piętro | Scalony na wszystkie sale piętra | Gdy ≥ 2 piętra |
-| Segment | Scalony na sale segmentu | Gdy ≥ 2 segmenty |
-| Sala | Numer i opis sali | Zawsze |
-| Gospodarz | Klasa gospodarz + wychowawca | Zawsze |
+- Czerwona ramka + ⚠ gdy ten sam nauczyciel lub klasa w dwóch salach jednocześnie
+- Licznik kolizji w dolnym pasku — kliknij aby przejść do pierwszej
 
 ---
 
 ### 🏠 Gospodarz sali
-- Każdej sali można przypisać klasę gospodarza i nauczyciela wychowawcę
-- **Podwójny gospodarz** — dla sal dzielonych przez dwie klasy można przypisać dwie pary klasa+wychowawca; obie widoczne w nagłówku tabeli oddzielone poziomą linią
-- Kliknięcie wiersza „Gospod." w nagłówku → modal z opcją dodania drugiego gospodarza
-- Widoczny przez cały rok niezależnie od dnia
+- Kliknij wiersz **Gospod.** w nagłówku sali
+- Przypisz klasę i wychowawcę (opcjonalnie dwóch dla sal dzielonych)
 
 ---
 
 ### 📁 Archiwum
-- Każdy nowy rok automatycznie archiwizuje poprzedni
-- Dostęp, przywracanie i usuwanie starych planów
+- Kliknij rok w topbarze (np. **2025/2026 ▼**) aby otworzyć archiwum
+- Można przywrócić lub trwale usunąć stary rok
 
 ---
 
-### 🔄 Eksport i import JSON (współpraca)
-
-#### Eksport
-Przycisk **⬆ JSON** w górnym pasku. Plik `NazwaSzkoły_RRRR-MM-DD.json` zawiera konfigurację szkoły, plan, daty i archiwum.
-
-#### Import
-Przycisk **⬇ Import** lub **drag & drop** (przeciągnij plik `.json` na okno aplikacji).
-
-Przy imporcie wyświetla się podgląd różnic i wybór trybu:
-
-| Tryb | Działanie |
-|------|-----------|
-| Scalaj | Dodaje tylko brakujące wpisy — nie nadpisuje istniejących |
-| Zastąp | Nadpisuje cały plan danymi z pliku |
-
-#### Współpraca dwóch osób
-Gdy dwie osoby układają plan dla różnych grup:
-1. Każda eksportuje swój plik JSON
-2. Jedna wczytuje plik drugiej i wybiera **Scal** — brakujące komórki zostają uzupełnione bez nadpisywania własnych wpisów
-
-Import dostępny też ze **strony powitalnej** (karta „Importuj z pliku") z tym samym wyborem trybu.
+### 🔄 Eksport i import JSON
+- Menu ☰ → **⬆ Eksportuj JSON** — plik z pełnym planem i archiwum
+- Menu ☰ → **⬇ Importuj JSON** lub przeciągnij plik `.json` na okno
+- Tryby: **Scal** (uzupełnij braki) / **Zastąp** (nadpisz wszystko)
 
 ---
 
 ### 📄 Eksport do PDF
-Przycisk **⬇ PDF** — orientacja pozioma, gotowy do wydruku lub wysłania.
-
-Wydruk zawiera **nagłówek** z:
-- Nazwą szkoły (pełna + skrót)
-- Rokiem szkolnym
-- Dniem tygodnia
-- Datą obowiązywania planu (pole „Od:")
-
----
-
-### 🌙 Motyw jasny / ciemny
-Przełącznik 🌙 / ☀️ w górnym pasku, zapamiętywany w `localStorage`.
-
-### ❓ Panel pomocy
-Przycisk **?** w prawym rogu — wysuwa panel z opisem funkcji.
+- Menu ☰ → **⬇ Eksportuj PDF** — orientacja pozioma, gotowy do wydruku
+- Nagłówek zawiera nazwę szkoły, rok, dzień i datę obowiązywania
 
 ---
 
 ## 📲 PWA — instalacja jako aplikacja
 
 ### Chrome / Edge (Windows, Android)
-1. Otwórz aplikację
-2. Kliknij baner **„Zainstaluj SalePlan"** lub ikonę ⊕ w pasku adresu
+Kliknij baner „Zainstaluj SalePlan" lub ikonę ⊕ w pasku adresu przeglądarki.
 
 ### Safari (iOS / macOS)
-Stuknij **Udostępnij → Dodaj do ekranu głównego**
+Udostępnij → **Dodaj do ekranu głównego**
 
 ### Po instalacji
-- Działa bez paska adresu, jak aplikacja natywna
-- **Pełny tryb offline** — Service Worker cache'uje wszystkie pliki
-- Skrót na pulpicie / ekranie głównym
+- Pełny tryb offline — Service Worker cache'uje wszystkie pliki
+- Przy nowej wersji aplikacja automatycznie się odświeży
 
 ---
 
@@ -175,73 +130,69 @@ Stuknij **Udostępnij → Dodaj do ekranu głównego**
 
 | Skrót | Akcja |
 |-------|-------|
-| `Ctrl + Enter` | Zapisz wpis w oknie edycji |
-| `Escape` | Zamknij okno edycji |
+| **Ctrl+Enter** | Zapisz wpis w oknie edycji |
+| **Escape** | Zamknij okno / panel / menu |
 
 ---
 
 ## 🚀 Uruchomienie
 
-### GitHub Pages (zalecane)
-1. Wgraj pliki na GitHub
-2. **Settings → Pages → Deploy from branch → main → / (root)**
-3. Dostępne pod: `https://krzjur-oss.github.io/Plan-sal/`
-
-> ⚠️ Service Worker wymaga **HTTPS** — GitHub Pages zapewnia to automatycznie.
-
-> 💡 Po aktualizacji plików wyczyść dane witryny lub otwórz w trybie incognito, żeby stary Service Worker nie serwował poprzedniej wersji.
+### GitHub Pages
+https://krzjur-oss.github.io/Plan-sal/
 
 ### Lokalnie
-Otwórz `index.html` w przeglądarce. Offline i PWA wymagają HTTPS.
+Otwórz `index.html` bezpośrednio w przeglądarce — nie wymaga serwera.
 
 ---
 
 ## 📖 Jak zacząć
 
-1. Pierwsze uruchomienie → **strona powitalna**
-2. Wybierz **Utwórz nowy plan** → kreator (6 kroków)
-3. Wypełnij dane szkoły, budynki, piętra, klasy, nauczycieli i przypisania
-4. Kliknij **„Zakończ i przejdź do planu"**
-5. Kliknij wiersz **„Gospod."** — ustaw klasę i wychowawcę każdej sali (opcjonalnie drugi gospodarz)
-6. Klikaj komórki w tabeli — wybierz nauczyciela, klasy, wpisz przedmiot
-7. **💾 Zapisz**
-
-**Nowy rok:** strona powitalna → **Nowy rok szkolny** (lub przycisk **＋ Nowy rok** w pasku) → stary rok trafia do archiwum.
-
-**Edycja konfiguracji:** przycisk **✏️ Edytuj rok** → zmień sale, klasy lub godziny bez utraty wpisów.
+1. Otwórz aplikację — pojawi się strona powitalna
+2. Wybierz **✨ Utwórz nowy plan** i przejdź przez kreator (6 kroków)
+3. Wypełniaj plan klikając komórki w tabeli
+4. Regularnie eksportuj kopię zapasową: Menu ☰ → **⬆ Eksportuj JSON**
 
 ---
 
 ## 🔒 Prywatność i dane
 
-> Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych zewnętrznie.
+Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych zewnętrznie. Wszystkie dane w `localStorage` przeglądarki.
 
-Wszystkie dane w `localStorage` przeglądarki. Jedyne zewnętrzne połączenie: czcionki Google Fonts przy pierwszym uruchomieniu online.
+| Klucz | Zawartość |
+|-------|-----------|
+| `sp_active` | Konfiguracja aktywnego roku |
+| `sp_sched` | Wpisy planu zajęć |
+| `sp_archive` | Zarchiwizowane lata |
+| `sp_vfdates` | Daty „obowiązuje od" |
+| `sp_theme` | Wybrany motyw |
+| `sp_pwa_dismissed` | Stan banera instalacji PWA |
+| `sp_wiz_draft` | Autosave kreatora |
+| `sp_cookies_accepted` | Potwierdzenie informacji o danych |
 
 ---
 
 ## 🗂 Struktura repozytorium
 
 ```
-/
-├── index.html       ← cała aplikacja (HTML + CSS + JS)
-├── manifest.json    ← konfiguracja PWA
-├── sw.js            ← Service Worker (cache offline)
-├── icon-72.png  ... icon-512.png
-└── README.md
+Plan-sal/
+├── index.html      # Cała aplikacja (HTML + CSS + JS)
+├── manifest.json   # PWA manifest
+├── sw.js           # Service Worker
+├── icon-*.png      # Ikony (72–512 px)
+├── LICENSE         # Licencja
+└── README.md       # Dokumentacja
 ```
 
 ---
 
 ## 🛠 Technologie
 
-- Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności
-- Dane: `localStorage`
-- Offline: Service Worker (Cache API)
-- Standard: PWA (Web App Manifest + Service Worker)
+Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localStorage. Offline: Service Worker (Cache API). Standard: PWA (Web App Manifest).
 
 ---
 
-## 📄 Licencja
+## ⚖️ Licencja i prawa autorskie
 
-Do użytku wewnętrznego szkoły.
+© 2025 Krzysztof Jureczek. Wszelkie prawa zastrzeżone.
+
+Szczegółowe warunki użytkowania w pliku [`LICENSE`](LICENSE). Aplikacja przeznaczona wyłącznie do niekomercyjnego użytku w placówkach oświatowych.

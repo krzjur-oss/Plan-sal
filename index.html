@@ -2482,55 +2482,6 @@ body.light #tutBox { background: #fff; }
 @keyframes notifOut { from { opacity:1; } to { opacity:0; } }
 
 /* ── Modal O programie ── */
-#aboutModal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 2500;
-  background: rgba(0,0,0,0.55);
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-}
-#aboutModal.show { display: flex; }
-.about-box {
-  background: #fff;
-  border-radius: 18px;
-  width: min(700px, 96vw);
-  max-height: 88vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
-  overflow: hidden;
-  font-family: 'Segoe UI', system-ui, sans-serif;
-}
-.about-header {
-  padding: 20px 24px 14px;
-  border-bottom: 1px solid #e5e7eb;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
-}
-.about-header h2 { font-size: 1.1rem; font-weight: 700; color: #1e3a8a; margin: 0; }
-.about-close {
-  background: none; border: none; font-size: 1.3rem;
-  cursor: pointer; color: #6b7280; padding: 2px 6px; border-radius: 6px;
-}
-.about-close:hover { background: #f3f4f6; color: #111; }
-.about-body {
-  overflow-y: auto; padding: 20px 28px 28px; flex: 1;
-  color: #374151; font-size: 0.88rem; line-height: 1.65;
-}
-.about-body h3 { font-size: 1rem; color: #1e3a8a; margin: 20px 0 6px; padding-bottom: 3px; border-bottom: 1px solid #dbeafe; }
-.about-body h3:first-child { margin-top: 0; }
-.about-body p { margin: 4px 0 10px; }
-.about-body ul { margin: 4px 0 10px; padding-left: 20px; }
-.about-body li { margin-bottom: 3px; }
-.about-body table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 0.82rem; }
-.about-body th { background: #eff6ff; color: #1e3a8a; padding: 5px 10px; text-align: left; border: 1px solid #bfdbfe; }
-.about-body td { padding: 5px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
-.about-body tr:nth-child(even) td { background: #f9fafb; }
-.about-author { margin-top: 28px; padding-top: 16px; border-top: 2px solid #dbeafe; text-align: center; color: #6b7280; font-size: 0.82rem; }
-.about-author strong { display: block; font-size: 1rem; color: #1e3a8a; margin-bottom: 2px; }
 
 
 /* ── Stopka licencyjna ── */
@@ -3132,12 +3083,23 @@ if ('serviceWorker' in navigator) {
   <h3>Pomoc <button onclick="toggleAppHelp()" style="background:none;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:0;line-height:1">✕</button></h3>
 
   <div class="help-section">
+    <div class="help-title">☰ Menu</div>
+    <ul class="help-list">
+      <li>Wszystkie opcje dostępne przez przycisk <b>☰</b> (lewy górny róg)</li>
+      <li><b>💾 Zapisz</b> — ręczny zapis do przeglądarki</li>
+      <li><b>✏️ Edytuj rok</b> — zmień sale, klasy, nauczycieli, godziny</li>
+      <li><b>🗑 Wyczyść dzień</b> — usuwa wszystkie wpisy bieżącego dnia</li>
+      <li><b>🌙 Zmień motyw</b> — jasny / ciemny</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
     <div class="help-title">📋 Tabela planu</div>
     <ul class="help-list">
-      <li>Kliknij komórkę aby edytować zajęcia</li>
-      <li>Wybierz nauczyciela, klasę/grupę i przedmiot</li>
-      <li><b>Ctrl+Enter</b> — zapisz &nbsp;·&nbsp; <b>Esc</b> — zamknij</li>
-      <li>Przycisk <b>Wyczyść</b> usuwa wpis z komórki</li>
+      <li>Kliknij komórkę (<b>＋</b>) aby dodać lub edytować zajęcia</li>
+      <li>Wybierz nauczyciela, klasę/grupę i wpisz przedmiot</li>
+      <li><b>Ctrl+Enter</b> — zapisz wpis &nbsp;·&nbsp; <b>Esc</b> — zamknij</li>
+      <li>Kilka klas tej samej grupy łączy się w komórce: <b>4ABC MN</b></li>
     </ul>
   </div>
 
@@ -3145,8 +3107,16 @@ if ('serviceWorker' in navigator) {
     <div class="help-title">🖱️ Przeciąganie zajęć</div>
     <ul class="help-list">
       <li>Przeciągnij wypełnioną komórkę na inne miejsce — skopiuje wpis</li>
-      <li>Aby <b>przenieść</b>: przeciągnij + wyczyść oryginał</li>
+      <li>Aby <b>przenieść</b>: przeciągnij, a następnie wyczyść oryginał</li>
       <li>Gdy cel jest zajęty — pojawi się pytanie przed nadpisaniem</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">📅 Dni i daty</div>
+    <ul class="help-list">
+      <li>Przełączaj dni zakładkami u góry ekranu</li>
+      <li>Pole <b>Obowiązuje od</b> (w menu ☰) ustawia datę dla każdego dnia osobno</li>
     </ul>
   </div>
 
@@ -3154,142 +3124,50 @@ if ('serviceWorker' in navigator) {
     <div class="help-title">🏠 Gospodarz sali</div>
     <ul class="help-list">
       <li>Kliknij wiersz <b>Gospod.</b> w nagłówku sali</li>
-      <li>Przypisz klasę i wychowawcę (opcjonalnie dwóch)</li>
+      <li>Przypisz klasę i wychowawcę (opcjonalnie dwóch dla sal dzielonych)</li>
     </ul>
   </div>
 
   <div class="help-section">
     <div class="help-title">⚠️ Kolizje</div>
     <ul class="help-list">
-      <li>Czerwona ramka gdy nauczyciel lub klasa w dwóch salach jednocześnie</li>
-      <li>Kliknij licznik kolizji w pasku statusu aby przejść do pierwszej</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">➕ Dodawanie w locie</div>
-    <ul class="help-list">
-      <li>W oknie edycji: <b>+ Dodaj nauczyciela</b> lub <b>+ Dodaj klasę/grupę</b></li>
-      <li>Nowe pozycje dostępne natychmiast w całym planie</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">🔄 Eksport / Import JSON</div>
-    <ul class="help-list">
-      <li><b>⬆ JSON</b> — eksport pełnego planu z archiwum</li>
-      <li><b>⬇ Import</b> lub przeciągnij plik .json na okno</li>
-      <li>Tryby: <b>Scal</b> (uzupełnij braki) / <b>Zastąp</b> (nadpisz)</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">📄 PDF &amp; Archiwum</div>
-    <ul class="help-list">
-      <li><b>⬇ PDF</b> — plan gotowy do wydruku (orientacja pozioma)</li>
-      <li>Kliknij rok w topbarze (np. <b>2025/2026 ▼</b>) aby otworzyć archiwum</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">💾 Zapis danych</div>
-    <ul class="help-list">
-      <li>Dane zapisywane lokalnie w przeglądarce (localStorage)</li>
-      <li>Autosapis co zmianę · <b>💾 Zapisz</b> — ręczny zapis</li>
-      <li>Eksportuj JSON jako kopię zapasową</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">🏠 Gospodarz sali</div>
-    <ul class="help-list">
-      <li>Kliknij nagłówek sali (wiersz <b>Gospod.</b>)</li>
-      <li>Przypisz klasę i wychowawcę do sali</li>
-      <li>Można przypisać dwóch gospodarzy (dla sal dzielonych)</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">📅 Dni i daty</div>
-    <ul class="help-list">
-      <li>Przełączaj dni przyciskami u góry</li>
-      <li>Pole <b>Od:</b> ustawia datę obowiązywania planu</li>
-      <li>Każdy dzień ma niezależną datę</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">⚠️ Kolizje</div>
-    <ul class="help-list">
-      <li>Czerwona ramka + ⚠ oznacza kolizję</li>
-      <li>Ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
-      <li>Kliknij licznik kolizji w pasku dolnym aby przejść do pierwszej</li>
+      <li>Czerwona ramka + ⚠ gdy nauczyciel lub klasa w dwóch salach jednocześnie</li>
+      <li>Kliknij licznik kolizji w dolnym pasku aby przejść do pierwszej</li>
     </ul>
   </div>
 
   <div class="help-section">
     <div class="help-title">➕ Klasy i nauczyciele w locie</div>
     <ul class="help-list">
-      <li>W oknie edycji komórki kliknij <b>+ Dodaj nowego nauczyciela</b></li>
-      <li>Lub <b>+ Dodaj nową klasę / grupę</b></li>
-      <li>Nowe pozycje są od razu dostępne w planie</li>
+      <li>W oknie edycji komórki: <b>+ Dodaj nauczyciela</b> lub <b>+ Dodaj klasę/grupę</b></li>
+      <li>Nowe pozycje dostępne natychmiast w całym planie</li>
     </ul>
   </div>
 
   <div class="help-section">
-    <div class="help-title">🔄 Eksport / Import</div>
+    <div class="help-title">🔄 JSON &amp; 📄 PDF</div>
     <ul class="help-list">
-      <li><b>Zapisz</b> — zapisuje do localStorage (automatycznie)</li>
-      <li><b>JSON</b> — eksportuje plik do pobrania</li>
-      <li><b>Import</b> — wczytuje plik JSON (lub przeciągnij na okno)</li>
-      <li>Tryby importu: Scalaj / Zastąp / Nowy rok</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">📄 PDF</div>
-    <ul class="help-list">
-      <li>Przycisk <b>PDF</b> — drukuj lub zapisz jako PDF</li>
-      <li>Nagłówek zawiera szkołę, rok, dzień i datę obowiązywania</li>
-      <li>Orientacja pozioma — ustaw w oknie drukowania</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">✏️ Edycja roku</div>
-    <ul class="help-list">
-      <li><b>Nowy rok</b> — kreator nowego roku szkolnego</li>
-      <li><b>Edytuj rok</b> — zmień sale, klasy lub godziny</li>
-      <li>Istniejące wpisy są zachowane</li>
-      <li><b>Strona główna</b> — wróć do ekranu startowego</li>
+      <li><b>⬆ Eksportuj JSON</b> — kopia zapasowa całego planu z archiwum</li>
+      <li><b>⬇ Importuj JSON</b> — lub przeciągnij plik .json na okno</li>
+      <li><b>⬇ Eksportuj PDF</b> — plan gotowy do wydruku (orientacja pozioma)</li>
     </ul>
   </div>
 
   <div class="help-section">
     <div class="help-title">📁 Archiwum</div>
     <ul class="help-list">
-      <li>Przycisk z rokiem w topbarze → <b>Archiwum</b></li>
-      <li>Poprzednie lata są automatycznie archiwizowane</li>
+      <li>Kliknij rok w topbarze (np. <b>2025/2026 ▼</b>) aby otworzyć archiwum</li>
       <li>Można przywrócić lub trwale usunąć stary rok</li>
     </ul>
   </div>
 
   <div class="help-section">
-    <div class="help-title">🗑️ Wyczyść dzień</div>
-    <ul class="help-list">
-      <li>Przycisk <b>Dzień</b> usuwa wszystkie wpisy bieżącego dnia</li>
-      <li>Operacja jest nieodwracalna</li>
-    </ul>
-  </div>
-
-  <div class="help-section">
-    <div class="help-title">📲 Skróty klawiszowe</div>
+    <div class="help-title">⌨️ Skróty klawiszowe</div>
     <ul class="help-list">
       <li><b>Ctrl+Enter</b> — zapisz wpis w komórce</li>
-      <li><b>Escape</b> — zamknij okno / panel</li>
+      <li><b>Escape</b> — zamknij okno lub panel pomocy</li>
     </ul>
   </div>
-</div>
 
 
 <!-- ── Baner informacji o localStorage ── -->
@@ -6044,90 +5922,6 @@ function pwaDismiss() {
 //  O PROGRAMIE
 // ================================================================
 function showAboutModal() {
-  document.getElementById('aboutBody').innerHTML = `
-    <h3>🚀 Strona powitalna</h3>
-    <p>Przy pierwszym uruchomieniu wyświetla się strona powitalna z czterema opcjami:</p>
-    <table>
-      <tr><th>Opcja</th><th>Opis</th></tr>
-      <tr><td>✨ Utwórz nowy plan</td><td>Kreator od zera — 6 kroków</td></tr>
-      <tr><td>📋 Nowy rok szkolny</td><td>Kopiuje konfigurację z bieżącego roku</td></tr>
-      <tr><td>📂 Importuj z pliku</td><td>Wczytaj plan z pliku .json — zastąp / scal / nowy</td></tr>
-      <tr><td>🎬 Wersja demo</td><td>Fikcyjna szkoła SP1 — dane nie są zapisywane</td></tr>
-    </table>
-    <h3>🧙 Kreator nowego roku (6 kroków)</h3>
-    <table>
-      <tr><th>Krok</th><th>Opis</th></tr>
-      <tr><td>1 — Szkoła</td><td>Nazwa, skrót, telefon, www, budynki</td></tr>
-      <tr><td>2 — Rok szkolny</td><td>Rok szkolny i numery godzin lekcyjnych</td></tr>
-      <tr><td>3 — Piętra i sale</td><td>Piętra, segmenty i numery sal</td></tr>
-      <tr><td>4 — Klasy i grupy</td><td>Lista klas z podziałem na grupy</td></tr>
-      <tr><td>5 — Nauczyciele</td><td>Lista nauczycieli ze skrótami</td></tr>
-      <tr><td>6 — Przypisania</td><td>Domyślne przypisanie klas do sal</td></tr>
-    </table>
-    <ul>
-      <li><strong>Autosave szkicu</strong> — kreator zapisuje postęp co 30 s; można wznowić po przerwaniu</li>
-      <li><strong>✏️ Edytuj rok</strong> — zmień sale, klasy lub godziny bez utraty wpisów</li>
-    </ul>
-    <h3>🏫 Sale i budynki</h3>
-    <ul>
-      <li>Dowolna liczba budynków, pięter i segmentów</li>
-      <li>Scalony nagłówek tabeli: budynek → piętro → segment → sala → gospodarz</li>
-    </ul>
-    <h3>👨‍🏫 Nauczyciele i klasy</h3>
-    <ul>
-      <li>Automatyczny skrót: Jan Kowalski → JKow</li>
-      <li>Import z pliku .txt, dodawanie w locie z poziomu edycji komórki</li>
-      <li>Listy <strong>sortowane alfabetycznie</strong> — klasy w porządku naturalnym (1A → 2A → 10C)</li>
-    </ul>
-    <h3>📋 Planowanie sal</h3>
-    <ul>
-      <li>Siatka: godziny × sale — kliknij komórkę aby edytować</li>
-      <li>W komórce: nauczyciel, klasy/grupy, przedmiot, uwagi</li>
-      <li><strong>Zajęcia międzyoddziałowe</strong> — wiele klas w jednej sali jednocześnie</li>
-      <li>Data „Obowiązuje od" dla każdego dnia tygodnia</li>
-    </ul>
-    <h3>⚠️ Wykrywanie kolizji</h3>
-    <ul>
-      <li>Automatyczne wykrywanie: ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
-      <li>Czerwona ramka + ikona ⚠ z tooltipem; licznik kolizji w dolnym pasku</li>
-    </ul>
-    <h3>🏠 Gospodarz sali</h3>
-    <ul>
-      <li>Klasa gospodarz + wychowawca widoczne w nagłówku tabeli przez cały rok</li>
-      <li><strong>Podwójny gospodarz</strong> — dwie pary klasa+wychowawca dla sal dzielonych</li>
-    </ul>
-    <h3>🔄 Eksport i import JSON</h3>
-    <ul>
-      <li>Eksport całego planu do pliku JSON (⬆ JSON)</li>
-      <li>Import z pliku lub drag &amp; drop — tryby: Scalaj / Zastąp</li>
-      <li>Umożliwia współpracę dwóch osób układających plan równolegle</li>
-    </ul>
-    <h3>📄 Eksport do PDF</h3>
-    <ul>
-      <li>Przycisk ⬇ PDF — orientacja pozioma, gotowy do wydruku</li>
-      <li>Nagłówek PDF: nazwa szkoły, rok szkolny, dzień, data obowiązywania</li>
-    </ul>
-    <h3>📁 Archiwum</h3>
-    <ul>
-      <li>Każdy nowy rok automatycznie archiwizuje poprzedni</li>
-      <li>Dostęp, przywracanie i usuwanie starych planów</li>
-    </ul>
-    <h3>📲 PWA — instalacja jako aplikacja</h3>
-    <ul>
-      <li><strong>Chrome/Edge:</strong> kliknij baner „Zainstaluj SalePlan" lub ikonę ⊕ w pasku adresu</li>
-      <li><strong>Safari (iOS/macOS):</strong> Udostępnij → Dodaj do ekranu głównego</li>
-      <li>Pełny tryb offline — Service Worker cache'uje wszystkie pliki</li>
-    </ul>
-    <h3>🔒 Prywatność</h3>
-    <p>Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych zewnętrznie.
-    Wszystkie dane zapisywane są wyłącznie w localStorage przeglądarki.</p>
-    <h3>🛠️ Technologie</h3>
-    <p>Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localStorage. Offline: Service Worker (Cache API). Standard: PWA (Web App Manifest + Service Worker).</p>
-    <div class="about-author">
-      <strong>Krzysztof Jureczek</strong>
-      Autor i twórca aplikacji SalePlan
-    </div>
-  `;
   document.getElementById('aboutModal').classList.add('show');
 }
 
@@ -6137,19 +5931,6 @@ function closeAboutModal() {
 
 
 </script>
-
-<div id="aboutModal">
-  <div class="about-box">
-    <div class="about-header">
-      <h2>ℹ️ O programie SalePlan</h2>
-      <button class="about-close" onclick="closeAboutModal()">✕</button>
-    </div>
-    <div class="about-body" id="aboutBody">
-      <!-- wypełniane przez JS -->
-    </div>
-  </div>
-</div>
-
 
 <!-- ── Modal O programie ── -->
 <div id="aboutModal">
@@ -6169,11 +5950,26 @@ function closeAboutModal() {
         <tr><td>🎬 Wersja demo</td><td>Przykładowa szkoła — dane nie są zapisywane</td></tr>
       </table>
 
+      <h3>☰ Menu nawigacyjne</h3>
+      <p>Wszystkie opcje dostępne są przez przycisk <b>☰</b> w lewym górnym rogu:</p>
+      <ul>
+        <li><b>Obowiązuje od</b> — data obowiązywania planu (osobna dla każdego dnia)</li>
+        <li><b>💾 Zapisz</b> — ręczny zapis do pamięci przeglądarki</li>
+        <li><b>⬇ Eksportuj PDF</b> — plan gotowy do wydruku</li>
+        <li><b>⬆ Eksportuj JSON</b> — kopia zapasowa planu</li>
+        <li><b>⬇ Importuj JSON</b> — wczytaj plan z pliku</li>
+        <li><b>✏️ Edytuj rok</b> — zmień sale, klasy, nauczycieli, godziny</li>
+        <li><b>🗑 Wyczyść dzień</b> — usuwa wszystkie wpisy bieżącego dnia</li>
+        <li><b>❓ Pomoc</b> — panel z podpowiedziami</li>
+        <li><b>🌙 Zmień motyw</b> — przełącz jasny / ciemny motyw</li>
+        <li><b>🏠 Strona główna</b> — wróć do ekranu startowego</li>
+      </ul>
+
       <h3>📋 Planowanie sal</h3>
       <ul>
         <li>Kliknij komórkę — wybierz nauczyciela, klasę/grupę, przedmiot</li>
-        <li>W komórce widoczny skrót klasy, skrót przedmiotu i inicjały nauczyciela</li>
-        <li>Wypełnioną komórkę możesz <b>przeciągnąć</b> na inną godzinę lub salę (kopiowanie)</li>
+        <li>Kilka klas tego samego poziomu i grupy łączy się automatycznie: <b>4A MN + 4B MN + 4C MN → 4ABC MN</b></li>
+        <li>Wypełnioną komórkę możesz <b>przeciągnąć</b> na inną godzinę lub salę</li>
         <li><b>Ctrl+Enter</b> — zapisz wpis &nbsp;·&nbsp; <b>Esc</b> — zamknij okno</li>
       </ul>
 
@@ -6198,20 +5994,20 @@ function closeAboutModal() {
       <h3>🖱️ Przeciąganie zajęć</h3>
       <ul>
         <li>Wypełnioną komórkę przeciągnij na inne miejsce — skopiuje wpis</li>
-        <li>Aby <b>przenieść</b>: przeciągnij, a następnie wyczyść oryginał przyciskiem „Wyczyść"</li>
+        <li>Aby <b>przenieść</b>: przeciągnij, a następnie wyczyść oryginał</li>
         <li>Gdy cel jest zajęty — pojawi się pytanie przed nadpisaniem</li>
       </ul>
 
       <h3>🔄 Eksport i import JSON</h3>
       <ul>
-        <li>Przycisk <b>⬆ JSON</b> — plik z pełnym planem i archiwum</li>
-        <li>Przycisk <b>⬇ Import</b> lub przeciągnij plik .json na okno aplikacji</li>
+        <li><b>⬆ Eksportuj JSON</b> — plik z pełnym planem i archiwum</li>
+        <li><b>⬇ Importuj JSON</b> lub przeciągnij plik .json na okno aplikacji</li>
         <li>Tryby: <b>Scal</b> (uzupełnij braki) / <b>Zastąp</b> (nadpisz wszystko)</li>
       </ul>
 
       <h3>📄 Eksport do PDF</h3>
       <ul>
-        <li>Przycisk <b>⬇ PDF</b> — orientacja pozioma, gotowy do wydruku lub wysłania</li>
+        <li>Menu ☰ → <b>⬇ Eksportuj PDF</b> — orientacja pozioma, gotowy do wydruku</li>
         <li>Nagłówek zawiera szkołę, rok, dzień i datę obowiązywania</li>
       </ul>
 
@@ -6256,6 +6052,7 @@ function closeAboutModal() {
       </div>
     </div>
   </div>
+</div>
 </div>
 
 </body>
