@@ -4832,7 +4832,7 @@ function mountApp() {
   document.getElementById('appOverlay').classList.add('show');
   document.getElementById('currentYearLabel').textContent = appState.yearLabel;
   document.getElementById('sbYear').textContent = appState.yearLabel;
-  const schoolName = appState.school?.short || appState.school?.name || '';
+  const schoolName = appState.school?.name || appState.school?.short || '';
   const snEl = document.getElementById('hmenuSchoolName');
   if (snEl) snEl.textContent = schoolName;
   document.title = `SalePlan — ${schoolName || 'Plan Sal'}`;
