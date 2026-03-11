@@ -3225,6 +3225,128 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
+<!-- ── Modal O programie ── -->
+<div id="aboutModal">
+  <div class="about-box">
+    <div class="about-header">
+      <h2>ℹ️ SalePlan — O programie</h2>
+      <button class="about-close" onclick="closeAboutModal()">✕</button>
+    </div>
+    <div class="about-body">
+      <h3>🚀 Strona powitalna</h3>
+      <p>Przy pierwszym uruchomieniu wyświetla się strona powitalna z czterema opcjami:</p>
+      <table>
+        <tr><th>Opcja</th><th>Opis</th></tr>
+        <tr><td>✨ Utwórz nowy plan</td><td>Kreator od zera — 6 kroków</td></tr>
+        <tr><td>📋 Nowy rok szkolny</td><td>Kopiuje konfigurację z bieżącego roku</td></tr>
+        <tr><td>📂 Importuj z pliku</td><td>Wczytaj plan z pliku .json</td></tr>
+        <tr><td>🎬 Wersja demo</td><td>Przykładowa szkoła — dane nie są zapisywane</td></tr>
+      </table>
+
+      <h3>☰ Menu nawigacyjne</h3>
+      <p>Wszystkie opcje dostępne są przez przycisk <b>☰</b> w lewym górnym rogu:</p>
+      <ul>
+        <li><b>Obowiązuje od</b> — data obowiązywania planu (osobna dla każdego dnia)</li>
+        <li><b>💾 Zapisz</b> — ręczny zapis do pamięci przeglądarki</li>
+        <li><b>⬇ Eksportuj PDF</b> — plan gotowy do wydruku</li>
+        <li><b>⬆ Eksportuj JSON</b> — kopia zapasowa planu</li>
+        <li><b>⬇ Importuj JSON</b> — wczytaj plan z pliku</li>
+        <li><b>✏️ Edytuj rok</b> — zmień sale, klasy, nauczycieli, godziny</li>
+        <li><b>🗑 Wyczyść dzień</b> — usuwa wszystkie wpisy bieżącego dnia</li>
+        <li><b>❓ Pomoc</b> — panel z podpowiedziami</li>
+        <li><b>🌙 Zmień motyw</b> — przełącz jasny / ciemny motyw</li>
+        <li><b>🏠 Strona główna</b> — wróć do ekranu startowego</li>
+      </ul>
+
+      <h3>📋 Planowanie sal</h3>
+      <ul>
+        <li>Kliknij komórkę — wybierz nauczyciela, klasę/grupę, przedmiot</li>
+        <li>Kilka klas tego samego poziomu i grupy łączy się automatycznie: <b>4A MN + 4B MN + 4C MN → 4ABC MN</b></li>
+        <li>Wypełnioną komórkę możesz <b>przeciągnąć</b> na inną godzinę lub salę</li>
+        <li><b>Ctrl+Enter</b> — zapisz wpis &nbsp;·&nbsp; <b>Esc</b> — zamknij okno</li>
+      </ul>
+
+      <h3>🏠 Gospodarz sali</h3>
+      <ul>
+        <li>Kliknij wiersz <b>Gospod.</b> w nagłówku sali</li>
+        <li>Przypisz klasę i wychowawcę (opcjonalnie dwóch dla sal dzielonych)</li>
+      </ul>
+
+      <h3>⚠️ Wykrywanie kolizji</h3>
+      <ul>
+        <li>Czerwona ramka + ⚠ gdy ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
+        <li>Licznik kolizji w dolnym pasku — kliknij aby przejść do pierwszej</li>
+      </ul>
+
+      <h3>➕ Klasy i nauczyciele w locie</h3>
+      <ul>
+        <li>W oknie edycji komórki: <b>+ Dodaj nowego nauczyciela</b> lub <b>+ Dodaj nową klasę/grupę</b></li>
+        <li>Nowe pozycje dostępne natychmiast w całym planie</li>
+      </ul>
+
+      <h3>🖱️ Przeciąganie zajęć</h3>
+      <ul>
+        <li>Wypełnioną komórkę przeciągnij na inne miejsce — skopiuje wpis</li>
+        <li>Aby <b>przenieść</b>: przeciągnij, a następnie wyczyść oryginał</li>
+        <li>Gdy cel jest zajęty — pojawi się pytanie przed nadpisaniem</li>
+      </ul>
+
+      <h3>🔄 Eksport i import JSON</h3>
+      <ul>
+        <li><b>⬆ Eksportuj JSON</b> — plik z pełnym planem i archiwum</li>
+        <li><b>⬇ Importuj JSON</b> lub przeciągnij plik .json na okno aplikacji</li>
+        <li>Tryby: <b>Scal</b> (uzupełnij braki) / <b>Zastąp</b> (nadpisz wszystko)</li>
+      </ul>
+
+      <h3>📄 Eksport do PDF</h3>
+      <ul>
+        <li>Menu ☰ → <b>⬇ Eksportuj PDF</b> — orientacja pozioma, gotowy do wydruku</li>
+        <li>Nagłówek zawiera szkołę, rok, dzień i datę obowiązywania</li>
+      </ul>
+
+      <h3>📁 Archiwum</h3>
+      <ul>
+        <li>Kliknij rok w topbarze (np. <b>2025/2026 ▼</b>) aby otworzyć archiwum</li>
+        <li>Można przywrócić lub trwale usunąć stary rok</li>
+      </ul>
+
+      <h3>🧙 Kreator — 6 kroków</h3>
+      <table>
+        <tr><th>Krok</th><th>Opis</th></tr>
+        <tr><td>1 — Szkoła</td><td>Nazwa, skrót, telefon, www, budynki</td></tr>
+        <tr><td>2 — Rok szkolny</td><td>Rok i numery godzin lekcyjnych</td></tr>
+        <tr><td>3 — Piętra i sale</td><td>Piętra, segmenty, numery sal</td></tr>
+        <tr><td>4 — Klasy i grupy</td><td>Lista klas z podziałem na grupy</td></tr>
+        <tr><td>5 — Nauczyciele</td><td>Lista nauczycieli ze skrótami</td></tr>
+        <tr><td>6 — Przypisania</td><td>Domyślne przypisania klas do sal</td></tr>
+      </table>
+
+      <h3>🔒 Prywatność i dane</h3>
+      <p>Wszystkie dane przechowywane są wyłącznie lokalnie w przeglądarce (<em>localStorage</em>). Żadne dane nie są wysyłane na serwery.</p>
+      <table>
+        <tr><th>Klucz</th><th>Zawartość</th></tr>
+        <tr><td><code>sp_active</code></td><td>Konfiguracja aktywnego roku</td></tr>
+        <tr><td><code>sp_sched</code></td><td>Wpisy planu zajęć</td></tr>
+        <tr><td><code>sp_archive</code></td><td>Zarchiwizowane lata</td></tr>
+        <tr><td><code>sp_vfdates</code></td><td>Daty „obowiązuje od"</td></tr>
+        <tr><td><code>sp_theme</code></td><td>Motyw (ciemny/jasny)</td></tr>
+        <tr><td><code>sp_pwa_dismissed</code></td><td>Baner instalacji PWA</td></tr>
+        <tr><td><code>sp_wiz_draft</code></td><td>Autosave kreatora</td></tr>
+        <tr><td><code>sp_cookies_accepted</code></td><td>Potwierdzenie informacji o danych</td></tr>
+      </table>
+
+      <h3>⚖️ Licencja i prawa autorskie</h3>
+      <p><strong>© 2025 Krzysztof Jureczek. Wszelkie prawa zastrzeżone.</strong></p>
+      <p>Oprogramowanie SalePlan jest własnością autora i przeznaczone wyłącznie do niekomercyjnego użytku w placówkach oświatowych. Kopiowanie, modyfikowanie i dystrybucja kodu bez pisemnej zgody autora jest zabroniona.</p>
+
+      <div class="about-author">
+        <strong>Krzysztof Jureczek</strong>
+        Autor i twórca aplikacji SalePlan
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ================================================================
 //  INFORMACJA O LOKALNYM PRZECHOWYWANIU DANYCH
@@ -5932,127 +6054,7 @@ function closeAboutModal() {
 
 </script>
 
-<!-- ── Modal O programie ── -->
-<div id="aboutModal">
-  <div class="about-box">
-    <div class="about-header">
-      <h2>ℹ️ SalePlan — O programie</h2>
-      <button class="about-close" onclick="closeAboutModal()">✕</button>
-    </div>
-    <div class="about-body">
-      <h3>🚀 Strona powitalna</h3>
-      <p>Przy pierwszym uruchomieniu wyświetla się strona powitalna z czterema opcjami:</p>
-      <table>
-        <tr><th>Opcja</th><th>Opis</th></tr>
-        <tr><td>✨ Utwórz nowy plan</td><td>Kreator od zera — 6 kroków</td></tr>
-        <tr><td>📋 Nowy rok szkolny</td><td>Kopiuje konfigurację z bieżącego roku</td></tr>
-        <tr><td>📂 Importuj z pliku</td><td>Wczytaj plan z pliku .json</td></tr>
-        <tr><td>🎬 Wersja demo</td><td>Przykładowa szkoła — dane nie są zapisywane</td></tr>
-      </table>
 
-      <h3>☰ Menu nawigacyjne</h3>
-      <p>Wszystkie opcje dostępne są przez przycisk <b>☰</b> w lewym górnym rogu:</p>
-      <ul>
-        <li><b>Obowiązuje od</b> — data obowiązywania planu (osobna dla każdego dnia)</li>
-        <li><b>💾 Zapisz</b> — ręczny zapis do pamięci przeglądarki</li>
-        <li><b>⬇ Eksportuj PDF</b> — plan gotowy do wydruku</li>
-        <li><b>⬆ Eksportuj JSON</b> — kopia zapasowa planu</li>
-        <li><b>⬇ Importuj JSON</b> — wczytaj plan z pliku</li>
-        <li><b>✏️ Edytuj rok</b> — zmień sale, klasy, nauczycieli, godziny</li>
-        <li><b>🗑 Wyczyść dzień</b> — usuwa wszystkie wpisy bieżącego dnia</li>
-        <li><b>❓ Pomoc</b> — panel z podpowiedziami</li>
-        <li><b>🌙 Zmień motyw</b> — przełącz jasny / ciemny motyw</li>
-        <li><b>🏠 Strona główna</b> — wróć do ekranu startowego</li>
-      </ul>
-
-      <h3>📋 Planowanie sal</h3>
-      <ul>
-        <li>Kliknij komórkę — wybierz nauczyciela, klasę/grupę, przedmiot</li>
-        <li>Kilka klas tego samego poziomu i grupy łączy się automatycznie: <b>4A MN + 4B MN + 4C MN → 4ABC MN</b></li>
-        <li>Wypełnioną komórkę możesz <b>przeciągnąć</b> na inną godzinę lub salę</li>
-        <li><b>Ctrl+Enter</b> — zapisz wpis &nbsp;·&nbsp; <b>Esc</b> — zamknij okno</li>
-      </ul>
-
-      <h3>🏠 Gospodarz sali</h3>
-      <ul>
-        <li>Kliknij wiersz <b>Gospod.</b> w nagłówku sali</li>
-        <li>Przypisz klasę i wychowawcę (opcjonalnie dwóch dla sal dzielonych)</li>
-      </ul>
-
-      <h3>⚠️ Wykrywanie kolizji</h3>
-      <ul>
-        <li>Czerwona ramka + ⚠ gdy ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
-        <li>Licznik kolizji w dolnym pasku — kliknij aby przejść do pierwszej</li>
-      </ul>
-
-      <h3>➕ Klasy i nauczyciele w locie</h3>
-      <ul>
-        <li>W oknie edycji komórki: <b>+ Dodaj nowego nauczyciela</b> lub <b>+ Dodaj nową klasę/grupę</b></li>
-        <li>Nowe pozycje dostępne natychmiast w całym planie</li>
-      </ul>
-
-      <h3>🖱️ Przeciąganie zajęć</h3>
-      <ul>
-        <li>Wypełnioną komórkę przeciągnij na inne miejsce — skopiuje wpis</li>
-        <li>Aby <b>przenieść</b>: przeciągnij, a następnie wyczyść oryginał</li>
-        <li>Gdy cel jest zajęty — pojawi się pytanie przed nadpisaniem</li>
-      </ul>
-
-      <h3>🔄 Eksport i import JSON</h3>
-      <ul>
-        <li><b>⬆ Eksportuj JSON</b> — plik z pełnym planem i archiwum</li>
-        <li><b>⬇ Importuj JSON</b> lub przeciągnij plik .json na okno aplikacji</li>
-        <li>Tryby: <b>Scal</b> (uzupełnij braki) / <b>Zastąp</b> (nadpisz wszystko)</li>
-      </ul>
-
-      <h3>📄 Eksport do PDF</h3>
-      <ul>
-        <li>Menu ☰ → <b>⬇ Eksportuj PDF</b> — orientacja pozioma, gotowy do wydruku</li>
-        <li>Nagłówek zawiera szkołę, rok, dzień i datę obowiązywania</li>
-      </ul>
-
-      <h3>📁 Archiwum</h3>
-      <ul>
-        <li>Kliknij rok w topbarze (np. <b>2025/2026 ▼</b>) aby otworzyć archiwum</li>
-        <li>Można przywrócić lub trwale usunąć stary rok</li>
-      </ul>
-
-      <h3>🧙 Kreator — 6 kroków</h3>
-      <table>
-        <tr><th>Krok</th><th>Opis</th></tr>
-        <tr><td>1 — Szkoła</td><td>Nazwa, skrót, telefon, www, budynki</td></tr>
-        <tr><td>2 — Rok szkolny</td><td>Rok i numery godzin lekcyjnych</td></tr>
-        <tr><td>3 — Piętra i sale</td><td>Piętra, segmenty, numery sal</td></tr>
-        <tr><td>4 — Klasy i grupy</td><td>Lista klas z podziałem na grupy</td></tr>
-        <tr><td>5 — Nauczyciele</td><td>Lista nauczycieli ze skrótami</td></tr>
-        <tr><td>6 — Przypisania</td><td>Domyślne przypisania klas do sal</td></tr>
-      </table>
-
-      <h3>🔒 Prywatność i dane</h3>
-      <p>Wszystkie dane przechowywane są wyłącznie lokalnie w przeglądarce (<em>localStorage</em>). Żadne dane nie są wysyłane na serwery.</p>
-      <table>
-        <tr><th>Klucz</th><th>Zawartość</th></tr>
-        <tr><td><code>sp_active</code></td><td>Konfiguracja aktywnego roku</td></tr>
-        <tr><td><code>sp_sched</code></td><td>Wpisy planu zajęć</td></tr>
-        <tr><td><code>sp_archive</code></td><td>Zarchiwizowane lata</td></tr>
-        <tr><td><code>sp_vfdates</code></td><td>Daty „obowiązuje od"</td></tr>
-        <tr><td><code>sp_theme</code></td><td>Motyw (ciemny/jasny)</td></tr>
-        <tr><td><code>sp_pwa_dismissed</code></td><td>Baner instalacji PWA</td></tr>
-        <tr><td><code>sp_wiz_draft</code></td><td>Autosave kreatora</td></tr>
-        <tr><td><code>sp_cookies_accepted</code></td><td>Potwierdzenie informacji o danych</td></tr>
-      </table>
-
-      <h3>⚖️ Licencja i prawa autorskie</h3>
-      <p><strong>© 2025 Krzysztof Jureczek. Wszelkie prawa zastrzeżone.</strong></p>
-      <p>Oprogramowanie SalePlan jest własnością autora i przeznaczone wyłącznie do niekomercyjnego użytku w placówkach oświatowych. Kopiowanie, modyfikowanie i dystrybucja kodu bez pisemnej zgody autora jest zabroniona.</p>
-
-      <div class="about-author">
-        <strong>Krzysztof Jureczek</strong>
-        Autor i twórca aplikacji SalePlan
-      </div>
-    </div>
-  </div>
-</div>
 </div>
 
 </body>
