@@ -38,7 +38,7 @@ Panel instrukcji po lewej stronie kreatora wyjaśnia każdy krok.
 Kreator automatycznie zapisuje postęp co 30 sekund do `localStorage` (`sp_wiz_draft`). Przy przypadkowym zamknięciu — po ponownym otwarciu kreatora pojawi się pytanie o wznowienie przerwanej sesji.
 
 #### ✏️ Edycja bieżącego roku
-Przycisk **✏️ Edytuj rok** w górnym pasku otwiera kreator z danymi bieżącego roku. Można zmienić sale, klasy, nauczycieli lub godziny bez tworzenia nowego roku i bez utraty wpisanych zajęć.
+Menu **☰** → **✏️ Edytuj rok** otwiera kreator z danymi bieżącego roku. Można zmienić sale, klasy, nauczycieli lub godziny bez tworzenia nowego roku i bez utraty wpisanych zajęć.
 
 ---
 
@@ -114,7 +114,7 @@ Wypełnioną komórkę można przeciągnąć na inną (drag & drop):
 
 ### 📁 Archiwum
 - Każdy nowy rok automatycznie archiwizuje poprzedni
-- Kliknij rok w topbarze (np. **2025/2026 ▼**) aby otworzyć archiwum
+- Menu **☰** → **📁 Archiwum** — dostęp do archiwalnych lat szkolnych
 - Dostęp, przywracanie i usuwanie starych planów
 
 ---
@@ -122,10 +122,10 @@ Wypełnioną komórkę można przeciągnąć na inną (drag & drop):
 ### 🔄 Eksport i import JSON (współpraca)
 
 #### Eksport
-Przycisk **⬆ JSON** w górnym pasku. Plik `NazwaSzkoły_RRRR-MM-DD.json` zawiera konfigurację szkoły, plan, daty i archiwum.
+Menu **☰** → **⬆ Eksportuj JSON**. Plik `NazwaSzkoły_RRRR-MM-DD.json` zawiera konfigurację szkoły, plan, daty i archiwum.
 
 #### Import
-Przycisk **⬇ Import** lub **drag & drop** (przeciągnij plik `.json` na okno aplikacji).
+Menu **☰** → **⬇ Importuj JSON** lub **drag & drop** (przeciągnij plik `.json` na okno aplikacji).
 
 Przy imporcie wyświetla się podgląd różnic i wybór trybu:
 
@@ -140,6 +140,25 @@ Gdy dwie osoby układają plan dla różnych grup:
 2. Jedna wczytuje plik drugiej i wybiera **Scal** — brakujące komórki zostają uzupełnione bez nadpisywania własnych wpisów
 
 Import dostępny też ze **strony powitalnej** (karta „Importuj z pliku") z tym samym wyborem trybu.
+
+---
+
+### 🔧 Pasek narzędzi (topbar)
+
+Topbar zawiera zawsze tylko: **SalePlan** · przyciski dni · **⬇ PDF** · **?** · motyw · **☰**
+
+Przycisk **☰** (menu) otwiera listę wszystkich akcji:
+
+| Pozycja | Działanie |
+|---------|-----------|
+| 📅 Od: `[data]` | Data obowiązywania planu dla bieżącego dnia |
+| 💾 Zapisz | Ręczny zapis do pamięci przeglądarki |
+| ⬆ Eksportuj JSON | Eksport planu do pliku |
+| ⬇ Importuj JSON | Import planu z pliku |
+| ✏️ Edytuj rok | Zmień konfigurację bieżącego roku |
+| 🗑 Wyczyść dzień | Usuń wszystkie wpisy bieżącego dnia |
+| 📁 Archiwum | Przeglądaj, przywróć lub usuń poprzednie lata |
+| 🏠 Strona główna | Wróć do ekranu startowego |
 
 ---
 
@@ -216,7 +235,7 @@ Otwórz `index.html` w przeglądarce. Offline i PWA wymagają HTTPS.
 
 **Nowy rok:** strona powitalna → **Nowy rok szkolny** → stary rok trafia do archiwum.
 
-**Edycja konfiguracji:** przycisk **✏️ Edytuj rok** → zmień sale, klasy lub godziny bez utraty wpisów.
+**Edycja konfiguracji:** menu **☰** → **✏️ Edytuj rok** → zmień sale, klasy lub godziny bez utraty wpisów.
 
 ---
 
