@@ -265,9 +265,9 @@ Jedyne zewnętrzne połączenie: czcionki Google Fonts przy pierwszym uruchomien
 
 ---
 
-## 📄 Licencja
+## 📄 Licencja / License
 
-Do użytku wewnętrznego szkoły.
+Projekt **SalePlan** jest własnością Krzysztofa Jureczka. Kod źródłowy oraz oprawa graficzna są chronione prawem autorskim. Kopiowanie i rozpowszechnianie bez zgody autora jest zabronione. Szczegóły w pliku [LICENSE](LICENSE).
 
 ---
 
