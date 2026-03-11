@@ -16,7 +16,7 @@ Przy pierwszym uruchomieniu (lub gdy brak zapisanego planu) wyświetla się stro
 |-------|------|
 | ✨ Utwórz nowy plan | Kreator od zera — 6 kroków |
 | 📋 Nowy rok szkolny | Kopiuje całą konfigurację z bieżącego roku (szkoła, sale, nauczyciele, klasy, plan) |
-| 📂 Importuj z pliku | Wczytaj plan z pliku `.json` z wyborem trybu: zastąp / scal |
+| 📂 Importuj z pliku | Wczytaj plan z pliku `.json` z wyborem trybu: zastąp / scal / nowy |
 | 🎬 Wersja demo | Fikcyjna szkoła SP1 z przykładowym planem i demonstracyjną kolizją — dane nie są zapisywane |
 
 ---
@@ -69,15 +69,9 @@ Przycisk **✏️ Edytuj rok** w górnym pasku otwiera kreator z danymi bieżąc
 
 ### 📋 Planowanie sal
 - Interaktywna siatka: godziny lekcyjne × sale
-- W każdej komórce: nauczyciel (lista rozwijana), klasy/grupy (chipy), przedmiot, uwagi
-- W wypełnionej komórce widoczny skrót klasy, skrót przedmiotu i inicjały nauczyciela
-
-#### 🖱️ Przeciąganie zajęć między komórkami
-Wypełnioną komórkę można przeciągnąć na inną (drag & drop):
-- Przeciągnięcie **kopiuje** zajęcia — oryginał zostaje niezmieniony
-- Upuszczenie na **pustą komórkę** — niebieska ramka, natychmiastowe skopiowanie
-- Upuszczenie na **zajętą komórkę** — żółta ramka, pytanie o potwierdzenie nadpisania
-- Aby **przenieść**: przeciągnij, a następnie wyczyść oryginał przyciskiem „Wyczyść"
+- W każdej komórce: nauczyciel (lista), klasy/grupy (chipy), przedmiot, uwagi
+- Skrót nauczyciela i badge klasy widoczne w komórce
+- Data „Obowiązuje od" dla każdego dnia tygodnia
 
 #### 👥 Zajęcia międzyoddziałowe
 - Jedna sala — wiele klas/grup jednocześnie (np. `1A gr.1` + `2A gr.1`)
@@ -114,7 +108,6 @@ Wypełnioną komórkę można przeciągnąć na inną (drag & drop):
 
 ### 📁 Archiwum
 - Każdy nowy rok automatycznie archiwizuje poprzedni
-- Kliknij rok w topbarze (np. **2025/2026 ▼**) aby otworzyć archiwum
 - Dostęp, przywracanie i usuwanie starych planów
 
 ---
@@ -155,10 +148,10 @@ Wydruk zawiera **nagłówek** z:
 ---
 
 ### 🌙 Motyw jasny / ciemny
-Przełącznik 🌙 / ☀️ w górnym pasku, zapamiętywany w pamięci przeglądarki.
+Przełącznik 🌙 / ☀️ w górnym pasku, zapamiętywany w `localStorage`.
 
 ### ❓ Panel pomocy
-Przycisk **?** w prawym rogu topbara — wysuwa panel boczny z opisem wszystkich funkcji.
+Przycisk **?** w prawym rogu — wysuwa panel z opisem funkcji.
 
 ---
 
@@ -196,7 +189,7 @@ Stuknij **Udostępnij → Dodaj do ekranu głównego**
 
 > ⚠️ Service Worker wymaga **HTTPS** — GitHub Pages zapewnia to automatycznie.
 
-> 💡 Po aktualizacji plików aplikacja automatycznie pobiera nową wersję i przeładowuje się przy kolejnym otwarciu.
+> 💡 Po aktualizacji plików wyczyść dane witryny lub otwórz w trybie incognito, żeby stary Service Worker nie serwował poprzedniej wersji.
 
 ### Lokalnie
 Otwórz `index.html` w przeglądarce. Offline i PWA wymagają HTTPS.
@@ -211,10 +204,9 @@ Otwórz `index.html` w przeglądarce. Offline i PWA wymagają HTTPS.
 4. Kliknij **„Zakończ i przejdź do planu"**
 5. Kliknij wiersz **„Gospod."** — ustaw klasę i wychowawcę każdej sali (opcjonalnie drugi gospodarz)
 6. Klikaj komórki w tabeli — wybierz nauczyciela, klasy, wpisz przedmiot
-7. Wypełnione komórki możesz **przeciągać** na inne godziny lub sale
-8. **💾 Zapisz**
+7. **💾 Zapisz**
 
-**Nowy rok:** strona powitalna → **Nowy rok szkolny** → stary rok trafia do archiwum.
+**Nowy rok:** strona powitalna → **Nowy rok szkolny** (lub przycisk **＋ Nowy rok** w pasku) → stary rok trafia do archiwum.
 
 **Edycja konfiguracji:** przycisk **✏️ Edytuj rok** → zmień sale, klasy lub godziny bez utraty wpisów.
 
@@ -224,22 +216,7 @@ Otwórz `index.html` w przeglądarce. Offline i PWA wymagają HTTPS.
 
 > Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych zewnętrznie.
 
-Wszystkie dane przechowywane są wyłącznie w pamięci lokalnej przeglądarki (`localStorage`). Przy pierwszym uruchomieniu wyświetlana jest informacja o przechowywanych danych z możliwością sprawdzenia szczegółów (jakie klucze, co zawierają, jak usunąć).
-
-Jedyne zewnętrzne połączenie: czcionki Google Fonts przy pierwszym uruchomieniu online.
-
-### Klucze localStorage
-
-| Klucz | Zawartość |
-|-------|-----------|
-| `sp_active` | Konfiguracja aktywnego roku szkolnego |
-| `sp_sched` | Wpisy planu zajęć |
-| `sp_archive` | Zarchiwizowane poprzednie lata |
-| `sp_vfdates` | Daty „obowiązuje od" |
-| `sp_theme` | Wybrany motyw (ciemny/jasny) |
-| `sp_pwa_dismissed` | Czy baner instalacji PWA był zamknięty |
-| `sp_wiz_draft` | Autosave szkicu kreatora |
-| `sp_cookies_accepted` | Czy informacja o localStorage była potwierdzona |
+Wszystkie dane w `localStorage` przeglądarki. Jedyne zewnętrzne połączenie: czcionki Google Fonts przy pierwszym uruchomieniu online.
 
 ---
 
@@ -265,10 +242,6 @@ Jedyne zewnętrzne połączenie: czcionki Google Fonts przy pierwszym uruchomien
 
 ---
 
-## 📄 Licencja / License
+## 📄 Licencja
 
-Projekt **SalePlan** jest własnością Krzysztofa Jureczka. Kod źródłowy oraz oprawa graficzna są chronione prawem autorskim. Kopiowanie i rozpowszechnianie bez zgody autora jest zabronione. Szczegóły w pliku [LICENSE](LICENSE).
-
----
-
-*Autor: Krzysztof Jureczek*
+Do użytku wewnętrznego szkoły.

@@ -1,4 +1,14 @@
 <!DOCTYPE html>
+<!--
+  SalePlan — Plan Sal Zajęciowych
+  © 2025 Krzysztof Jureczek. Wszelkie prawa zastrzeżone.
+
+  Oprogramowanie SalePlan jest własnością autora i przeznaczone
+  wyłącznie do niekomercyjnego użytku w placówkach oświatowych.
+  Kopiowanie, modyfikowanie i dystrybucja kodu bez pisemnej
+  zgody autora jest zabroniona.
+-->
+
 <html lang="pl">
 <head>
 <script>
@@ -2324,6 +2334,106 @@ body.light #tutBox { background: #fff; }
   opacity: 0.92;
 }
 
+
+/* ── Demo banner ── */
+.demo-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1500;
+  background: #fef3c7;
+  border-bottom: 2px solid #f59e0b;
+  padding: 6px 16px;
+  font-size: 0.78rem;
+  color: #92400e;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 500;
+}
+.demo-banner.show { display: flex; }
+
+/* ── Notifikacje ── */
+.notify-box {
+  position: fixed;
+  bottom: 60px; right: 20px;
+  z-index: 999;
+  animation: notifIn 0.2s ease, notifOut 0.3s ease 2.5s forwards;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 0.82rem;
+  color: var(--text);
+  max-width: 280px;
+  pointer-events: none;
+}
+@keyframes notifIn  { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+@keyframes notifOut { from { opacity:1; } to { opacity:0; } }
+
+/* ── Modal O programie ── */
+#aboutModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  background: rgba(0,0,0,0.55);
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#aboutModal.show { display: flex; }
+.about-box {
+  background: #fff;
+  border-radius: 18px;
+  width: min(700px, 96vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.about-header {
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.about-header h2 { font-size: 1.1rem; font-weight: 700; color: #1e3a8a; margin: 0; }
+.about-close {
+  background: none; border: none; font-size: 1.3rem;
+  cursor: pointer; color: #6b7280; padding: 2px 6px; border-radius: 6px;
+}
+.about-close:hover { background: #f3f4f6; color: #111; }
+.about-body {
+  overflow-y: auto; padding: 20px 28px 28px; flex: 1;
+  color: #374151; font-size: 0.88rem; line-height: 1.65;
+}
+.about-body h3 { font-size: 1rem; color: #1e3a8a; margin: 20px 0 6px; padding-bottom: 3px; border-bottom: 1px solid #dbeafe; }
+.about-body h3:first-child { margin-top: 0; }
+.about-body p { margin: 4px 0 10px; }
+.about-body ul { margin: 4px 0 10px; padding-left: 20px; }
+.about-body li { margin-bottom: 3px; }
+.about-body table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 0.82rem; }
+.about-body th { background: #eff6ff; color: #1e3a8a; padding: 5px 10px; text-align: left; border: 1px solid #bfdbfe; }
+.about-body td { padding: 5px 10px; border: 1px solid #e5e7eb; vertical-align: top; }
+.about-body tr:nth-child(even) td { background: #f9fafb; }
+.about-author { margin-top: 28px; padding-top: 16px; border-top: 2px solid #dbeafe; text-align: center; color: #6b7280; font-size: 0.82rem; }
+.about-author strong { display: block; font-size: 1rem; color: #1e3a8a; margin-bottom: 2px; }
+
+
+/* ── Stopka licencyjna ── */
+.app-footer {
+  text-align: center;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  padding: 6px 16px 10px;
+  opacity: 0.6;
+  letter-spacing: 0.02em;
+}
+
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -2406,6 +2516,7 @@ if ('serviceWorker' in navigator) {
 
   </div>
 </div>
+<div class="app-footer">© 2025 Krzysztof Jureczek · SalePlan · Wszelkie prawa zastrzeżone</div>
 <!-- /STRONA POWITALNA -->
 
 <!-- ── Panel wyboru trybu importu (welcome) ── -->
@@ -2899,8 +3010,67 @@ if ('serviceWorker' in navigator) {
     <ul class="help-list">
       <li>Kliknij komórkę aby edytować zajęcia</li>
       <li>Wybierz nauczyciela, klasę/grupę i przedmiot</li>
-      <li>Ctrl+Enter — zapisz &nbsp;·&nbsp; Esc — zamknij</li>
+      <li><b>Ctrl+Enter</b> — zapisz &nbsp;·&nbsp; <b>Esc</b> — zamknij</li>
       <li>Przycisk <b>Wyczyść</b> usuwa wpis z komórki</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">🖱️ Przeciąganie zajęć</div>
+    <ul class="help-list">
+      <li>Przeciągnij wypełnioną komórkę na inne miejsce — skopiuje wpis</li>
+      <li>Aby <b>przenieść</b>: przeciągnij + wyczyść oryginał</li>
+      <li>Gdy cel jest zajęty — pojawi się pytanie przed nadpisaniem</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">🏠 Gospodarz sali</div>
+    <ul class="help-list">
+      <li>Kliknij wiersz <b>Gospod.</b> w nagłówku sali</li>
+      <li>Przypisz klasę i wychowawcę (opcjonalnie dwóch)</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">⚠️ Kolizje</div>
+    <ul class="help-list">
+      <li>Czerwona ramka gdy nauczyciel lub klasa w dwóch salach jednocześnie</li>
+      <li>Kliknij licznik kolizji w pasku statusu aby przejść do pierwszej</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">➕ Dodawanie w locie</div>
+    <ul class="help-list">
+      <li>W oknie edycji: <b>+ Dodaj nauczyciela</b> lub <b>+ Dodaj klasę/grupę</b></li>
+      <li>Nowe pozycje dostępne natychmiast w całym planie</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">🔄 Eksport / Import JSON</div>
+    <ul class="help-list">
+      <li><b>⬆ JSON</b> — eksport pełnego planu z archiwum</li>
+      <li><b>⬇ Import</b> lub przeciągnij plik .json na okno</li>
+      <li>Tryby: <b>Scal</b> (uzupełnij braki) / <b>Zastąp</b> (nadpisz)</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">📄 PDF &amp; Archiwum</div>
+    <ul class="help-list">
+      <li><b>⬇ PDF</b> — plan gotowy do wydruku (orientacja pozioma)</li>
+      <li>Kliknij rok w topbarze (np. <b>2025/2026 ▼</b>) aby otworzyć archiwum</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">💾 Zapis danych</div>
+    <ul class="help-list">
+      <li>Dane zapisywane lokalnie w przeglądarce (localStorage)</li>
+      <li>Autosapis co zmianę · <b>💾 Zapisz</b> — ręczny zapis</li>
+      <li>Eksportuj JSON jako kopię zapasową</li>
     </ul>
   </div>
 
@@ -5255,10 +5425,10 @@ function exportPDF() {
   window.print();
   document.title = 'SalePlan — Plan Sal Zajęciowych';
 }
-document.getElementById('validFrom').addEventListener('change',()=>{
-  if (!validFromDates[appState.yearKey]) validFromDates[appState.yearKey]={};
-  validFromDates[appState.yearKey][currentDay]=document.getElementById('validFrom').value;
-});
+(function(){const _vf=document.getElementById('validFrom');if(_vf)_vf.addEventListener('change',()=>{
+  if(!validFromDates[appState.yearKey])validFromDates[appState.yearKey]={};
+  validFromDates[appState.yearKey][currentDay]=_vf.value;
+});})();
 
 // ================================================================
 //  HELPERS
@@ -5784,6 +5954,114 @@ function closeAboutModal() {
     </div>
     <div class="about-body" id="aboutBody">
       <!-- wypełniane przez JS -->
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Modal O programie ── -->
+<div id="aboutModal">
+  <div class="about-box">
+    <div class="about-header">
+      <h2>ℹ️ SalePlan — O programie</h2>
+      <button class="about-close" onclick="closeAboutModal()">✕</button>
+    </div>
+    <div class="about-body">
+      <h3>🚀 Strona powitalna</h3>
+      <p>Przy pierwszym uruchomieniu wyświetla się strona powitalna z czterema opcjami:</p>
+      <table>
+        <tr><th>Opcja</th><th>Opis</th></tr>
+        <tr><td>✨ Utwórz nowy plan</td><td>Kreator od zera — 6 kroków</td></tr>
+        <tr><td>📋 Nowy rok szkolny</td><td>Kopiuje konfigurację z bieżącego roku</td></tr>
+        <tr><td>📂 Importuj z pliku</td><td>Wczytaj plan z pliku .json</td></tr>
+        <tr><td>🎬 Wersja demo</td><td>Przykładowa szkoła — dane nie są zapisywane</td></tr>
+      </table>
+
+      <h3>📋 Planowanie sal</h3>
+      <ul>
+        <li>Kliknij komórkę — wybierz nauczyciela, klasę/grupę, przedmiot</li>
+        <li>W komórce widoczny skrót klasy, skrót przedmiotu i inicjały nauczyciela</li>
+        <li>Wypełnioną komórkę możesz <b>przeciągnąć</b> na inną godzinę lub salę (kopiowanie)</li>
+        <li><b>Ctrl+Enter</b> — zapisz wpis &nbsp;·&nbsp; <b>Esc</b> — zamknij okno</li>
+      </ul>
+
+      <h3>🏠 Gospodarz sali</h3>
+      <ul>
+        <li>Kliknij wiersz <b>Gospod.</b> w nagłówku sali</li>
+        <li>Przypisz klasę i wychowawcę (opcjonalnie dwóch dla sal dzielonych)</li>
+      </ul>
+
+      <h3>⚠️ Wykrywanie kolizji</h3>
+      <ul>
+        <li>Czerwona ramka + ⚠ gdy ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
+        <li>Licznik kolizji w dolnym pasku — kliknij aby przejść do pierwszej</li>
+      </ul>
+
+      <h3>➕ Klasy i nauczyciele w locie</h3>
+      <ul>
+        <li>W oknie edycji komórki: <b>+ Dodaj nowego nauczyciela</b> lub <b>+ Dodaj nową klasę/grupę</b></li>
+        <li>Nowe pozycje dostępne natychmiast w całym planie</li>
+      </ul>
+
+      <h3>🖱️ Przeciąganie zajęć</h3>
+      <ul>
+        <li>Wypełnioną komórkę przeciągnij na inne miejsce — skopiuje wpis</li>
+        <li>Aby <b>przenieść</b>: przeciągnij, a następnie wyczyść oryginał przyciskiem „Wyczyść"</li>
+        <li>Gdy cel jest zajęty — pojawi się pytanie przed nadpisaniem</li>
+      </ul>
+
+      <h3>🔄 Eksport i import JSON</h3>
+      <ul>
+        <li>Przycisk <b>⬆ JSON</b> — plik z pełnym planem i archiwum</li>
+        <li>Przycisk <b>⬇ Import</b> lub przeciągnij plik .json na okno aplikacji</li>
+        <li>Tryby: <b>Scal</b> (uzupełnij braki) / <b>Zastąp</b> (nadpisz wszystko)</li>
+      </ul>
+
+      <h3>📄 Eksport do PDF</h3>
+      <ul>
+        <li>Przycisk <b>⬇ PDF</b> — orientacja pozioma, gotowy do wydruku lub wysłania</li>
+        <li>Nagłówek zawiera szkołę, rok, dzień i datę obowiązywania</li>
+      </ul>
+
+      <h3>📁 Archiwum</h3>
+      <ul>
+        <li>Kliknij rok w topbarze (np. <b>2025/2026 ▼</b>) aby otworzyć archiwum</li>
+        <li>Można przywrócić lub trwale usunąć stary rok</li>
+      </ul>
+
+      <h3>🧙 Kreator — 6 kroków</h3>
+      <table>
+        <tr><th>Krok</th><th>Opis</th></tr>
+        <tr><td>1 — Szkoła</td><td>Nazwa, skrót, telefon, www, budynki</td></tr>
+        <tr><td>2 — Rok szkolny</td><td>Rok i numery godzin lekcyjnych</td></tr>
+        <tr><td>3 — Piętra i sale</td><td>Piętra, segmenty, numery sal</td></tr>
+        <tr><td>4 — Klasy i grupy</td><td>Lista klas z podziałem na grupy</td></tr>
+        <tr><td>5 — Nauczyciele</td><td>Lista nauczycieli ze skrótami</td></tr>
+        <tr><td>6 — Przypisania</td><td>Domyślne przypisania klas do sal</td></tr>
+      </table>
+
+      <h3>🔒 Prywatność i dane</h3>
+      <p>Wszystkie dane przechowywane są wyłącznie lokalnie w przeglądarce (<em>localStorage</em>). Żadne dane nie są wysyłane na serwery.</p>
+      <table>
+        <tr><th>Klucz</th><th>Zawartość</th></tr>
+        <tr><td><code>sp_active</code></td><td>Konfiguracja aktywnego roku</td></tr>
+        <tr><td><code>sp_sched</code></td><td>Wpisy planu zajęć</td></tr>
+        <tr><td><code>sp_archive</code></td><td>Zarchiwizowane lata</td></tr>
+        <tr><td><code>sp_vfdates</code></td><td>Daty „obowiązuje od"</td></tr>
+        <tr><td><code>sp_theme</code></td><td>Motyw (ciemny/jasny)</td></tr>
+        <tr><td><code>sp_pwa_dismissed</code></td><td>Baner instalacji PWA</td></tr>
+        <tr><td><code>sp_wiz_draft</code></td><td>Autosave kreatora</td></tr>
+        <tr><td><code>sp_cookies_accepted</code></td><td>Potwierdzenie informacji o danych</td></tr>
+      </table>
+
+      <h3>⚖️ Licencja i prawa autorskie</h3>
+      <p><strong>© 2025 Krzysztof Jureczek. Wszelkie prawa zastrzeżone.</strong></p>
+      <p>Oprogramowanie SalePlan jest własnością autora i przeznaczone wyłącznie do niekomercyjnego użytku w placówkach oświatowych. Kopiowanie, modyfikowanie i dystrybucja kodu bez pisemnej zgody autora jest zabroniona.</p>
+
+      <div class="about-author">
+        <strong>Krzysztof Jureczek</strong>
+        Autor i twórca aplikacji SalePlan
+      </div>
     </div>
   </div>
 </div>
