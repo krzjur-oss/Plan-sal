@@ -668,18 +668,127 @@ body {
 .topbar {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  padding: 12px 24px;
+  padding: 8px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: sticky;
   top: 0;
-  z-index: 100;
-  gap: 12px;
-  flex-wrap: wrap;
+  z-index: 200;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
-.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-left { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+/* ── Hamburger button ── */
+.hamburger-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  padding: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.hamburger-btn:hover { background: var(--surface3); }
+.hamburger-btn span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+.hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.open span:nth-child(2) { opacity: 0; }
+.hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── Hamburger menu panel ── */
+.hmenu {
+  position: fixed;
+  top: 0; left: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  padding: 60px 0 24px;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+}
+.hmenu.open { transform: translateX(0); }
+
+.hmenu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 499;
+  background: rgba(0,0,0,0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.hmenu-overlay.open { opacity: 1; pointer-events: auto; }
+
+.hmenu-section { padding: 6px 16px; }
+.hmenu-school {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hmenu-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.hmenu-date {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-family: var(--mono);
+}
+.hmenu-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
+.hmenu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 20px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.88rem;
+  color: var(--text);
+  font-family: var(--font);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.hmenu-item:hover { background: var(--surface2); }
+.hmenu-item-red { color: #ef4444; }
+.hmenu-item-red:hover { background: #fef2f2; }
 
 .logo {
   font-size: 1.1rem;
@@ -2836,32 +2945,46 @@ if ('serviceWorker' in navigator) {
 
   <div class="topbar">
     <div class="topbar-left">
+      <button id="hamburgerBtn" class="hamburger-btn" onclick="toggleMobileMenu()" title="Menu" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
       <div class="logo">Sale<span>Plan</span></div>
-      <button class="btn btn-ghost" onclick="showWelcomeScreen()" title="Strona główna" style="font-size:0.75rem;padding:4px 10px">🏠 Strona główna</button>
-      <div class="school-name-topbar" id="schoolNameTopbar"></div>
       <div class="year-pill" id="yearPill" onclick="showArchive()">
         <span id="currentYearLabel">—</span>
         <span style="font-size:0.6rem;opacity:0.5">▼</span>
       </div>
     </div>
     <div class="topbar-center" id="dayTabs"></div>
-    <div class="topbar-right">
-      <div class="valid-from-wrap">
-        <span class="valid-from-label">Od:</span>
-        <input type="date" class="valid-from-input" id="validFrom">
-      </div>
-      <button class="btn btn-green" onclick="exportPDF()">⬇ PDF</button>
-      <button class="btn btn-primary" onclick="saveData()">💾 Zapisz</button>
-      <button class="btn btn-outline-blue" onclick="exportJSON()" title="Eksportuj plan do pliku JSON">⬆ JSON</button>
-      <label class="btn btn-outline-blue" title="Importuj plan z pliku JSON" style="cursor:pointer">⬇ Import<input type="file" accept=".json" style="display:none" onchange="handleImportFile(this.files[0]);this.value=''"></label>
-      <button class="btn btn-outline-orange" onclick="openEditWizard()" title="Edytuj sale, klasy, nauczycieli lub godziny bieżącego roku">✏️ Edytuj rok</button>
-      <button class="btn btn-red" onclick="clearDay()">🗑 Dzień</button>
-      <button class="tut-trigger" id="tutTriggerBtn" onclick="toggleAppHelp()" title="Pomoc">?</button>
-      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Przełącz motyw">🌙</button>
+  </div>
+
+  <!-- ── Menu hamburger ── -->
+  <div id="mobileMenu" class="hmenu" role="menu" aria-hidden="true">
+    <div class="hmenu-section">
+      <div class="hmenu-school" id="hmenuSchoolName"></div>
     </div>
-  
+    <div class="hmenu-sep"></div>
+    <div class="hmenu-section">
+      <div class="hmenu-label">Obowiązuje od</div>
+      <input type="date" class="hmenu-date" id="validFrom">
+    </div>
+    <div class="hmenu-sep"></div>
+    <button class="hmenu-item" onclick="saveData();toggleMobileMenu()">💾 Zapisz</button>
+    <button class="hmenu-item" onclick="exportPDF();toggleMobileMenu()">⬇ Eksportuj PDF</button>
+    <button class="hmenu-item" onclick="exportJSON();toggleMobileMenu()">⬆ Eksportuj JSON</button>
+    <label class="hmenu-item">⬇ Importuj JSON<input type="file" accept=".json" style="display:none" onchange="handleImportFile(this.files[0]);this.value='';toggleMobileMenu()"></label>
+    <div class="hmenu-sep"></div>
+    <button class="hmenu-item" onclick="openEditWizard();toggleMobileMenu()">✏️ Edytuj rok</button>
+    <button class="hmenu-item hmenu-item-red" onclick="clearDay();toggleMobileMenu()">🗑 Wyczyść dzień</button>
+    <div class="hmenu-sep"></div>
+    <button class="hmenu-item" onclick="toggleAppHelp();toggleMobileMenu()">❓ Pomoc</button>
+    <button class="hmenu-item" onclick="showAboutModal();toggleMobileMenu()">ℹ️ O programie</button>
+    <button class="hmenu-item" onclick="toggleTheme();toggleMobileMenu()">🌙 Zmień motyw</button>
+    <div class="hmenu-sep"></div>
+    <button class="hmenu-item" onclick="showWelcomeScreen();toggleMobileMenu()">🏠 Strona główna</button>
+  </div>
+  <div id="hmenuOverlay" class="hmenu-overlay" onclick="toggleMobileMenu()"></div>
+
 <div class="app-footer">© 2025 Krzysztof Jureczek · SalePlan · Wszelkie prawa zastrzeżone</div>
-</div>
 
   <div id="pdfHeader" style="display:none">
     <div class="pdf-school"></div>
@@ -4830,7 +4953,8 @@ function mountApp() {
   document.getElementById('currentYearLabel').textContent = appState.yearLabel;
   document.getElementById('sbYear').textContent = appState.yearLabel;
   const schoolName = appState.school?.short || appState.school?.name || '';
-  document.getElementById('schoolNameTopbar').textContent = schoolName;
+  const snEl = document.getElementById('hmenuSchoolName');
+  if (snEl) snEl.textContent = schoolName;
   document.title = `SalePlan — ${schoolName || 'Plan Sal'}`;
 
   const tabsEl = document.getElementById('dayTabs');
@@ -5473,6 +5597,33 @@ function mergeClassNames(classes) {
 
   return [...merged, ...unparsed];
 }
+
+// ── Hamburger menu ──────────────────────────────────────────
+function toggleMobileMenu() {
+  const menu    = document.getElementById('mobileMenu');
+  const overlay = document.getElementById('hmenuOverlay');
+  const btn     = document.getElementById('hamburgerBtn');
+  if (!menu) return;
+  const opening = !menu.classList.contains('open');
+  menu.classList.toggle('open', opening);
+  menu.setAttribute('aria-hidden', String(!opening));
+  if (overlay) overlay.classList.toggle('open', opening);
+  if (btn)     btn.classList.toggle('open', opening);
+  // Synchronizuj datę w menu z polem #validFrom (JS może zaktualizować po montażu)
+  if (opening) {
+    const vf = document.getElementById('validFrom');
+    const md = document.getElementById('validFrom'); // to samo pole - jest w menu
+    // validFrom jest już w menu, nie trzeba synchronizować
+  }
+}
+
+// Zamknij menu klawiszem Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const menu = document.getElementById('mobileMenu');
+    if (menu && menu.classList.contains('open')) toggleMobileMenu();
+  }
+});
 
 function esc(str){return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function sbSet(msg){document.getElementById('sbText').textContent=msg;setTimeout(()=>document.getElementById('sbText').textContent='Gotowy',2500);}
