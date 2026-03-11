@@ -2293,6 +2293,37 @@ body.light #tutBox { background: #fff; }
 }
 .cookie-detail-box tr:nth-child(even) td { background: var(--surface2); }
 
+
+/* ── Drag & Drop komórek ── */
+.cell-inner[draggable="true"] { cursor: grab; }
+.cell-inner[draggable="true"]:active { cursor: grabbing; }
+.cell-inner.dnd-dragging {
+  opacity: 0.4;
+  outline: 2px dashed var(--accent);
+}
+.cell-inner.dnd-over {
+  outline: 2px solid var(--accent);
+  background: var(--accent-glow) !important;
+}
+.cell-inner.dnd-over-filled {
+  outline: 2px solid var(--yellow);
+  background: rgba(245,158,11,0.12) !important;
+}
+.dnd-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  background: var(--surface2);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  max-width: 140px;
+  opacity: 0.92;
+}
+
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -2868,15 +2899,26 @@ if ('serviceWorker' in navigator) {
     <ul class="help-list">
       <li>Kliknij komórkę aby edytować zajęcia</li>
       <li>Wybierz nauczyciela, klasę/grupę i przedmiot</li>
+      <li>W komórce widoczny: skrót klasy · skrót przedmiotu · nauczyciel</li>
       <li>Ctrl+Enter — zapisz &nbsp;·&nbsp; Esc — zamknij</li>
       <li>Przycisk <b>Wyczyść</b> usuwa wpis z komórki</li>
     </ul>
   </div>
 
   <div class="help-section">
+    <div class="help-title">🖱️ Przeciąganie zajęć</div>
+    <ul class="help-list">
+      <li>Wypełnioną komórkę możesz <b>przeciągnąć</b> na inną</li>
+      <li>Przeciągnięcie <b>kopiuje</b> zajęcia — oryginał pozostaje</li>
+      <li>Upuszczenie na zajętą komórkę pyta o potwierdzenie nadpisania</li>
+      <li>Aby <b>przenieść</b>: przeciągnij, potem wyczyść oryginał</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
     <div class="help-title">🏠 Gospodarz sali</div>
     <ul class="help-list">
-      <li>Kliknij nagłówek sali (wiersz <b>Gospod.</b>)</li>
+      <li>Kliknij wiersz <b>Gospod.</b> w nagłówku sali</li>
       <li>Przypisz klasę i wychowawcę do sali</li>
       <li>Można przypisać dwóch gospodarzy (dla sal dzielonych)</li>
     </ul>
@@ -2896,14 +2938,14 @@ if ('serviceWorker' in navigator) {
     <ul class="help-list">
       <li>Czerwona ramka + ⚠ oznacza kolizję</li>
       <li>Ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
-      <li>Kliknij licznik kolizji w pasku dolnym aby przejść do pierwszej</li>
+      <li>Kliknij licznik kolizji w dolnym pasku — przejście do pierwszej</li>
     </ul>
   </div>
 
   <div class="help-section">
     <div class="help-title">➕ Klasy i nauczyciele w locie</div>
     <ul class="help-list">
-      <li>W oknie edycji komórki kliknij <b>+ Dodaj nowego nauczyciela</b></li>
+      <li>W oknie edycji kliknij <b>+ Dodaj nowego nauczyciela</b></li>
       <li>Lub <b>+ Dodaj nową klasę / grupę</b></li>
       <li>Nowe pozycje są od razu dostępne w planie</li>
     </ul>
@@ -2912,10 +2954,10 @@ if ('serviceWorker' in navigator) {
   <div class="help-section">
     <div class="help-title">🔄 Eksport / Import</div>
     <ul class="help-list">
-      <li><b>Zapisz</b> — zapisuje do localStorage (automatycznie)</li>
       <li><b>JSON</b> — eksportuje plik do pobrania</li>
-      <li><b>Import</b> — wczytuje plik JSON (lub przeciągnij na okno)</li>
-      <li>Tryby importu: Scalaj / Zastąp / Nowy rok</li>
+      <li><b>Import</b> — wczytaj plik JSON lub przeciągnij go na okno aplikacji</li>
+      <li>Tryby importu: <b>Scal</b> (uzupełnij braki) / <b>Zastąp</b> (nadpisz wszystko)</li>
+      <li><b>Zapisz</b> — ręczny zapis do pamięci przeglądarki</li>
     </ul>
   </div>
 
@@ -2931,17 +2973,16 @@ if ('serviceWorker' in navigator) {
   <div class="help-section">
     <div class="help-title">✏️ Edycja roku</div>
     <ul class="help-list">
-      <li><b>Nowy rok</b> — kreator nowego roku szkolnego</li>
-      <li><b>Edytuj rok</b> — zmień sale, klasy lub godziny</li>
-      <li>Istniejące wpisy są zachowane</li>
+      <li><b>Edytuj rok</b> — zmień sale, klasy lub godziny bez utraty wpisów</li>
       <li><b>Strona główna</b> — wróć do ekranu startowego</li>
+      <li>Nowy rok szkolny tworzysz ze strony głównej</li>
     </ul>
   </div>
 
   <div class="help-section">
     <div class="help-title">📁 Archiwum</div>
     <ul class="help-list">
-      <li>Przycisk z rokiem w topbarze → <b>Archiwum</b></li>
+      <li>Kliknij rok w topbarze (np. <b>2025/2026 ▼</b>)</li>
       <li>Poprzednie lata są automatycznie archiwizowane</li>
       <li>Można przywrócić lub trwale usunąć stary rok</li>
     </ul>
@@ -2963,7 +3004,6 @@ if ('serviceWorker' in navigator) {
     </ul>
   </div>
 </div>
-
 
 <!-- ── Baner informacji o localStorage ── -->
 <div id="cookieBanner">
@@ -4677,6 +4717,90 @@ function switchDay(idx) {
 }
 
 
+
+// ================================================================
+//  DRAG & DROP KOMÓREK PLANU
+// ================================================================
+let _dndSrcDay, _dndSrcHour, _dndSrcKey;  // źródło przeciągania
+
+function dndStart(e, day, hour, key) {
+  _dndSrcDay  = day;
+  _dndSrcHour = hour;
+  _dndSrcKey  = key;
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setData('text/plain', day + '|' + hour + '|' + key);
+
+  // Własny ghost element z podglądem zawartości
+  const entry = schedData[appState.yearKey]?.[day]?.[hour]?.[key] || {};
+  const clsLabel = (entry.classes && entry.classes.length ? entry.classes : entry.className ? [entry.className] : []).join(', ');
+  const ghost = document.createElement('div');
+  ghost.className = 'dnd-ghost';
+  ghost.id = '_dndGhost';
+  ghost.innerHTML = (clsLabel ? `<b>${esc(clsLabel)}</b><br>` : '') +
+                    (entry.subject ? esc(subjectAbbr(entry.subject)) + '<br>' : '') +
+                    (entry.teacherAbbr ? esc(entry.teacherAbbr) : '');
+  ghost.style.left = '-999px';
+  ghost.style.top  = '-999px';
+  document.body.appendChild(ghost);
+  e.dataTransfer.setDragImage(ghost, 60, 20);
+
+  // Oznacz źródło
+  setTimeout(() => e.target.classList.add('dnd-dragging'), 0);
+}
+
+function dndEnd(e) {
+  e.target.classList.remove('dnd-dragging');
+  const ghost = document.getElementById('_dndGhost');
+  if (ghost) ghost.remove();
+  // Usuń wszystkie klasy hover
+  document.querySelectorAll('.dnd-over, .dnd-over-filled').forEach(el => {
+    el.classList.remove('dnd-over', 'dnd-over-filled');
+  });
+}
+
+function dndOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  const el = e.currentTarget;
+  const isFilled = el.classList.contains('filled');
+  el.classList.toggle('dnd-over', !isFilled);
+  el.classList.toggle('dnd-over-filled', isFilled);
+}
+
+function dndLeave(e) {
+  e.currentTarget.classList.remove('dnd-over', 'dnd-over-filled');
+}
+
+function dndDrop(e, day, hour, key) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dnd-over', 'dnd-over-filled');
+
+  // Nie rób nic jeśli upuszczono na siebie
+  if (_dndSrcDay === day && _dndSrcHour === hour && _dndSrcKey === key) return;
+
+  const yk = appState.yearKey;
+  const srcEntry = schedData[yk]?.[_dndSrcDay]?.[_dndSrcHour]?.[_dndSrcKey];
+  if (!srcEntry || (!srcEntry.teacherAbbr && !(srcEntry.classes||[]).length && !srcEntry.className)) return;
+
+  const dstEntry = schedData[yk]?.[day]?.[hour]?.[key];
+  const dstFilled = dstEntry && (dstEntry.teacherAbbr || (dstEntry.classes||[]).length || dstEntry.className);
+
+  // Jeśli cel jest wypełniony — zapytaj
+  if (dstFilled) {
+    if (!confirm('Komórka docelowa jest zajęta. Nadpisać jej zawartość?')) return;
+  }
+
+  // Skopiuj wpis
+  if (!schedData[yk][day]) schedData[yk][day] = {};
+  if (!schedData[yk][day][hour]) schedData[yk][day][hour] = {};
+  schedData[yk][day][hour][key] = JSON.parse(JSON.stringify(srcEntry));
+
+  persistAll();
+  renderSchedule();
+  sbSet('✓ Skopiowano zajęcia');
+}
+
+
 // Skrót nazwy przedmiotu: wielowyrazowe → inicjały, jednowyrazowe → 3 litery
 function subjectAbbr(subject) {
   if (!subject) return '';
@@ -4837,7 +4961,16 @@ function renderSchedule() {
       const cellErrs = collisions[cellId] || [];
       const hasErr   = cellErrs.length > 0;
       const errTip   = cellErrs.join('\n');
-      tbody += `<td><div class="cell-inner ${filled?'filled':''} ${hasErr?'collision':''}" onclick="openEditModal(${currentDay},'${h}','${key}')" ${hasErr?`data-collision-tip="${esc(errTip)}"`:''}>${hasErr?'<span class="cell-collision-icon">⚠</span>':''}${
+      tbody += `<td><div class="cell-inner ${filled?'filled':''} ${hasErr?'collision':''}"
+            onclick="openEditModal(${currentDay},'${h}','${key}')"
+            ${filled?`draggable="true"
+            ondragstart="dndStart(event,${currentDay},'${h}','${key}')"
+            ondragend="dndEnd(event)"`:''}
+            ondragover="dndOver(event)"
+            ondragleave="dndLeave(event)"
+            ondrop="dndDrop(event,${currentDay},'${h}','${key}')"
+            ${hasErr?`data-collision-tip="${esc(errTip)}"`:''}
+            >${hasErr?'<span class="cell-collision-icon">⚠</span>':''}${
         filled
           ? `<div class="cell-row-cls">${
                (entry.classes && entry.classes.length
