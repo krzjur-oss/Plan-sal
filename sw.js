@@ -1,5 +1,5 @@
 // SalePlan Service Worker
-const CACHE = 'sp-v61';
+const CACHE = 'sp-v62';
 const ASSETS = [
   '/Plan-sal/',
   '/Plan-sal/index.html',
@@ -9,39 +9,79 @@ const ASSETS = [
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap',
 ];
 
+// Instalacja — zakeszuj assety i od razu przejmij kontrolę
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
-});
-
-self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+    caches.open(CACHE)
+      .then(c => c.addAll(ASSETS))
+      .then(() => self.skipWaiting())  // nie czekaj na zamknięcie starych klientów
   );
 });
 
+// Aktywacja — usuń stare cache, przejmij wszystkich klientów, wymuś reload
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
+      .then(() => {
+        // Powiadom wszystkich otwartych klientów o nowej wersji → przeładuj
+        return self.clients.matchAll({ type: 'window' }).then(clients => {
+          clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+        });
+      })
+  );
+});
+
+// Fetch — network-first dla HTML (zawsze świeży), cache-first dla pozostałych
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+
+  // HTML — zawsze sieć, fallback cache
+  if (url.origin === location.origin && (
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('/') ||
+    url.pathname === '/Plan-sal'
+  )) {
+    e.respondWith(
+      fetch(e.request, { cache: 'no-store' })
+        .then(r => {
+          if (r && r.status === 200) {
+            caches.open(CACHE).then(c => c.put(e.request, r.clone()));
+          }
+          return r;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Pozostałe zasoby origin — cache-first
   if (url.origin === location.origin) {
     e.respondWith(
       caches.match(e.request).then(cached => {
         if (cached) return cached;
         return fetch(e.request).then(r => {
-          if (r && r.status === 200) {
+          if (r && r.status === 200)
             caches.open(CACHE).then(c => c.put(e.request, r.clone()));
-          }
           return r;
         }).catch(() => caches.match('/Plan-sal/index.html'));
       })
     );
     return;
   }
+
+  // Fonty — cache-first
   if (url.hostname.includes('fonts.')) {
     e.respondWith(
-      fetch(e.request)
-        .then(r => { caches.open(CACHE).then(c => c.put(e.request, r.clone())); return r; })
-        .catch(() => caches.match(e.request))
+      caches.match(e.request)
+        .then(cached => cached || fetch(e.request).then(r => {
+          caches.open(CACHE).then(c => c.put(e.request, r.clone()));
+          return r;
+        }))
+        .catch(() => new Response('', { status: 408 }))
     );
   }
 });
