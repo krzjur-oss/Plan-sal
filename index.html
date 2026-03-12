@@ -43,6 +43,7 @@ if ('serviceWorker' in navigator) {
 
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+
 :root {
   --bg: #080c12;
   --surface: #0e1420;
@@ -1581,14 +1582,6 @@ body.light #tutBox { background: #fff; }
   font-size: 0.68rem; color: var(--text-dim);
   margin-bottom: 10px;
 }
-.tut-trigger {
-  width: 30px; height: 30px; border-radius: 50%;
-  background: var(--surface2); border: 1px solid var(--border2);
-  color: var(--text-muted); font-weight: 700; font-size: 0.85rem;
-  cursor: pointer; display: flex; align-items: center;
-  justify-content: center; transition: all 0.15s; flex-shrink: 0;
-}
-.tut-trigger:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ================================================================
    PANEL INSTRUKCJI KREATORA
@@ -1764,10 +1757,10 @@ body.light #tutBox { background: #fff; }
 }
 #collisionCount.none { display: none; }
 
-/* ── Nowy układ komórki (pionowy) ── */
-.cell-row-cls     { margin-bottom: 1px; }
+/* ── Układ komórki ── */
+.cell-row-cls     { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 2px; }
 .cell-abbr-cls    { background: rgba(16,185,129,0.15); color: var(--green); border-color: rgba(16,185,129,0.3); }
-.cell-row-teacher { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; margin-bottom: 1px; }
+.cell-row-teacher { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; line-height: 1; }
 .cell-teacher-name { font-size: 0.65rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .cell-row-subject { font-size: 0.7rem; color: var(--text); line-height: 1.2; word-break: break-word; }
 
@@ -1820,10 +1813,6 @@ body.light #tutBox { background: #fff; }
   height: 26px;
   line-height: 1;
 }
-/* Uproszczony układ komórki */
-.cell-row-cls  { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 2px; }
-.cell-row-teacher { line-height: 1; }
-
 /* ================================================================
    EKSPORT / IMPORT / DRAG & DROP
    ================================================================ */
@@ -2500,16 +2489,101 @@ body.light #tutBox { background: #fff; }
   opacity: 0.6;
   letter-spacing: 0.02em;
 }
+.app-footer a {
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  opacity: 1;
+}
+.app-footer a:hover { opacity: 0.8; }
+
+/* ── Modal Regulaminu ── */
+#termsModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 3200;
+  background: rgba(0,0,0,0.6);
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#termsModal.show { display: flex; }
+.terms-box {
+  background: #fff;
+  border-radius: 18px;
+  width: min(740px, 96vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.terms-header {
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.terms-header h2 { font-size: 1.1rem; font-weight: 700; color: #1e3a8a; margin: 0; }
+.terms-close {
+  background: none; border: none; font-size: 1.3rem; cursor: pointer;
+  color: #6b7280; line-height: 1; padding: 2px 6px; border-radius: 6px;
+}
+.terms-close:hover { background: #f3f4f6; color: #111; }
+.terms-body {
+  overflow-y: auto; padding: 20px 28px 24px; flex: 1;
+  color: #374151; font-size: 0.88rem; line-height: 1.7;
+}
+.terms-body h3 {
+  font-size: 0.95rem; color: #1e3a8a; margin: 20px 0 6px;
+  padding-bottom: 3px; border-bottom: 1px solid #dbeafe; font-weight: 700;
+}
+.terms-body h3:first-child { margin-top: 0; }
+.terms-body p { margin: 4px 0 10px; }
+.terms-body ul { margin: 4px 0 10px; padding-left: 20px; }
+.terms-body li { margin-bottom: 4px; }
+.terms-body strong { color: #1e3a8a; }
+.terms-body .terms-version { font-size: 0.75rem; color: #9ca3af; margin-bottom: 18px; }
+.terms-footer {
+  padding: 14px 24px 18px; border-top: 1px solid #e5e7eb;
+  display: flex; gap: 10px; justify-content: flex-end;
+  flex-shrink: 0; flex-wrap: wrap;
+}
+/* Baner akceptacji regulaminu przy starcie */
+#termsBanner {
+  display: none; position: fixed; inset: 0; z-index: 3300;
+  background: rgba(0,0,0,0.72); align-items: center;
+  justify-content: center; backdrop-filter: blur(6px);
+}
+#termsBanner.show { display: flex; }
+.terms-banner-box {
+  background: #fff; border-radius: 20px; width: min(560px, 95vw);
+  box-shadow: 0 28px 80px rgba(0,0,0,0.4); overflow: hidden;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+.terms-banner-hero {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  padding: 28px 28px 20px; color: #fff;
+}
+.terms-banner-hero h2 { font-size: 1.25rem; font-weight: 800; margin: 0 0 6px; }
+.terms-banner-hero p { font-size: 0.82rem; opacity: 0.88; margin: 0; line-height: 1.5; }
+.terms-banner-body {
+  padding: 20px 28px; color: #374151; font-size: 0.84rem; line-height: 1.65;
+}
+.terms-banner-body ul { padding-left: 18px; margin: 8px 0 0; }
+.terms-banner-body li { margin-bottom: 5px; }
+.terms-banner-footer { padding: 0 28px 22px; display: flex; gap: 10px; flex-direction: column; }
+.terms-banner-footer .terms-read-link {
+  font-size: 0.78rem; color: #3b82f6; cursor: pointer;
+  text-decoration: underline; text-align: center;
+}
+.terms-banner-footer .terms-read-link:hover { color: #1d4ed8; }
 
 </style>
-<script>
-// Force SW update — unregister old cache versions
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(reg => reg.update());
-  });
-}
-</script>
 </head>
 <body>
 <!-- ================================================================
@@ -2936,6 +3010,7 @@ if ('serviceWorker' in navigator) {
     <div class="hmenu-sep"></div>
     <button class="hmenu-item" onclick="toggleAppHelp();toggleMobileMenu()">❓ Pomoc</button>
     <button class="hmenu-item" onclick="showAboutModal();toggleMobileMenu()">ℹ️ O programie</button>
+    <button class="hmenu-item" onclick="showTermsModal();toggleMobileMenu()">📄 Regulamin</button>
     <button class="hmenu-item" onclick="toggleTheme();toggleMobileMenu()">🌙 Zmień motyw</button>
     <div class="hmenu-sep"></div>
     <button class="hmenu-item" onclick="showWelcomeScreen();toggleMobileMenu()">🏠 Strona główna</button>
@@ -2966,7 +3041,7 @@ if ('serviceWorker' in navigator) {
     <span id="sbYear" style="color:var(--accent)"></span>
   </div>
 
-  <div class="app-footer">© 2025 Krzysztof Jureczek · SalePlan · Wszelkie prawa zastrzeżone</div>
+  <div class="app-footer">© 2025 Krzysztof Jureczek · SalePlan · Wszelkie prawa zastrzeżone · <a onclick="showTermsModal()">Regulamin</a></div>
 
 </div>
 
@@ -3211,6 +3286,8 @@ if ('serviceWorker' in navigator) {
       <tr><td><code>sp_theme</code></td><td>Wybór motywu: ciemny / jasny</td><td>Zapamiętanie preferencji wyglądu</td></tr>
       <tr><td><code>sp_pwa_dismissed</code></td><td>Informacja czy baner instalacji PWA był zamknięty</td><td>Nie pokazuj ponownie banera</td></tr>
       <tr><td><code>sp_wiz_draft</code></td><td>Autosave szkicu kreatora nowego roku</td><td>Wznowienie przerwanego kreatora</td></tr>
+      <tr><td><code>sp_cookies_accepted</code></td><td>Potwierdzenie informacji o danych lokalnych</td><td>Nie pokazuj ponownie banera informacyjnego</td></tr>
+      <tr><td><code>sp_terms_accepted</code></td><td>Potwierdzenie akceptacji regulaminu</td><td>Nie pokazuj ponownie banera regulaminu</td></tr>
     </table>
 
     <h3>Gdzie są przechowywane dane?</h3>
@@ -3228,7 +3305,8 @@ if ('serviceWorker' in navigator) {
     ani żadnych innych narzędzi śledzących. Kod aplikacji jest w całości
     zawarty w jednym pliku HTML.</p>
 
-    <div style="margin-top:20px;text-align:right">
+    <div style="margin-top:20px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeCookieDetail()">Zamknij</button>
       <button class="btn btn-primary" onclick="acceptCookies()">Rozumiem, zamknij</button>
     </div>
   </div>
@@ -3237,7 +3315,6 @@ if ('serviceWorker' in navigator) {
 
 
 <script>
-// ============
 // ================================================================
 //  INFORMACJA O LOKALNYM PRZECHOWYWANIU DANYCH
 // ================================================================
@@ -3991,14 +4068,6 @@ function autoClassAbbr(className, groupName) {
   const full = cls + ' ' + grpAbbr.toUpperCase();
   return full.slice(0, 12);  // max 12 znaków
 }
-
-// Testuj kilka przykładów (usunąć po weryfikacji)
-// autoClassAbbr('1A', 'cała klasa')          → '1A'
-// autoClassAbbr('1A', 'religia')             → '1A REL'
-// autoClassAbbr('1A', 'mniejszość niemiecka')→ '1A MN'
-// autoClassAbbr('1A', 'historia i kultura Niemiec') → '1A HKN'
-// autoClassAbbr('4A', 'gr ez')               → '4A GE'
-// autoClassAbbr('2B', '')                    → '2B'
 
 // ================================================================
 //  EKSPORT / IMPORT / SCALANIE (współpraca)
@@ -5515,12 +5584,6 @@ function toggleMobileMenu() {
   menu.setAttribute('aria-hidden', String(!opening));
   if (overlay) overlay.classList.toggle('open', opening);
   if (btn)     btn.classList.toggle('open', opening);
-  // Synchronizuj datę w menu z polem #validFrom (JS może zaktualizować po montażu)
-  if (opening) {
-    const vf = document.getElementById('validFrom');
-    const md = document.getElementById('validFrom'); // to samo pole - jest w menu
-    // validFrom jest już w menu, nie trzeba synchronizować
-  }
 }
 
 // Zamknij menu klawiszem Escape
@@ -5569,6 +5632,7 @@ function toggleTheme() {
 document.addEventListener('DOMContentLoaded', function() {
   loadAll();
   initCookieBanner();
+  initTermsBanner();
   initImportDragDrop();
   // Autosave szkicu przy zmianie pól kreatora (krok 0 i 1)
   ['wSchoolName','wSchoolShort','wSchoolPhone','wSchoolWeb','wYear','wHours'].forEach(id => {
@@ -5947,6 +6011,50 @@ function pwaDismiss() {
 
 
 // ================================================================
+//  REGULAMIN
+// ================================================================
+const TERMS_KEY = 'sp_terms_accepted';
+
+function initTermsBanner() {
+  if (!localStorage.getItem(TERMS_KEY)) {
+    document.getElementById('termsBanner').classList.add('show');
+  }
+}
+
+function acceptTerms() {
+  localStorage.setItem(TERMS_KEY, '1');
+  document.getElementById('termsBanner').classList.remove('show');
+}
+
+function showTermsModal() {
+  document.getElementById('termsModal').classList.add('show');
+}
+
+function closeTermsModal() {
+  document.getElementById('termsModal').classList.remove('show');
+}
+
+// Otwiera pełny regulamin z baneru (baner pozostaje w tle)
+function showTermsModalFromBanner() {
+  document.getElementById('termsModal').classList.add('show');
+}
+
+// Zamknij regulamin klawiszem Escape (nie zamyka baneru — wymaga akceptacji)
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('termsModal').classList.contains('show')) {
+      closeTermsModal();
+    }
+  }
+});
+// Klik w tło zamyka modal regulaminu (nie baner)
+(function(){
+  var m = document.getElementById('termsModal');
+  if (m) m.addEventListener('click', e => { if (e.target === m) closeTermsModal(); });
+})();
+
+
+// ================================================================
 //  O PROGRAMIE
 // ================================================================
 function showAboutModal() {
@@ -6048,7 +6156,7 @@ function closeAboutModal() {
       <h3>🧙 Kreator — 6 kroków</h3>
       <table>
         <tr><th>Krok</th><th>Opis</th></tr>
-        <tr><td>1 — Szkoła</td><td>Nazwa, skrót, telefon, www, budynki</td></tr>
+        <tr><td>1 — Szkoła</td><td>Nazwa, skrót, telefon, strona www + lista budynków</td></tr>
         <tr><td>2 — Rok szkolny</td><td>Rok i numery godzin lekcyjnych</td></tr>
         <tr><td>3 — Piętra i sale</td><td>Piętra, segmenty, numery sal</td></tr>
         <tr><td>4 — Klasy i grupy</td><td>Lista klas z podziałem na grupy</td></tr>
@@ -6068,6 +6176,7 @@ function closeAboutModal() {
         <tr><td><code>sp_pwa_dismissed</code></td><td>Baner instalacji PWA</td></tr>
         <tr><td><code>sp_wiz_draft</code></td><td>Autosave kreatora</td></tr>
         <tr><td><code>sp_cookies_accepted</code></td><td>Potwierdzenie informacji o danych</td></tr>
+        <tr><td><code>sp_terms_accepted</code></td><td>Potwierdzenie akceptacji regulaminu</td></tr>
       </table>
 
       <h3>⚖️ Licencja i prawa autorskie</h3>
@@ -6081,5 +6190,91 @@ function closeAboutModal() {
     </div>
   </div>
 </div>
+<!-- ── Modal Regulaminu ── -->
+<div id="termsModal">
+  <div class="terms-box">
+    <div class="terms-header">
+      <h2>📄 Regulamin aplikacji SalePlan</h2>
+      <button class="terms-close" onclick="closeTermsModal()">✕</button>
+    </div>
+    <div class="terms-body">
+      <p class="terms-version">Wersja 1.0 · obowiązuje od 1 stycznia 2025 r.</p>
+
+      <h3>§1. Postanowienia ogólne</h3>
+      <p>Niniejszy Regulamin określa zasady korzystania z aplikacji internetowej <strong>SalePlan — Plan Sal Zajęciowych</strong> (dalej: „Aplikacja"), udostępnianej pod adresem <strong>https://krzjur-oss.github.io/Plan-sal/</strong>.</p>
+      <p>Właścicielem i twórcą Aplikacji jest <strong>Krzysztof Jureczek</strong> (dalej: „Autor"). Korzystanie z Aplikacji jest równoznaczne z akceptacją niniejszego Regulaminu.</p>
+
+      <h3>§2. Przeznaczenie Aplikacji</h3>
+      <p>Aplikacja przeznaczona jest wyłącznie do <strong>niekomercyjnego użytku w placówkach oświatowych</strong> (szkoły, przedszkola, placówki kształcenia). Umożliwia planowanie i zarządzanie przydziałem sal lekcyjnych dla nauczycieli i klas.</p>
+
+      <h3>§3. Warunki korzystania</h3>
+      <ul>
+        <li>Aplikacja jest bezpłatna i dostępna dla każdego użytkownika posiadającego dostęp do przeglądarki internetowej.</li>
+        <li>Użytkownik zobowiązuje się korzystać z Aplikacji zgodnie z jej przeznaczeniem oraz obowiązującym prawem.</li>
+        <li>Zabronione jest używanie Aplikacji w celach komercyjnych bez pisemnej zgody Autora.</li>
+        <li>Zabronione jest podejmowanie działań mogących zakłócić działanie Aplikacji lub narazić innych użytkowników na szkodę.</li>
+      </ul>
+
+      <h3>§4. Prawa autorskie i licencja</h3>
+      <p>Wszelkie prawa do Aplikacji — w tym kod źródłowy, interfejs graficzny, projekt wizualny oraz dokumentacja — należą wyłącznie do Autora i są chronione przepisami prawa autorskiego.</p>
+      <ul>
+        <li><strong>Zabronione</strong> jest kopiowanie, modyfikowanie, dekompilowanie, rozpowszechnianie lub sprzedaż Aplikacji bądź jej części bez pisemnej zgody Autora.</li>
+        <li><strong>Dozwolone</strong> jest korzystanie z Aplikacji zgodnie z jej przeznaczeniem oraz udostępnianie linku do Aplikacji innym osobom.</li>
+      </ul>
+      <p>W sprawach licencjonowania komercyjnego prosimy o kontakt z Autorem.</p>
+
+      <h3>§5. Dane i prywatność</h3>
+      <p>Aplikacja <strong>nie zbiera, nie przesyła ani nie przechowuje</strong> żadnych danych użytkownika na zewnętrznych serwerach. Wszelkie dane (plan zajęć, lista klas, nauczyciele) przechowywane są wyłącznie lokalnie w pamięci przeglądarki użytkownika (<em>localStorage</em>) na jego urządzeniu.</p>
+      <ul>
+        <li>Dane nie opuszczają urządzenia użytkownika.</li>
+        <li>Aplikacja nie używa plików cookie, narzędzi analitycznych ani reklam.</li>
+        <li>Użytkownik może w każdej chwili usunąć swoje dane, czyszcząc dane przeglądarki lub korzystając z funkcji eksportu/importu JSON.</li>
+      </ul>
+
+      <h3>§6. Odpowiedzialność</h3>
+      <p>Aplikacja udostępniana jest w stanie „takim, jakim jest" (<em>as is</em>), bez jakichkolwiek gwarancji — w szczególności gwarancji przydatności do określonego celu czy nieprzerwanego działania.</p>
+      <ul>
+        <li>Autor nie ponosi odpowiedzialności za utratę danych wynikającą z wyczyszczenia danych przeglądarki, awarii urządzenia lub innych przyczyn niezależnych od Autora.</li>
+        <li>Autor nie ponosi odpowiedzialności za szkody wynikające z nieprawidłowego korzystania z Aplikacji.</li>
+        <li>Zaleca się regularne tworzenie kopii zapasowych danych za pomocą funkcji <strong>Eksportuj JSON</strong>.</li>
+      </ul>
+
+      <h3>§7. Zmiany Regulaminu</h3>
+      <p>Autor zastrzega sobie prawo do zmiany Regulaminu. O istotnych zmianach użytkownicy będą informowani poprzez komunikat wyświetlany w Aplikacji. Dalsze korzystanie z Aplikacji po opublikowaniu zmian oznacza ich akceptację.</p>
+
+      <h3>§8. Postanowienia końcowe</h3>
+      <p>W sprawach nieuregulowanych niniejszym Regulaminem zastosowanie mają przepisy prawa polskiego, w szczególności Kodeksu cywilnego oraz ustawy o prawie autorskim i prawach pokrewnych.</p>
+      <p>Wszelkie pytania dotyczące Aplikacji lub niniejszego Regulaminu można kierować do Autora za pośrednictwem repozytorium GitHub projektu.</p>
+      <p style="margin-top:18px;padding-top:14px;border-top:1px solid #dbeafe;font-size:0.8rem;color:#6b7280;text-align:center"><strong>Krzysztof Jureczek</strong> · Autor i twórca aplikacji SalePlan · © 2025</p>
+    </div>
+    <div class="terms-footer">
+      <button class="btn btn-ghost" onclick="closeTermsModal()" style="font-size:0.82rem">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Baner akceptacji regulaminu przy pierwszym uruchomieniu ── -->
+<div id="termsBanner">
+  <div class="terms-banner-box">
+    <div class="terms-banner-hero">
+      <h2>📄 Regulamin SalePlan</h2>
+      <p>Przed rozpoczęciem korzystania z aplikacji zapoznaj się z regulaminem i potwierdź jego akceptację.</p>
+    </div>
+    <div class="terms-banner-body">
+      <p>Korzystając z aplikacji <strong>SalePlan</strong>, akceptujesz poniższe warunki:</p>
+      <ul>
+        <li>Aplikacja przeznaczona jest wyłącznie do niekomercyjnego użytku w placówkach oświatowych.</li>
+        <li>Wszystkie dane przechowywane są lokalnie w Twojej przeglądarce — żadne dane nie są wysyłane na serwery.</li>
+        <li>Kopiowanie, modyfikowanie i dystrybucja kodu bez zgody Autora jest zabroniona.</li>
+        <li>Autor nie ponosi odpowiedzialności za utratę danych — zaleca się regularne kopie zapasowe JSON.</li>
+      </ul>
+    </div>
+    <div class="terms-banner-footer">
+      <button class="btn btn-primary" style="font-size:0.88rem;padding:11px 20px;justify-content:center" onclick="acceptTerms()">✓ Akceptuję regulamin i przechodzę do aplikacji</button>
+      <span class="terms-read-link" onclick="showTermsModalFromBanner()">Przeczytaj pełny regulamin</span>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
