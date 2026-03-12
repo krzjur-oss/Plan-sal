@@ -1231,43 +1231,64 @@ body {
 .pdf-from  { color: #1a56db; font-weight: 600; }
 .pdf-from::before { content: 'Od: '; font-weight: 400; color: #555; }
 
+@page { margin: 8mm; size: A4 landscape; }
+
 @media print {
   .topbar, .statusbar, .modal-overlay, #wizardOverlay, #archivePanel, #pwaInstallBanner,
-  #homeroomModal, .notif, .pwa-install-banner { display: none !important; }
+  #homeroomModal, .notif, .pwa-install-banner, #appHelpPanel, #mobileMenu, #hmenuOverlay,
+  #pdfFilenameModal, #cookieBanner, #cookieDetailModal { display: none !important; }
   #pdfHeader { display: block !important; }
-  body, body.light { background: #fff !important; color: #000 !important; }
-  .main { padding: 0 !important; overflow: visible !important; }
-  .schedule-wrap { min-width: unset !important; overflow: visible !important; }
+  #appOverlay { display: block !important; }
+  body, body.light { background: #fff !important; color: #000 !important; margin: 0 !important; }
+  .main {
+    padding: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+  .schedule-wrap {
+    min-width: unset !important;
+    overflow: visible !important;
+    width: 100% !important;
+  }
   .schedule-table {
     width: 100% !important;
-    table-layout: auto !important;
-    font-size: 0.6rem !important;
+    table-layout: fixed !important;
+    font-size: 0.55rem !important;
     border-collapse: collapse !important;
+    page-break-inside: auto;
   }
   .schedule-table th, .schedule-table td {
     border: 0.5px solid #bbb !important;
-    padding: 2px 3px !important;
+    padding: 2px 2px !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
   }
   .schedule-table th {
     background: #f0f0f0 !important;
     color: #333 !important;
     position: static !important;
-    white-space: nowrap;
+    white-space: nowrap !important;
   }
-  .th-building { font-size: 0.55rem !important; background: #e8e8e8 !important; }
-  .th-floor    { font-size: 0.55rem !important; }
-  .th-seg-row  { font-size: 0.5rem !important; }
-  .th-room-row { font-size: 0.62rem !important; color: #1a56db !important; }
-  .th-homeroom { font-size: 0.5rem !important; }
-  .cell-inner  { min-height: 28px !important; padding: 2px 3px !important; }
+  .schedule-table td.time-cell {
+    background: #f5f5f5 !important;
+    position: static !important;
+    width: 32px !important;
+    min-width: 32px !important;
+  }
+  .th-building { font-size: 0.5rem !important; background: #e8e8e8 !important; }
+  .th-floor    { font-size: 0.5rem !important; }
+  .th-seg-row  { font-size: 0.46rem !important; }
+  .th-room-row { font-size: 0.58rem !important; color: #1a56db !important; }
+  .th-homeroom { font-size: 0.46rem !important; }
+  .cell-inner  { min-height: 24px !important; padding: 2px 2px !important; }
   .cell-inner.filled { border-left: 2px solid #555 !important; background: #f0f4ff !important; }
-  .cell-abbr   { font-size: 0.55rem !important; padding: 0 2px !important; }
-  .cell-teacher { color: #003 !important; font-size: 0.55rem !important; }
-  .cell-subject { color: #000 !important; font-size: 0.58rem !important; }
-  .cell-note   { font-size: 0.5rem !important; }
-  .schedule-table td.time-cell { background: #f5f5f5 !important; }
-  .app-footer { display: none !important; }
+  .cell-abbr   { font-size: 0.5rem !important; padding: 0 1px !important; }
+  .cell-teacher { color: #003 !important; font-size: 0.5rem !important; }
+  .cell-subject { color: #000 !important; font-size: 0.52rem !important; }
+  .cell-note   { font-size: 0.46rem !important; }
   .schedule-table td { min-width: unset !important; }
+  .app-footer { display: none !important; }
   @page { margin: 8mm; size: A4 landscape; }
 }
 
@@ -2502,7 +2523,7 @@ body.light #tutBox { background: #fff; }
 }
 
 #pdfFilenameModal { display: none; }
-#pdfFilenameModal.show { display: flex !important; }
+#pdfFilenameModal.show { display: flex; }
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -6088,7 +6109,7 @@ function closeAboutModal() {
 </div>
 
 <!-- ── Modal nazwy pliku PDF ── -->
-<div id="pdfFilenameModal" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;backdrop-filter:blur(4px)">
+<div id="pdfFilenameModal" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;backdrop-filter:blur(4px)">
   <div style="background:var(--surface);border-radius:16px;padding:28px 28px 24px;width:min(420px,92vw);box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:'Segoe UI',system-ui,sans-serif">
     <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px">📄 Nazwa pliku PDF</div>
     <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:14px">Uzupełnij numer wersji po <b>_v</b></div>
