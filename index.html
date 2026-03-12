@@ -1231,64 +1231,43 @@ body {
 .pdf-from  { color: #1a56db; font-weight: 600; }
 .pdf-from::before { content: 'Od: '; font-weight: 400; color: #555; }
 
-@page { margin: 8mm; size: A4 landscape; }
-
 @media print {
   .topbar, .statusbar, .modal-overlay, #wizardOverlay, #archivePanel, #pwaInstallBanner,
-  #homeroomModal, .notif, .pwa-install-banner, #appHelpPanel, #mobileMenu, #hmenuOverlay,
-  #pdfFilenameModal, #cookieBanner, #cookieDetailModal { display: none !important; }
+  #homeroomModal, .notif, .pwa-install-banner { display: none !important; }
   #pdfHeader { display: block !important; }
-  #appOverlay { display: block !important; }
-  body, body.light { background: #fff !important; color: #000 !important; margin: 0 !important; }
-  .main {
-    padding: 0 !important;
-    overflow: visible !important;
-    width: 100% !important;
-    max-width: none !important;
-  }
-  .schedule-wrap {
-    min-width: unset !important;
-    overflow: visible !important;
-    width: 100% !important;
-  }
+  body, body.light { background: #fff !important; color: #000 !important; }
+  .main { padding: 0 !important; overflow: visible !important; }
+  .schedule-wrap { min-width: unset !important; overflow: visible !important; }
   .schedule-table {
     width: 100% !important;
-    table-layout: fixed !important;
-    font-size: 0.55rem !important;
+    table-layout: auto !important;
+    font-size: 0.6rem !important;
     border-collapse: collapse !important;
-    page-break-inside: auto;
   }
   .schedule-table th, .schedule-table td {
     border: 0.5px solid #bbb !important;
-    padding: 2px 2px !important;
-    overflow: hidden !important;
-    word-break: break-word !important;
+    padding: 2px 3px !important;
   }
   .schedule-table th {
     background: #f0f0f0 !important;
     color: #333 !important;
     position: static !important;
-    white-space: nowrap !important;
+    white-space: nowrap;
   }
-  .schedule-table td.time-cell {
-    background: #f5f5f5 !important;
-    position: static !important;
-    width: 32px !important;
-    min-width: 32px !important;
-  }
-  .th-building { font-size: 0.5rem !important; background: #e8e8e8 !important; }
-  .th-floor    { font-size: 0.5rem !important; }
-  .th-seg-row  { font-size: 0.46rem !important; }
-  .th-room-row { font-size: 0.58rem !important; color: #1a56db !important; }
-  .th-homeroom { font-size: 0.46rem !important; }
-  .cell-inner  { min-height: 24px !important; padding: 2px 2px !important; }
+  .th-building { font-size: 0.55rem !important; background: #e8e8e8 !important; }
+  .th-floor    { font-size: 0.55rem !important; }
+  .th-seg-row  { font-size: 0.5rem !important; }
+  .th-room-row { font-size: 0.62rem !important; color: #1a56db !important; }
+  .th-homeroom { font-size: 0.5rem !important; }
+  .cell-inner  { min-height: 28px !important; padding: 2px 3px !important; }
   .cell-inner.filled { border-left: 2px solid #555 !important; background: #f0f4ff !important; }
-  .cell-abbr   { font-size: 0.5rem !important; padding: 0 1px !important; }
-  .cell-teacher { color: #003 !important; font-size: 0.5rem !important; }
-  .cell-subject { color: #000 !important; font-size: 0.52rem !important; }
-  .cell-note   { font-size: 0.46rem !important; }
-  .schedule-table td { min-width: unset !important; }
+  .cell-abbr   { font-size: 0.55rem !important; padding: 0 2px !important; }
+  .cell-teacher { color: #003 !important; font-size: 0.55rem !important; }
+  .cell-subject { color: #000 !important; font-size: 0.58rem !important; }
+  .cell-note   { font-size: 0.5rem !important; }
+  .schedule-table td.time-cell { background: #f5f5f5 !important; }
   .app-footer { display: none !important; }
+  .schedule-table td { min-width: unset !important; }
   @page { margin: 8mm; size: A4 landscape; }
 }
 
@@ -2522,8 +2501,6 @@ body.light #tutBox { background: #fff; }
   letter-spacing: 0.02em;
 }
 
-#pdfFilenameModal { display: none; }
-#pdfFilenameModal.show { display: flex; }
 </style>
 <script>
 // Force SW update — unregister old cache versions
@@ -5454,13 +5431,13 @@ function exportPDF() {
   validFromDates[appState.yearKey][currentDay] = vf;
 
   // Wypełnij nagłówek PDF
-  const schoolFull  = appState.school?.name || appState.school?.short || '';
+  const schoolFull = appState.school?.name || appState.school?.short || '';
   const schoolShort = appState.school?.short || '';
   const schoolLabel = schoolFull && schoolShort && schoolFull !== schoolShort
     ? `${schoolFull} (${schoolShort})`
     : schoolFull || schoolShort || 'SalePlan';
-  const yearLabel   = appState.yearLabel || appState.yearKey || '';
-  const dayLabel    = (appState.days || [])[currentDay] || '';
+  const yearLabel  = appState.yearLabel || appState.yearKey || '';
+  const dayLabel   = (appState.days || [])[currentDay] || '';
   const vfFormatted = vf
     ? new Date(vf).toLocaleDateString('pl-PL', {day:'2-digit', month:'long', year:'numeric'})
     : 'nie podano';
@@ -5471,31 +5448,28 @@ function exportPDF() {
   hdr.querySelector('.pdf-day').textContent    = `· ${dayLabel}`;
   hdr.querySelector('.pdf-from').textContent   = vfFormatted;
 
-  // Nazwa pliku
-  const DAY_ABBR  = ['PN','WT','SR','CZW','PT'];
-  const dayAbbr   = DAY_ABBR[currentDay] || String(currentDay+1);
-  const yearShort = yearLabel.replace(/20(\d{2})\/20(\d{2})/, '$1-$2').replace(/\//g, '-');
-  const suggested = `${dayAbbr}_${yearShort}_v`;
+  // Build filename — skrót_dnia_rok_szkolny_v
+  const DAY_ABBR = ['PN','WT','SR','CZW','PT'];
+  const dayAbbr  = DAY_ABBR[currentDay] || String(currentDay+1);
+  const yearShort = yearLabel.replace(/20(\d{2})\/20(\d{2})/, '$1-$2')
+                             .replace(/\//g, '-');
+  const vfDate   = vf ? vf.replace(/-/g, '').slice(2) : '';
+  document.title = `${dayAbbr}_${yearShort}_v`;
 
-  // Pokaż dialog z nazwą pliku
-  document.getElementById('pdfFilenameInput').value = suggested;
-  document.getElementById('pdfFilenameModal').classList.add('show');
+  window.print();
+  document.title = 'SalePlan — Plan Sal Zajęciowych';
 }
+(function(){const _vf=document.getElementById('validFrom');if(_vf)_vf.addEventListener('change',()=>{
+  if(!validFromDates[appState.yearKey])validFromDates[appState.yearKey]={};
+  validFromDates[appState.yearKey][currentDay]=_vf.value;
+});})();
 
-function doPrint() {
-  const name = document.getElementById('pdfFilenameInput').value.trim() || 'plan';
-  document.getElementById('pdfFilenameModal').classList.remove('show');
-  const prev = document.title;
-  document.title = name;
-  setTimeout(() => {
-    window.print();
-    setTimeout(() => { document.title = prev; }, 500);
-  }, 100);
-}
-
-function closePdfFilenameModal() {
-  document.getElementById('pdfFilenameModal').classList.remove('show');
-}
+// ================================================================
+//  HELPERS
+// ================================================================
+// ================================================================
+//  MERGE CLASS NAMES — łączy np. ['4A MN','4B MN','4C MN'] → ['4ABC MN']
+// ================================================================
 function mergeClassNames(classes) {
   if (!classes || classes.length <= 1) return classes || [];
 
@@ -6104,23 +6078,6 @@ function closeAboutModal() {
         <strong>Krzysztof Jureczek</strong>
         Autor i twórca aplikacji SalePlan
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ── Modal nazwy pliku PDF ── -->
-<div id="pdfFilenameModal" style="position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;backdrop-filter:blur(4px)">
-  <div style="background:var(--surface);border-radius:16px;padding:28px 28px 24px;width:min(420px,92vw);box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:'Segoe UI',system-ui,sans-serif">
-    <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px">📄 Nazwa pliku PDF</div>
-    <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:14px">Uzupełnij numer wersji po <b>_v</b></div>
-    <input id="pdfFilenameInput" type="text"
-      style="width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:var(--mono);background:var(--surface2);color:var(--text);outline:none"
-      onkeydown="if(event.key==='Enter')doPrint();if(event.key==='Escape')closePdfFilenameModal()"
-      onfocus="const v=this.value;const vIdx=v.lastIndexOf('_v');if(vIdx>=0){this.setSelectionRange(vIdx+2,v.length)}"
-    >
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
-      <button class="btn btn-ghost" onclick="closePdfFilenameModal()">Anuluj</button>
-      <button class="btn btn-primary" onclick="doPrint()">🖨️ Drukuj / Zapisz PDF</button>
     </div>
   </div>
 </div>
