@@ -3001,8 +3001,9 @@ if ('serviceWorker' in navigator) {
       <label class="form-label">Klasa / Grupa <span style="font-size:0.6rem;color:var(--text-dim);font-weight:400">(można dodać kilka)</span></label>
       <select class="teacher-select" id="inpClass" style="display:none"></select>
       <div id="multiClassList" class="mc-list"></div>
-      <button class="quick-add-toggle" onclick="toggleQuickAdd('class')" id="qaToggleClass">
-        <span class="qa-icon">＋</span> Dodaj nową klasę / grupę
+      <div id="mcSelectWrap" class="mc-add-wrap" style="margin-top:6px"></div>
+      <button class="quick-add-toggle" onclick="toggleQuickAdd('class')" id="qaToggleClass" style="margin-top:4px;font-size:0.72rem;color:var(--text-dim)">
+        <span class="qa-icon">＋</span> Utwórz nową klasę / grupę
       </button>
       <div class="quick-add-panel" id="qaPanelClass">
         <div class="quick-add-row">
@@ -3174,6 +3175,7 @@ if ('serviceWorker' in navigator) {
       <li><b>Escape</b> — zamknij okno lub panel pomocy</li>
     </ul>
   </div>
+</div>
 
 
 <!-- ── Baner informacji o localStorage ── -->
@@ -3234,6 +3236,7 @@ if ('serviceWorker' in navigator) {
 
 
 <script>
+// ============
 // ================================================================
 //  INFORMACJA O LOKALNYM PRZECHOWYWANIU DANYCH
 // ================================================================
@@ -5225,6 +5228,7 @@ function openEditModal(day, hour, key) {
 
   document.getElementById('inpSubject').value = entry.subject||'';
   document.getElementById('inpNote').value = entry.note||'';
+  renderMcSelect();
   document.getElementById('editModal').classList.add('show');
   selT.focus();
 }
@@ -5244,57 +5248,47 @@ function closeEditModal() {
 // ================================================================
 //  ZAJĘCIA MIĘDZYODDZIAŁOWE — wielokrotny wybór klas
 // ================================================================
-function renderMultiClassList(selected) {
-  // Zawsze aktualizuj moduł stanu
-  _selectedClasses = Array.isArray(selected) ? selected.slice() : [];
+function renderMcSelect() {
+  const wrap = document.getElementById('mcSelectWrap');
+  if (!wrap) return;
+  const classes = appState?.classes || [];
+  if (!classes.length) { wrap.innerHTML = ''; return; }
+  const sortedClasses = classes.slice().sort((a,b) =>
+    (a.name||'').localeCompare(b.name||'', 'pl', {numeric:true, sensitivity:'base'}));
+  const opts = sortedClasses.map(cl => {
+    const val   = cl.abbr || cl.name;
+    const label = (cl.group && cl.group.toLowerCase() !== 'cała klasa')
+      ? cl.name + ' — ' + cl.group : cl.name;
+    return `<option value="${esc(val)}">${esc(label)}</option>`;
+  }).join('');
+  wrap.innerHTML =
+    `<select id="mcAddSelect" class="teacher-select mc-add-select">${opts}</select>
+     <button class="btn btn-green mc-add-btn" onclick="mcAddClass()">＋ Dodaj</button>`;
+}
 
+function renderMultiClassList(selected) {
+  _selectedClasses = Array.isArray(selected) ? selected.slice() : [];
   const container = document.getElementById('multiClassList');
   if (!container) return;
-
   const classes = appState?.classes || [];
   if (classes.length === 0) {
     container.innerHTML = '<span style="color:orange;font-size:0.8rem">⚠ Brak klas — dodaj w kreatorze (✏️ Edytuj rok)</span>';
     return;
   }
-
-  // Pomocnicza: znajdź etykietę dla skrótu
   function labelFor(val) {
     const found = classes.find(cl => (cl.abbr || cl.name) === val);
     if (!found) return val;
     return (found.group && found.group.toLowerCase() !== 'cała klasa')
-      ? found.name + ' ' + found.group
-      : found.name;
+      ? found.name + ' ' + found.group : found.name;
   }
-
-  // Chipsy wybranych klas
   const chips = _selectedClasses.map((val, i) =>
     `<span class="mc-chip">
        <span class="mc-chip-val">${esc(labelFor(val))}</span>
        <button class="mc-chip-del" onclick="mcRemoveClass(${i})" title="Usuń">✕</button>
      </span>`
   ).join('');
-
-  // Opcje selecta (posortowane, bez już wybranych)
-  const sortedClasses = classes.slice().sort((a,b) =>
-    (a.name||'').localeCompare(b.name||'', 'pl', {numeric:true, sensitivity:'base'})
-  );
-  const opts = sortedClasses.map(cl => {
-    const val   = cl.abbr || cl.name;
-    const label = (cl.group && cl.group.toLowerCase() !== 'cała klasa')
-      ? cl.name + ' — ' + cl.group
-      : cl.name;
-    const sel = _selectedClasses.includes(val) ? ' style="color:var(--text-dim)"' : '';
-    return `<option value="${esc(val)}"${sel}>${esc(label)}</option>`;
-  }).join('');
-
-  container.innerHTML = chips +
-    `<span class="mc-add-wrap">
-       <select id="mcAddSelect" class="teacher-select mc-add-select">${opts}</select>
-       <button class="btn btn-green mc-add-btn" onclick="mcAddClass()">＋ Dodaj</button>
-     </span>`;
+  container.innerHTML = chips || '<span style="font-size:0.75rem;color:var(--text-dim)">Brak wybranych klas</span>';
 }
-
-
 function mcAddClass() {
   const sel = document.getElementById('mcAddSelect');
   if (!sel) return;
@@ -5306,6 +5300,7 @@ function mcAddClass() {
   }
   _selectedClasses.push(val);
   renderMultiClassList(_selectedClasses);
+  renderMcSelect();
 }
 
 
@@ -5939,10 +5934,6 @@ function closeAboutModal() {
 
 
 </script>
-
-
-</div>
-
 
 <!-- ── Modal O programie ── -->
 <div id="aboutModal">
