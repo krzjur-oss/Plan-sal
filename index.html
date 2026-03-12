@@ -3429,6 +3429,8 @@ function loadAll() {
   if (appState && !appState.teachers)  appState.teachers  = [];
   if (appState && !appState.classes)   appState.classes   = [];
   if (appState && !appState.buildings) appState.buildings = [];
+  // Migracja nazw klas
+  if (appState) migrateClassNames(appState);
   // Normalizacja: hours muszą być stringami i posortowane numerycznie
   if (appState && appState.hours) {
     appState.hours = appState.hours
@@ -4125,6 +4127,7 @@ function confirmImport() {
     // Przywróć konfigurację i archiwum jeśli lokalnie brak
     if (!appState && _importData.appState)   appState = _importData.appState;
     if ((!archive || !archive.length) && _importData.archive) archive = _importData.archive;
+    migrateClassNames(appState);
     notify('✓ Scalono — dodano brakujące wpisy');
   } else {
     // Nadpisz całkowicie
@@ -4132,6 +4135,7 @@ function confirmImport() {
     if (_importData.validFromDates) validFromDates = _importData.validFromDates;
     if (_importData.appState)       appState       = _importData.appState;
     if (_importData.archive)        archive        = _importData.archive;
+    migrateClassNames(appState);
     notify('✓ Plan zastąpiony danymi z pliku');
   }
   persistAll();
@@ -4492,6 +4496,15 @@ function normalizeClassName(name) {
   const m = name.match(/^(\d+)([a-zA-Z\u00C0-\u017E]*)(.*)$/);
   if (m) return m[1] + m[2].toUpperCase() + m[3];
   return name ? name[0].toUpperCase() + name.slice(1) : name;
+}
+
+function migrateClassNames(state) {
+  if (!state || !Array.isArray(state.classes)) return;
+  state.classes = state.classes.map(cl => ({
+    ...cl,
+    name: normalizeClassName(cl.name || ''),
+    abbr: (cl.abbr || '').toUpperCase()
+  }));
 }
 
 function getClassesFromDOM() {
