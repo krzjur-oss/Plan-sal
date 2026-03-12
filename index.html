@@ -3010,7 +3010,7 @@ if ('serviceWorker' in navigator) {
         <div class="quick-add-row">
           <div style="display:flex;flex-direction:column;gap:3px;flex:1">
             <span class="quick-add-label">Klasa</span>
-            <input class="quick-add-inp" id="qaClassName" placeholder="np. 4A" oninput="qaAutoClassAbbr()">
+            <input class="quick-add-inp" id="qaClassName" placeholder="np. 4A" oninput="this.value=normalizeClassName(this.value);this.setSelectionRange(this.value.length,this.value.length);qaAutoClassAbbr()">
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;flex:1">
             <span class="quick-add-label">Skrót</span>
@@ -4460,7 +4460,7 @@ function renderClassGrid() {
   document.getElementById('classGrid').innerHTML = wClasses.map((c,i) => `
     <div class="class-item">
       <input class="class-input" value="${esc(c.name)}" placeholder="np. 1A"
-        oninput="wClasses[${i}].name=this.value; wClassAutoAbbr(${i})">
+        oninput="wClasses[${i}].name=normalizeClassName(this.value);this.value=wClasses[${i}].name;this.setSelectionRange(this.value.length,this.value.length); wClassAutoAbbr(${i})">
       <input class="class-abbr-inp" id="wca${i}" value="${esc(c.abbr)}" placeholder="skrót (auto)" maxlength="12"
         oninput="wClasses[${i}].abbr=this.value.toUpperCase();this.value=this.value.toUpperCase()"
         title="Edytuj ręcznie aby nadpisać auto-skrót">
@@ -4486,12 +4486,20 @@ function addClass() {
   document.querySelectorAll('.class-input')[wClasses.length-1]?.focus();
 }
 function removeClassAt(i) { wClasses.splice(i,1); renderClassGrid(); }
+function normalizeClassName(name) {
+  name = (name || '').trim();
+  // "1a" → "1A", "1abc" → "1ABC", "ang" → "Ang"
+  const m = name.match(/^(\d+)([a-zA-Z\u00C0-\u017E]*)(.*)$/);
+  if (m) return m[1] + m[2].toUpperCase() + m[3];
+  return name ? name[0].toUpperCase() + name.slice(1) : name;
+}
+
 function getClassesFromDOM() {
   // sync from DOM before returning
   document.querySelectorAll('.class-item').forEach((row,i) => {
     if (!wClasses[i]) return;
     const inps = row.querySelectorAll('input');
-    wClasses[i].name  = inps[0].value.trim();
+    wClasses[i].name  = normalizeClassName(inps[0].value);
     wClasses[i].abbr  = inps[1].value.trim().toUpperCase();
     wClasses[i].group = inps[2].value.trim();
   });
@@ -5838,7 +5846,7 @@ function qaAddTeacher() {
 }
 
 function qaAddClass() {
-  const name  = document.getElementById('qaClassName').value.trim();
+  const name  = normalizeClassName(document.getElementById('qaClassName').value);
   let   abbr  = document.getElementById('qaClassAbbr').value.trim().toUpperCase();
   const group = document.getElementById('qaClassGroup').value.trim() || 'cała klasa';
 
