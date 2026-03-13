@@ -3162,6 +3162,41 @@ body.light #tutBox { background: #fff; }
   </div>
 </div>
 
+<!-- ── Modal importu JSON ── -->
+<div id="importModal">
+  <div class="modal" style="width:460px;max-width:95vw">
+    <div class="modal-title">⬇ Importuj plan z pliku JSON</div>
+    <div class="modal-sub">Podgląd różnic między importowanym planem a bieżącym</div>
+
+    <div id="importInfo" style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px"></div>
+
+    <div class="form-group">
+      <label class="form-label">Tryb importu</label>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+          <input type="radio" name="importMode" id="importModeMerge" value="merge" style="margin-top:3px;flex-shrink:0">
+          <div>
+            <div style="font-size:0.85rem;font-weight:700;color:var(--text)">⊕ Scal — uzupełnij braki</div>
+            <div style="font-size:0.74rem;color:var(--text-muted);margin-top:2px">Dodaje tylko wpisy których brakuje w bieżącym planie. Istniejące komórki pozostają bez zmian.</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">
+          <input type="radio" name="importMode" id="importModeOverwrite" value="overwrite" style="margin-top:3px;flex-shrink:0">
+          <div>
+            <div style="font-size:0.85rem;font-weight:700;color:var(--red)">⚠ Zastąp — nadpisz wszystko</div>
+            <div style="font-size:0.74rem;color:var(--text-muted);margin-top:2px">Zastępuje cały bieżący plan danymi z pliku. Obecne wpisy zostaną utracone.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:6px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeImportModal()">Anuluj</button>
+      <button class="btn btn-primary" onclick="confirmImport()">✓ Importuj</button>
+    </div>
+  </div>
+</div>
+
 <div id="appHelpPanel">
   <h3>Pomoc <button onclick="toggleAppHelp()" style="background:none;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:0;line-height:1">✕</button></h3>
 
@@ -4171,7 +4206,6 @@ function confirmImport() {
   if (!_importData) return;
   const merge = document.getElementById('importModeMerge').checked;
   const impSched = _importData.schedData || {};
-  const yk = appState?.yearKey;
 
   if (merge) {
     // Scalanie: tylko puste komórki
@@ -4194,24 +4228,40 @@ function confirmImport() {
       });
     });
     // Przywróć konfigurację i archiwum jeśli lokalnie brak
-    if (!appState && _importData.appState)   appState = _importData.appState;
-    if ((!archive || !archive.length) && _importData.archive) archive = _importData.archive;
+    if (!appState && _importData.appState) {
+      appState = _importData.appState;
+      if (!appState.homerooms) appState.homerooms = {};
+    }
+    if (_importData.validFromDates) {
+      Object.assign(validFromDates, _importData.validFromDates);
+    }
+    if (_importData.archive && _importData.archive.length) {
+      if (!archive || !archive.length) archive = _importData.archive;
+    }
     migrateClassNames(appState);
+    persistAll();
+    closeImportModal();
+    if (appState) {
+      mountApp();
+    }
     notify('✓ Scalono — dodano brakujące wpisy');
   } else {
     // Nadpisz całkowicie
     schedData = impSched;
     if (_importData.validFromDates) validFromDates = _importData.validFromDates;
-    if (_importData.appState)       appState       = _importData.appState;
-    if (_importData.archive)        archive        = _importData.archive;
+    if (_importData.appState) {
+      appState = _importData.appState;
+      if (!appState.homerooms) appState.homerooms = {};
+    }
+    if (_importData.archive) archive = _importData.archive;
     migrateClassNames(appState);
+    persistAll();
+    closeImportModal();
+    if (appState) {
+      mountApp();
+    }
     notify('✓ Plan zastąpiony danymi z pliku');
   }
-  persistAll();
-  closeImportModal();
-  renderSchedule();
-
-
 }
 
 // ── Drag & drop na całą aplikację ──
