@@ -1,11 +1,11 @@
 // SalePlan Service Worker
-const CACHE = 'sp-v90';
+const CACHE = 'sp-v91';
 const ASSETS = [
-  '/Plan-sal/',
-  '/Plan-sal/index.html',
-  '/Plan-sal/manifest.json',
-  '/Plan-sal/icon-192.png',
-  '/Plan-sal/icon-512.png',
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap',
 ];
 
@@ -43,7 +43,7 @@ self.addEventListener('fetch', e => {
   if (url.origin === location.origin && (
     url.pathname.endsWith('.html') ||
     url.pathname.endsWith('/') ||
-    url.pathname === '/Plan-sal'
+    url.pathname === '/salaplan'
   )) {
     e.respondWith(
       fetch(e.request, { cache: 'no-store' })
@@ -67,7 +67,7 @@ self.addEventListener('fetch', e => {
           if (r && r.status === 200)
             caches.open(CACHE).then(c => c.put(e.request, r.clone()));
           return r;
-        }).catch(() => caches.match('/Plan-sal/index.html'));
+        })        .catch(() => caches.match('./index.html'));
       })
     );
     return;

@@ -6,6 +6,16 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 ---
 
+## 📦 Wersja
+
+| | |
+|---|---|
+| **Aktualna wersja** | v1.1.0 |
+| **Ostatnia aktualizacja** | 31 marca 2026 |
+| **Status** | Aktywny, rozwijany |
+
+---
+
 ## ✨ Funkcje
 
 ### 🚀 Strona powitalna
@@ -188,6 +198,34 @@ Plan-sal/
 ## 🛠 Technologie
 
 Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localStorage. Offline: Service Worker (Cache API). Standard: PWA (Web App Manifest).
+
+---
+
+## 🆕 Co nowego
+
+### v1.1.0 — 31 marca 2026
+
+- Naprawiono crash kreatora przy przejściu do kroku 5 (przypisania sal)
+- Naprawiono import nauczycieli z pliku TXT w kreatorze
+- Dodano brakującą inicjalizację pól appState dla starszych planów
+- Naprawiono zapis daty „obowiązuje od" przy brakującym planie
+- Naprawiono czyszczenie starych danych w localStorage przy usuwaniu planu
+- Usunięto konfliktujące definicje CSS (duplikaty animacji notyfikacji)
+- Poprawiono bezpieczeństwo — dodano escapowanie apostrofów w szablonach HTML
+- Dodano numer wersji, datę aktualizacji i sekcję changelog
+- Bump Service Worker cache v90 → v91
+
+### v1.0.0 — styczeń 2025
+
+- Pierwsze wydanie aplikacji SalePlan
+- Kreator konfiguracji szkoły (6 kroków)
+- Plan sal zajęciowych z obsługą budynków, pięter i segmentów
+- Wykrywanie kolizji nauczycieli i klas
+- Eksport/import JSON, eksport do PDF
+- Gospodarz sali z obsługą dwóch wychowawców
+- Tryb demo z przykładowymi danymi
+- PWA — instalacja na urządzeniu, praca offline
+- Motyw jasny i ciemny
 
 ---
 
