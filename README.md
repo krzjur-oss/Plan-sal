@@ -10,8 +10,8 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v1.1.0 |
-| **Ostatnia aktualizacja** | 31 marca 2026 |
+| **Aktualna wersja** | v1.2.0 |
+| **Ostatnia aktualizacja** | 7 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
 ---
@@ -202,6 +202,17 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v1.2.0 — 7 kwietnia 2026
+
+- Naprawiono crash przycisku zamknięcia banera PWA (`dismissPWAInstall` → `pwaDismiss`)
+- Naprawiono zakładki przypisań sal — używały `DAYS_DEFAULT` zamiast `appState.days`
+- Dodano `FileReader.onerror` do trzech funkcji (`welcomeHandleFile`, `handleImportFile`, `readFloorTxtFile`)
+- Naprawiono mylące łamanie linii przed operatorem `?` w `detectCollisions`
+- Przekonwertowano `<a>` bez `href` na `<button>` — lepsza dostępność
+- Usunięto zduplikowaną deklarację CSS `display:none` w `#pwaInstallBanner`
+- Usunięto pustą regułę CSS `.pdf-day`
+- Dodano `defer` do wczytywania `app.js` — poprawiona kolejność inicjalizacji DOM
 
 ### v1.1.0 — 31 marca 2026
 
