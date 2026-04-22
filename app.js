@@ -115,7 +115,7 @@ function closeAppHelp() {
 //  PANEL INSTRUKCJI KREATORA
 // ================================================================
 function wpUpdate(step) {
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < 7; i++) {
     var el = document.getElementById('wp' + i);
     if (el) el.classList.toggle('active', i === step);
   }
@@ -128,7 +128,7 @@ const DAYS_DEFAULT = ['Poniedziałek','Wtorek','Środa','Czwartek','Piątek'];
 const FLOOR_COLORS = ['#f59e0b','#3b82f6','#10b981','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
 const BUILDING_COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'];
 const BUILDING_LETTERS = ['A','B','C','D','E','F','G','H'];
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 
 let appState = null;
 let schedData = {};
@@ -143,10 +143,96 @@ let wFloors = [];
 let wClasses = [];
 let wTeachers = []; // [{first, last, abbr}]
 let wAssignments = {};
+let wSubjects = []; // [{name, abbr}] — słownik przedmiotów
+let wTimeslots = []; // [{label, start, end}] — przedziały czasowe lekcji
 let wStep = 0;
 
 let _mDay, _mHour, _mKey;
 let _selectedClasses = [];
+
+// ================================================================
+//  UNDO / REDO
+// ================================================================
+const UNDO_LIMIT = 30; // max głębokość stosu
+let _undoStack = [];   // [{snapshot, label}]
+let _redoStack = [];   // [{snapshot, label}]
+
+// Tryb widoku: 'rooms' | 'teacher' | 'class'
+let _viewMode   = 'rooms';
+let _viewFilter = ''; // skrót nauczyciela lub skrót klasy
+
+// Zapisuje snapshot schedData przed operacją mutującą komórkę/dzień
+function undoPush(label) {
+  const yk = appState?.yearKey;
+  if (!yk) return;
+  _undoStack.push({
+    label,
+    yearKey: yk,
+    day: currentDay,
+    snapshot: JSON.parse(JSON.stringify(schedData[yk]?.[currentDay] || {})),
+  });
+  if (_undoStack.length > UNDO_LIMIT) _undoStack.shift();
+  _redoStack = []; // nowa operacja kasuje redo
+  _undoUpdateUI();
+}
+
+function undoApply(stack, targetStack, action) {
+  if (!stack.length || !appState) return;
+  const entry = stack.pop();
+  const yk = appState.yearKey;
+
+  // Zapisz aktualny stan na docelowy stos
+  targetStack.push({
+    label: entry.label,
+    yearKey: yk,
+    day: entry.day,
+    snapshot: JSON.parse(JSON.stringify(schedData[yk]?.[entry.day] || {})),
+  });
+
+  // Przywróć
+  if (!schedData[yk]) schedData[yk] = {};
+  schedData[yk][entry.day] = JSON.parse(JSON.stringify(entry.snapshot));
+  persistAll();
+
+  // Przełącz na właściwy dzień jeśli inny
+  if (entry.day !== currentDay) {
+    currentDay = entry.day;
+    renderDayTabs();
+  }
+  renderSchedule();
+  updateStatusBar();
+  sbSet(`${action}: ${entry.label}`);
+  _undoUpdateUI();
+}
+
+function undoAction()  { undoApply(_undoStack, _redoStack, '↩ Cofnięto'); }
+function redoAction()  { undoApply(_redoStack, _undoStack, '↪ Przywrócono'); }
+
+function _undoUpdateUI() {
+  const canUndo = _undoStack.length > 0;
+  const canRedo = _redoStack.length > 0;
+
+  const btnU = document.getElementById('btnUndo');
+  const btnR = document.getElementById('btnRedo');
+  if (btnU) {
+    btnU.disabled = !canUndo;
+    btnU.title = canUndo
+      ? `Cofnij: ${_undoStack[_undoStack.length-1].label} (Ctrl+Z)`
+      : 'Brak operacji do cofnięcia';
+  }
+  if (btnR) {
+    btnR.disabled = !canRedo;
+    btnR.title = canRedo
+      ? `Przywróć: ${_redoStack[_redoStack.length-1].label} (Ctrl+Y)`
+      : 'Brak operacji do przywrócenia';
+  }
+
+  // Menu hamburger
+  const hmU = document.getElementById('hmenuUndo');
+  const hmR = document.getElementById('hmenuRedo');
+  if (hmU) { hmU.disabled = !canUndo; hmU.style.opacity = canUndo ? '1' : '0.4'; }
+  if (hmR) { hmR.disabled = !canRedo; hmR.style.opacity = canRedo ? '1' : '0.4'; }
+}
 
 // ================================================================
 //  ABBREVIATION GENERATOR
@@ -510,6 +596,12 @@ function openEditWizard() {
   wFloors    = JSON.parse(JSON.stringify(appState.floors    || []));
   wClasses   = JSON.parse(JSON.stringify(appState.classes   || []));
   wTeachers  = JSON.parse(JSON.stringify(appState.teachers  || []));
+  wSubjects  = JSON.parse(JSON.stringify(appState.subjects  || []));
+  wTimeslots = JSON.parse(JSON.stringify(
+    appState.timeslots?.length
+      ? appState.timeslots
+      : buildTimeslotsFromHours(appState.hours || [], [])
+  ));
 
   document.getElementById('wSchoolName').value  = appState.school?.name  || '';
   document.getElementById('wSchoolShort').value = appState.school?.short || '';
@@ -568,6 +660,8 @@ function wizardCollectDraft() {
     classes:   JSON.parse(JSON.stringify(wClasses    || [])),
     teachers:  JSON.parse(JSON.stringify(wTeachers   || [])),
     assignments: JSON.parse(JSON.stringify(wAssignments || {})),
+    subjects:  JSON.parse(JSON.stringify(wSubjects   || [])),
+    timeslots: JSON.parse(JSON.stringify(wTimeslots  || [])),
   };
 }
 
@@ -599,8 +693,15 @@ function wizardSaveDraft() {
     }, 4000);
   } catch(e) {
     if (dotEl)  dotEl.classList.remove('saving');
-    if (textEl) textEl.textContent = 'Błąd zapisu szkicu';
-    console.warn('wizardSaveDraft error:', e);
+    const isQuota = e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+                    (e.code && (e.code === 22 || e.code === 1014));
+    if (isQuota) {
+      if (textEl) textEl.textContent = '⚠ Brak miejsca — szkic nie zapisany';
+      notify('⚠ Brak miejsca w przeglądarce — szkic kreatora nie został zapisany', true);
+    } else {
+      if (textEl) textEl.textContent = 'Błąd zapisu szkicu';
+      console.warn('wizardSaveDraft error:', e);
+    }
   }
 }
 
@@ -652,6 +753,8 @@ function draftResume() {
     wFloors      = draft.floors     || [];
     wClasses     = draft.classes    || [];
     wTeachers    = draft.teachers   || [];
+    wSubjects    = draft.subjects   || [];
+    wTimeslots   = draft.timeslots  || [];
     wAssignments = draft.assignments || {};
 
     // Przywróć pola formularza
@@ -666,8 +769,11 @@ function draftResume() {
     renderBuildingList();
     renderFloorList();
     renderClassGrid();
+    renderSubjectList();
     renderTeacherList();
-    if (wStep === 5) renderAssignmentsStep();
+    if (wStep === 1 || wStep === 2) initTimeslotEditor();
+    if (wStep === 4) renderSubjectList();
+    if (wStep === 6) renderAssignmentsStep();
     updateWizardStep();
     wpUpdate(wStep);
 
@@ -781,6 +887,223 @@ function exportJSON() {
   a.click();
   URL.revokeObjectURL(url);
   notify('✓ Wyeksportowano plan do pliku JSON');
+}
+
+
+// ================================================================
+//  EKSPORT CSV
+// ================================================================
+
+// Escapuje wartość do formatu CSV (RFC 4180)
+function csvCell(val) {
+  const s = String(val == null ? '' : val);
+  if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function csvRow(cells) {
+  return cells.map(csvCell).join(',');
+}
+
+function downloadCSV(filename, rows) {
+  // BOM UTF-8 — Excel na Windows otwiera poprawnie polskie znaki
+  const bom  = '\uFEFF';
+  const text = bom + rows.join('\r\n');
+  const blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function csvFilename(suffix) {
+  const date   = new Date().toISOString().slice(0, 10);
+  const school = (appState?.school?.short || appState?.school?.name || 'SalePlan').replace(/\s+/g, '_');
+  const year   = (appState?.yearLabel || appState?.yearKey || '').replace(/[\/\\]/g, '-');
+  return `${school}_${year}_${suffix}_${date}.csv`;
+}
+
+// ── Wariant 1: Plan dzienny ──────────────────────────────────────
+// Wiersze: godziny lekcyjne; Kolumny: sale
+function exportCSVDay() {
+  if (!appState) return;
+  const cols    = flattenColumns(appState.floors);
+  const hours   = appState.hours;
+  const dayData = schedData[appState.yearKey]?.[currentDay] || {};
+  const dayName = appState.days[currentDay] || String(currentDay);
+
+  const rows = [];
+
+  // Nagłówek — 1. wiersz: dzień, 2. wiersz: nazwy sal
+  rows.push(csvRow(['Plan dzienny', dayName, appState.yearLabel || '']));
+  rows.push(csvRow(['Godz.', 'Czas', ...cols.map(col => col.room.num || col.room.sub || '?')]));
+
+  hours.forEach(h => {
+    const ts = getTimeslot(h);
+    const timeStr = (ts && ts.start && ts.end) ? `${ts.start}–${ts.end}` : '';
+    const cells = [String(h), timeStr];
+    cols.forEach(col => {
+      const entry = dayData[h]?.[colKey(col)] || {};
+      const cls   = (entry.classes || []).length ? entry.classes.join('+') : (entry.className || '');
+      const parts = [cls, entry.subject || '', entry.teacherAbbr || '', entry.note || ''];
+      cells.push(parts.filter(Boolean).join(' | '));
+    });
+    rows.push(csvRow(cells));
+  });
+
+  downloadCSV(csvFilename(`${dayName}`), rows);
+  notify('✓ Wyeksportowano plan dnia do CSV');
+  closeCSVModal();
+}
+
+// ── Wariant 2: Plan tygodniowy (jedna sala) ──────────────────────
+// Wiersze: godziny; Kolumny: dni tygodnia
+function exportCSVWeekBySala() {
+  if (!appState) return;
+  const cols  = flattenColumns(appState.floors);
+  const hours = appState.hours;
+  const days  = appState.days;
+  const yk    = appState.yearKey;
+
+  const rows = [];
+  rows.push(csvRow(['Plan tygodniowy — zestawienie per sala', appState.yearLabel || '']));
+  rows.push([]);
+
+  cols.forEach(col => {
+    const key       = colKey(col);
+    const roomLabel = col.room.num ? `Sala ${col.room.num}` : (col.room.sub || '?');
+    rows.push(csvRow([roomLabel]));
+    rows.push(csvRow(['Godz.', 'Czas', ...days]));
+
+    hours.forEach(h => {
+      const ts = getTimeslot(h);
+      const timeStr = (ts && ts.start && ts.end) ? `${ts.start}–${ts.end}` : '';
+      const cells = [String(h), timeStr];
+      days.forEach((_, di) => {
+        const entry = schedData[yk]?.[di]?.[h]?.[key] || {};
+        const cls   = (entry.classes || []).length ? entry.classes.join('+') : (entry.className || '');
+        const parts = [cls, entry.subject || '', entry.teacherAbbr || '', entry.note || ''];
+        cells.push(parts.filter(Boolean).join(' | '));
+      });
+      rows.push(csvRow(cells));
+    });
+    rows.push([]); // pusty wiersz między salami
+  });
+
+  downloadCSV(csvFilename('tygodniowy_sale'), rows);
+  notify('✓ Wyeksportowano plan tygodniowy (sale) do CSV');
+  closeCSVModal();
+}
+
+// ── Wariant 3: Zestawienie — każdy wpis jako wiersz ─────────────
+// Format płaski: Dzień, Godz., Czas, Sala, Klasy, Przedmiot, Nauczyciel, Uwaga
+function exportCSVFlat() {
+  if (!appState) return;
+  const cols  = flattenColumns(appState.floors);
+  const hours = appState.hours;
+  const days  = appState.days;
+  const yk    = appState.yearKey;
+
+  const rows = [];
+  rows.push(csvRow([
+    'Rok szkolny', 'Dzień', 'Nr godz.', 'Czas', 'Piętro', 'Segment', 'Sala',
+    'Klasy', 'Przedmiot', 'Nauczyciel (skrót)', 'Nauczyciel (imię nazwisko)', 'Uwaga'
+  ]));
+
+  days.forEach((dayName, di) => {
+    hours.forEach(h => {
+      const ts      = getTimeslot(h);
+      const timeStr = (ts && ts.start && ts.end) ? `${ts.start}–${ts.end}` : '';
+      cols.forEach(col => {
+        const entry = schedData[yk]?.[di]?.[h]?.[colKey(col)] || {};
+        const filled = entry.teacherAbbr || entry.subject || entry.className || (entry.classes||[]).length;
+        if (!filled) return; // pomiń puste
+        const cls      = (entry.classes || []).length ? entry.classes.join('+') : (entry.className || '');
+        const teacher  = entry.teacherAbbr ? getTeacherByAbbr(entry.teacherAbbr) : null;
+        const fullName = teacher ? `${teacher.last || ''} ${teacher.first || ''}`.trim() : '';
+        const floor    = col.floor?.name || '';
+        const seg      = col.segment?.name || '';
+        const sala     = col.room.num || col.room.sub || '';
+        rows.push(csvRow([
+          appState.yearLabel || yk,
+          dayName,
+          String(h),
+          timeStr,
+          floor,
+          seg,
+          sala,
+          cls,
+          entry.subject || '',
+          entry.teacherAbbr || '',
+          fullName,
+          entry.note || '',
+        ]));
+      });
+    });
+  });
+
+  downloadCSV(csvFilename('zestawienie'), rows);
+  notify(`✓ Wyeksportowano ${rows.length - 1} wpisów do CSV`);
+  closeCSVModal();
+}
+
+// ── Modal wyboru wariantu CSV ────────────────────────────────────
+function openCSVModal() {
+  if (!appState) { notify('⚠ Brak aktywnego planu', true); return; }
+  let modal = document.getElementById('csvExportModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'csvExportModal';
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '9998';
+    modal.innerHTML = `
+      <div class="modal csv-modal">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">📊 Eksport do CSV</div>
+            <div class="modal-sub">Wybierz format eksportu</div>
+          </div>
+          <button class="modal-close" onclick="closeCSVModal()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn csv-export-btn" onclick="exportCSVDay()">
+            <span class="csv-btn-icon">📅</span>
+            <span class="csv-btn-text">
+              <strong>Plan dzienny</strong>
+              <span>Aktywny dzień — kolumny: sale, wiersze: godziny</span>
+            </span>
+          </button>
+          <button class="btn csv-export-btn" onclick="exportCSVWeekBySala()">
+            <span class="csv-btn-icon">🗓</span>
+            <span class="csv-btn-text">
+              <strong>Plan tygodniowy</strong>
+              <span>Wszystkie sale × wszystkie dni tygodnia</span>
+            </span>
+          </button>
+          <button class="btn csv-export-btn" onclick="exportCSVFlat()">
+            <span class="csv-btn-icon">📋</span>
+            <span class="csv-btn-text">
+              <strong>Zestawienie wpisów</strong>
+              <span>Każdy wpis jako wiersz — do analizy w Excelu / Google Sheets</span>
+            </span>
+          </button>
+          <div style="font-size:0.72rem;color:var(--text-dim);margin-top:4px;line-height:1.5">
+            Pliki CSV mają kodowanie UTF-8 z BOM — Excel otwiera je poprawnie bez konwersji.
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeCSVModal(); });
+  }
+  modal.classList.add('show');
+}
+
+function closeCSVModal() {
+  document.getElementById('csvExportModal')?.classList.remove('show');
 }
 
 // ── Wczytaj JSON z pliku (obsługa pliku) ──
@@ -944,13 +1267,160 @@ function initImportDragDrop() {
     if (file) handleImportFile(file);
   });
 }
+// ================================================================
+//  STORAGE — BEZPIECZNY ZAPIS (QuotaExceededError)
+// ================================================================
+
+// Szacuje rozmiar danych w localStorage (bajty)
+function storageUsageBytes() {
+  let total = 0;
+  try {
+    for (const key of Object.keys(localStorage)) {
+      total += (localStorage.getItem(key) || '').length * 2; // UTF-16
+    }
+  } catch(e) {}
+  return total;
+}
+
+// Formatuje bajty na czytelny string
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+// Bezpieczny setItem — zwraca true/false, bez rzucania wyjątku
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+        (e.code && (e.code === 22 || e.code === 1014))) {
+      return false;
+    }
+    throw e; // inny błąd — propaguj
+  }
+}
+
+// Strategia ratunkowa przy przepełnieniu:
+// 1. Usuń szkic kreatora (mały, zbędny po zamknięciu)
+// 2. Usuń archiwum lat (może być duże)
+// 3. Jeśli nadal brak miejsca — pokaż modal awaryjny
+function _handleQuotaExceeded(failedKey) {
+  console.warn('[PlanLekcji] QuotaExceededError przy zapisie klucza:', failedKey,
+    '| Użycie localStorage:', formatBytes(storageUsageBytes()));
+
+  // Krok 1: usuń szkic kreatora
+  const hadDraft = !!localStorage.getItem(DRAFT_KEY);
+  if (hadDraft) {
+    localStorage.removeItem(DRAFT_KEY);
+    notify('⚠ Brak miejsca — usunięto szkic kreatora, by zwolnić pamięć', true);
+    // Spróbuj ponownie
+    if (safeSetItem(failedKey, _pendingSaveValues[failedKey] || '')) return true;
+  }
+
+  // Krok 2: usuń archiwum
+  if (archive && archive.length > 0) {
+    localStorage.removeItem('sp_archive');
+    archive = [];
+    notify('⚠ Brak miejsca — usunięto archiwum lat szkolnych, by zwolnić pamięć', true);
+    if (safeSetItem(failedKey, _pendingSaveValues[failedKey] || '')) return true;
+  }
+
+  // Krok 3: pokaż modal awaryjny
+  _showStorageFullModal();
+  return false;
+}
+
+// Tymczasowy bufor wartości do zapisu (używany przez strategię ratunkową)
+let _pendingSaveValues = {};
+
+function _showStorageFullModal() {
+  // Stwórz modal awaryjny jeśli nie istnieje
+  let modal = document.getElementById('storageFullModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'storageFullModal';
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '9999';
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:420px">
+        <div class="modal-header">
+          <span style="color:var(--red);font-size:1.1rem">⚠ Pamięć przeglądarki pełna</span>
+        </div>
+        <div class="modal-body" style="font-size:0.85rem;line-height:1.6">
+          <p>Przeglądarka nie może zapisać danych — magazyn lokalny (<code>localStorage</code>) jest przepełniony.</p>
+          <p style="margin-top:10px">Użycie teraz: <strong id="storageUsageInfo">—</strong></p>
+          <p style="margin-top:10px;color:var(--yellow)"><strong>Co zrobić?</strong></p>
+          <ol style="padding-left:1.2em;margin-top:6px;display:flex;flex-direction:column;gap:6px">
+            <li>Kliknij <strong>Eksportuj JSON</strong> poniżej — zapisz kopię zapasową planu na dysku.</li>
+            <li>Oczyść dane innych stron w ustawieniach przeglądarki lub przełącz się na inną przeglądarkę.</li>
+            <li>Po eksporcie możesz wczytać plan z pliku w dowolnym momencie.</li>
+          </ol>
+          <p style="margin-top:12px;font-size:0.75rem;color:var(--text-muted)">
+            Limit localStorage wynosi zwykle 5–10 MB na domenę.
+          </p>
+        </div>
+        <div class="modal-footer" style="gap:8px">
+          <button class="btn btn-green" onclick="exportJSON();document.getElementById('storageFullModal').classList.remove('show')">
+            💾 Eksportuj JSON
+          </button>
+          <button class="btn btn-ghost" onclick="document.getElementById('storageFullModal').classList.remove('show')">
+            Zamknij
+          </button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('show'); });
+  }
+  const usageEl = document.getElementById('storageUsageInfo');
+  if (usageEl) usageEl.textContent = formatBytes(storageUsageBytes()) + ' / ~5 MB';
+  modal.classList.add('show');
+}
+
 function persistAll() {
   if (_demoMode) return; // tryb demo — nie zapisuj do localStorage
-  localStorage.setItem('sp_sched', JSON.stringify(schedData));
-  localStorage.setItem('sp_vfdates', JSON.stringify(validFromDates));
-  localStorage.setItem('sp_archive', JSON.stringify(archive));
-  if (appState) { localStorage.setItem('sp_active', JSON.stringify(appState)); }
-  else { localStorage.removeItem('sp_active'); }
+
+  // Serializuj wszystkie dane z góry (raz, nie kilka razy przy retry)
+  const schedJson   = JSON.stringify(schedData);
+  const vfdJson     = JSON.stringify(validFromDates);
+  const archiveJson = JSON.stringify(archive);
+  const stateJson   = appState ? JSON.stringify(appState) : null;
+
+  // Bufor dla strategii ratunkowej
+  _pendingSaveValues = {
+    'sp_sched':   schedJson,
+    'sp_vfdates': vfdJson,
+    'sp_archive': archiveJson,
+  };
+  if (stateJson) _pendingSaveValues['sp_active'] = stateJson;
+
+  // Zapis z obsługą błędów przepełnienia
+  const keys = [
+    ['sp_sched',   schedJson],
+    ['sp_vfdates', vfdJson],
+    ['sp_archive', archiveJson],
+    ...(stateJson ? [['sp_active', stateJson]] : []),
+  ];
+
+  for (const [key, value] of keys) {
+    if (!safeSetItem(key, value)) {
+      // Quota — spróbuj ratunkowej strategii
+      const recovered = _handleQuotaExceeded(key);
+      if (recovered) {
+        // Ponów zapis pozostałych kluczy
+        for (const [k2, v2] of keys) {
+          safeSetItem(k2, v2); // błędy ignorujemy — już obsłużone
+        }
+      }
+      _pendingSaveValues = {};
+      return; // zakończ — błąd zgłoszony przez modal
+    }
+  }
+
+  if (!stateJson) localStorage.removeItem('sp_active');
+  _pendingSaveValues = {};
 }
 
 function saveData() {
@@ -970,6 +1440,12 @@ function saveData() {
 function openWizardNewYear(preload) {
   wStep = 0;
   wAssignments = {};
+  wSubjects = JSON.parse(JSON.stringify(appState?.subjects || []));
+  wTimeslots = JSON.parse(JSON.stringify(
+    appState?.timeslots?.length
+      ? appState.timeslots
+      : buildTimeslotsFromHours(appState?.hours || [], [])
+  ));
 
   if (appState) {
     // Nowy rok — przepisz dane z bieżącego roku (budynki, klasy, nauczyciele)
@@ -977,6 +1453,8 @@ function openWizardNewYear(preload) {
     wFloors = JSON.parse(JSON.stringify(appState.floors || []));
     wClasses = JSON.parse(JSON.stringify(appState.classes || []));
     wTeachers = JSON.parse(JSON.stringify(appState.teachers || []));
+    wSubjects = JSON.parse(JSON.stringify(appState.subjects || []));
+    wTimeslots = JSON.parse(JSON.stringify(appState.timeslots || []));
     document.getElementById('wSchoolName').value = appState.school?.name || '';
     document.getElementById('wSchoolShort').value = appState.school?.short || '';
     document.getElementById('wSchoolPhone').value = appState.school?.phone || '';
@@ -1043,13 +1521,23 @@ function wizardNext() {
     wClasses = getClassesFromDOM();
     if (wClasses.filter(c=>c.name).length === 0) { notify('⚠ Dodaj przynajmniej jedną klasę', true); return; }
   }
+  if (wStep === 1) {
+    // Po opuszczeniu kroku godzin odśwież timeslots (mogły się zmienić numery)
+    initTimeslotEditor();
+  }
   if (wStep === 4) {
+    // Przedmioty — opcjonalne, bez walidacji; tylko odśwież listę
+    renderSubjectList();
+  }
+  if (wStep === 5) {
     syncTeachersFromDOM();
     // teachers optional — no validation required
   }
-  if (wStep === 5) { finishWizard(); return; }
+  if (wStep === 6) { finishWizard(); return; }
   wStep++;
-  if (wStep === 5) renderAssignmentsStep();
+  if (wStep === 2) initTimeslotEditor(); // inicjuj timesloty gdy wchodzisz na krok budynków (po godzinach)
+  if (wStep === 4) renderSubjectList(); // wyrenderuj listę przy wejściu na krok przedmiotów
+  if (wStep === 6) renderAssignmentsStep();
   updateWizardStep();
   wpUpdate(wStep);
   wizardSaveDraft(); // autosave przy każdym kroku
@@ -1101,7 +1589,9 @@ function finishWizard() {
   }
 
   const prevHomerooms = appState?.homerooms || {};
-  appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, days: DAYS_DEFAULT, school, homerooms: prevHomerooms };
+  const subjects = wSubjects.filter(s => s.name && s.name.trim());
+  const timeslots = wTimeslots.filter(t => t.label).map(t => ({label:t.label,start:t.start||'',end:t.end||''}));
+  appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, subjects, timeslots, days: DAYS_DEFAULT, school, homerooms: prevHomerooms };
   _wizardEditMode = false; // reset flagi
 
   // Zawsze uzupełnij brakujące godziny i dni (bez kasowania istniejących wpisów)
@@ -1298,8 +1788,12 @@ function getClassesFromDOM() {
 }
 function clearAllClasses() {
   if (wClasses.length === 0) return;
-  if (!confirm('Usunąć wszystkie klasy z listy?')) return;
-  wClasses = []; renderClassGrid(); notify('🗑 Lista klas wyczyszczona');
+  showConfirm({
+    message: 'Usunąć wszystkie klasy z listy?',
+    confirmLabel: '🗑 Usuń wszystkie',
+    danger: true,
+    onConfirm: () => { wClasses = []; renderClassGrid(); notify('🗑 Lista klas wyczyszczona'); }
+  });
 }
 function updateClassCountBadge() {
   const b = document.getElementById('classCountBadge');
@@ -1473,11 +1967,17 @@ function importTeachersFromText(text) {
 
 function clearAllTeachers() {
   if (wTeachers.length === 0) return;
-  if (!confirm(`Usunąć wszystkich ${wTeachers.length} nauczycieli z listy?`)) return;
-  wTeachers = [];
-  renderTeacherList();
-  updateTeacherCountBadge();
-  notify('🗑 Lista nauczycieli wyczyszczona');
+  showConfirm({
+    message: `Usunąć wszystkich <strong>${wTeachers.length}</strong> nauczycieli z listy?`,
+    confirmLabel: '🗑 Usuń wszystkich',
+    danger: true,
+    onConfirm: () => {
+      wTeachers = [];
+      renderTeacherList();
+      updateTeacherCountBadge();
+      notify('🗑 Lista nauczycieli wyczyszczona');
+    }
+  });
 }
 
 function updateTeacherCountBadge() {
@@ -1663,6 +2163,20 @@ function mountApp() {
 
   renderSchedule();
 
+  // Pokaż przyciski Undo/Redo i zresetuj stos przy każdym montowaniu
+  const undoBar = document.getElementById('undoRedoBtns');
+  if (undoBar) undoBar.style.display = 'flex';
+  _undoStack = [];
+  _redoStack = [];
+  _undoUpdateUI();
+
+  // Pokaż pasek widoku i resetuj tryb
+  const viewBar = document.getElementById('viewModeBar');
+  if (viewBar) viewBar.style.display = 'flex';
+  _viewMode   = 'rooms';
+  _viewFilter = '';
+  _updateViewToolbar();
+
   // Ustaw wysokość .main po tym jak DOM jest gotowy (rAF gwarantuje że topbar jest widoczny)
   requestAnimationFrame(() => {
     function setMainHeight() {
@@ -1763,19 +2277,27 @@ function dndDrop(e, day, hour, key) {
   const dstEntry = schedData[yk]?.[day]?.[hour]?.[key];
   const dstFilled = dstEntry && (dstEntry.teacherAbbr || (dstEntry.classes||[]).length || dstEntry.className);
 
-  // Jeśli cel jest wypełniony — zapytaj
-  if (dstFilled) {
-    if (!confirm('Komórka docelowa jest zajęta. Nadpisać jej zawartość?')) return;
+  // Jeśli cel jest wypełniony — zapytaj; inaczej skopiuj od razu
+  function _doDrop() {
+    undoPush(`DnD → ${key}, godz. ${hour+1}, ${appState.days[day]}`);
+    if (!schedData[yk][day]) schedData[yk][day] = {};
+    if (!schedData[yk][day][hour]) schedData[yk][day][hour] = {};
+    schedData[yk][day][hour][key] = JSON.parse(JSON.stringify(srcEntry));
+    persistAll();
+    renderSchedule();
+    sbSet('✓ Skopiowano zajęcia');
   }
 
-  // Skopiuj wpis
-  if (!schedData[yk][day]) schedData[yk][day] = {};
-  if (!schedData[yk][day][hour]) schedData[yk][day][hour] = {};
-  schedData[yk][day][hour][key] = JSON.parse(JSON.stringify(srcEntry));
-
-  persistAll();
-  renderSchedule();
-  sbSet('✓ Skopiowano zajęcia');
+  if (dstFilled) {
+    showConfirm({
+      message: 'Komórka docelowa jest zajęta.<br>Nadpisać jej zawartość?',
+      confirmLabel: 'Nadpisz',
+      danger: true,
+      onConfirm: _doDrop,
+    });
+  } else {
+    _doDrop();
+  }
 }
 
 
@@ -1797,8 +2319,158 @@ function subjectAbbr(subject) {
   return initials.join('');
 }
 
+// ================================================================
+//  WIDOK NAUCZYCIELA / KLASY
+// ================================================================
+
+function setViewMode(mode, filter) {
+  _viewMode   = mode   || 'rooms';
+  _viewFilter = filter || '';
+  _updateViewToolbar();
+  renderSchedule();
+}
+
+function _updateViewToolbar() {
+  const btns = {
+    rooms:   document.getElementById('viewBtnRooms'),
+    teacher: document.getElementById('viewBtnTeacher'),
+    class:   document.getElementById('viewBtnClass'),
+  };
+  Object.entries(btns).forEach(([k, el]) => {
+    if (el) el.classList.toggle('active', k === _viewMode);
+  });
+  const sel = document.getElementById('viewFilterSelect');
+  if (sel) {
+    sel.style.display = (_viewMode === 'rooms') ? 'none' : '';
+    if (_viewMode !== 'rooms') _populateViewFilter(sel);
+  }
+}
+
+function _populateViewFilter(sel) {
+  const prev = sel.value;
+  sel.innerHTML = '';
+  if (_viewMode === 'teacher') {
+    const teachers = (appState?.teachers || [])
+      .slice().sort((a,b) => (a.last||'').localeCompare(b.last||'','pl',{sensitivity:'base'}));
+    teachers.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.abbr;
+      opt.textContent = `${t.last||''} ${t.first||''} (${t.abbr})`.trim();
+      sel.appendChild(opt);
+    });
+  } else {
+    const classes = (appState?.classes || [])
+      .filter((c,i,arr) => arr.findIndex(x => (x.abbr||x.name) === (c.abbr||c.name)) === i)
+      .slice().sort((a,b) => (a.name||'').localeCompare(b.name||'','pl',{sensitivity:'base'}));
+    classes.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.abbr || c.name;
+      opt.textContent = c.name + (c.group && c.group.toLowerCase() !== 'cała klasa' ? ` — ${c.group}` : '');
+      sel.appendChild(opt);
+    });
+  }
+  // Przywróć poprzedni wybór jeśli nadal istnieje, inaczej ustaw pierwszy
+  if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
+  else if (sel.options.length) sel.value = sel.options[0].value;
+  _viewFilter = sel.value;
+}
+
+function onViewFilterChange(val) {
+  _viewFilter = val;
+  renderSchedule();
+}
+
+// Buduje tabelę plan nauczyciela lub plan klasy
+function renderViewTable(mode, filter) {
+  const yk     = appState.yearKey;
+  const hours  = appState.hours;
+  const days   = appState.days;
+  const cols   = flattenColumns(appState.floors);
+
+  // Zbierz wszystkie wpisy pasujące do filtra we wszystkich dniach
+  // Struktura: result[dayIdx][hourIdx] = [{col, entry}]
+  const byDayHour = {};
+  days.forEach((_,di) => {
+    byDayHour[di] = {};
+    const dayData = schedData[yk]?.[di] || {};
+    hours.forEach(h => {
+      byDayHour[di][h] = [];
+      cols.forEach(col => {
+        const key   = colKey(col);
+        const entry = dayData[h]?.[key] || {};
+        const filled = !!(entry.teacherAbbr || entry.subject || entry.className || (entry.classes||[]).length);
+        if (!filled) return;
+        const match = mode === 'teacher'
+          ? entry.teacherAbbr === filter
+          : ((entry.classes||[]).includes(filter) || entry.className === filter);
+        if (match) byDayHour[di][h].push({ col, key, entry });
+      });
+    });
+  });
+
+  // Nagłówek — dni tygodnia
+  const filterLabel = mode === 'teacher'
+    ? (() => { const t = getTeacherByAbbr(filter); return t ? teacherDisplayName(t) : filter; })()
+    : filter;
+  const modeLabel = mode === 'teacher' ? '👤 Nauczyciel' : '🏫 Klasa';
+
+  let thead = `<thead><tr>
+    <th class="time-th" style="background:var(--surface)">Godz.</th>
+    ${days.map((d,di) => `<th class="th-view-day${di===currentDay?' th-view-day-active':''}"
+        onclick="switchDay(${di});renderSchedule()" style="cursor:pointer;min-width:120px">
+      ${esc(d)}</th>`).join('')}
+  </tr></thead>`;
+
+  // Ciało — godziny × dni
+  let tbody = '<tbody>';
+  hours.forEach(h => {
+    tbody += `<tr><td class="time-cell">${formatTimeCell(h)}</td>`;
+    days.forEach((_,di) => {
+      const entries = byDayHour[di][h] || [];
+      if (!entries.length) {
+        tbody += `<td><div class="cell-inner" onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','')"
+          style="cursor:pointer"><div class="cell-plus">＋</div></div></td>`;
+      } else {
+        tbody += `<td style="padding:2px;vertical-align:top">`;
+        entries.forEach(({ col, key, entry }) => {
+          const roomLabel = col.room.num ? `Sala ${esc(col.room.num)}` : esc(col.room.sub||'?');
+          const clsList   = (entry.classes||[]).length ? entry.classes : (entry.className ? [entry.className] : []);
+          tbody += `<div class="cell-inner filled view-cell"
+              onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
+              style="cursor:pointer;margin-bottom:2px">
+            <div class="cell-row-cls">${clsList.map(c=>`<span class="cell-abbr cell-abbr-cls" title="${esc(resolveClassName(c))}">${esc(c)}</span>`).join('')}</div>
+            ${entry.subject ? `<div class="cell-row-subject" title="${esc(entry.subject)}">${esc(subjectAbbr(entry.subject))}</div>` : ''}
+            <div class="cell-row-teacher" style="font-size:0.6rem;color:var(--text-muted)">${esc(roomLabel)}</div>
+          </div>`;
+        });
+        tbody += '</td>';
+      }
+    });
+    tbody += '</tr>';
+  });
+  tbody += '</tbody>';
+
+  // Podsumowanie — liczba zajętych godzin
+  let totalLessons = 0;
+  days.forEach((_,di) => hours.forEach(h => { if ((byDayHour[di][h]||[]).length) totalLessons++; }));
+
+  return { thead, tbody, totalLessons, filterLabel, modeLabel };
+}
+
 function renderSchedule() {
   if (!appState) return;
+
+  // ── Widok nauczyciela / klasy ──
+  if (_viewMode !== 'rooms') {
+    const { thead, tbody, totalLessons, filterLabel, modeLabel } = renderViewTable(_viewMode, _viewFilter);
+    document.getElementById('scheduleWrap').innerHTML =
+      `<div class="view-mode-banner">${modeLabel}: <strong>${esc(filterLabel)}</strong>
+        <span style="font-size:0.72rem;color:var(--text-muted);margin-left:10px">${totalLessons} godz. tygodniowo</span></div>
+       <table class="schedule-table view-mode-table">${thead}${tbody}</table>`;
+    updateStatusBar();
+    return;
+  }
+
   const cols       = flattenColumns(appState.floors);
   const hours      = appState.hours;
   const dayData    = schedData[appState.yearKey]?.[currentDay]||{};
@@ -1929,7 +2601,7 @@ function renderSchedule() {
 
   let tbody = '<tbody>';
   hours.forEach(h => {
-    tbody += `<tr><td class="time-cell">${h}</td>`;
+    tbody += `<tr><td class="time-cell">${formatTimeCell(h)}</td>`;
     cols.forEach(col => {
       const key   = colKey(col);
       const entry = dayData[h]?.[key]||{};
@@ -1998,6 +2670,324 @@ function updateStatusBar() {
     });
   });
   document.getElementById('sbCount').textContent = `${count} wpisów w tym dniu`;
+
+  // Wskaźnik użycia localStorage
+  const storageEl = document.getElementById('sbStorage');
+  if (storageEl) {
+    const used = storageUsageBytes();
+    const LIMIT = 5 * 1024 * 1024; // 5 MB typowy limit
+    const pct = Math.min(100, Math.round(used / LIMIT * 100));
+    const color = pct > 85 ? 'var(--red)' : pct > 65 ? 'var(--yellow)' : 'var(--text-muted)';
+    storageEl.innerHTML =
+      `<span style="color:${color}" title="Użycie pamięci lokalnej przeglądarki">` +
+      `💾 ${formatBytes(used)} (${pct}%)</span>`;
+  }
+}
+
+
+
+// ================================================================
+//  PRZEDZIAŁY CZASOWE LEKCJI (timeslots)
+// ================================================================
+
+// Domyślny plan lekcji (7:00 start, 45 min lekcja, 10 min przerwa)
+const TIMESLOTS_DEFAULT_45 = [
+  {label:'0',start:'07:00',end:'07:45'},
+  {label:'1',start:'07:55',end:'08:40'},
+  {label:'2',start:'08:50',end:'09:35'},
+  {label:'3',start:'09:45',end:'10:30'},
+  {label:'4',start:'10:45',end:'11:30'},
+  {label:'5',start:'11:45',end:'12:30'},
+  {label:'6',start:'12:40',end:'13:25'},
+  {label:'7',start:'13:35',end:'14:20'},
+  {label:'8',start:'14:30',end:'15:15'},
+  {label:'9',start:'15:25',end:'16:10'},
+  {label:'10',start:'16:20',end:'17:05'},
+];
+
+// Zwraca przedział dla danego klucza godziny; fallback gdy brak timeslots
+function getTimeslot(hourKey) {
+  const ts = appState?.timeslots;
+  if (!ts || !ts.length) return null;
+  return ts.find(t => t.label === String(hourKey)) || null;
+}
+
+// Formatuje komórkę czasu: numer + przedziały lub sam numer
+function formatTimeCell(hourKey) {
+  const ts = getTimeslot(hourKey);
+  if (!ts || (!ts.start && !ts.end)) return `<span class="time-num">${esc(String(hourKey))}</span>`;
+  return `<span class="time-num">${esc(ts.label||String(hourKey))}</span>
+          <span class="time-range">${esc(ts.start||'')}–${esc(ts.end||'')}</span>`;
+}
+
+// Buduje timeslots z tablicy hours i opcjonalnego poprzedniego appState
+function buildTimeslotsFromHours(hours, prevTimeslots) {
+  return hours.map(h => {
+    const existing = (prevTimeslots||[]).find(t => t.label === String(h));
+    return existing || { label: String(h), start: '', end: '' };
+  });
+}
+
+// ── Kreator: render edytora timeslotów ──
+
+function initTimeslotEditor() {
+  const hoursVal = document.getElementById('wHours')?.value || '';
+  const hours = hoursVal.split(',').map(h=>h.trim()).filter(Boolean);
+  // Zachowaj istniejące wpisy, uzupełnij nowymi
+  wTimeslots = hours.map(h => {
+    const ex = wTimeslots.find(t => t.label === h);
+    if (ex) return ex;
+    const def = TIMESLOTS_DEFAULT_45.find(t => t.label === h);
+    return def ? {...def} : { label: h, start: '', end: '' };
+  });
+  renderTimeslotEditor();
+}
+
+function renderTimeslotEditor() {
+  const container = document.getElementById('wTimeslotList');
+  if (!container) return;
+  if (!wTimeslots.length) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:0.8rem;padding:6px 0">Brak godzin — wróć do poprzedniego kroku i wpisz numery lekcji.</div>';
+    return;
+  }
+  container.innerHTML = wTimeslots.map((ts, i) => `
+    <div class="timeslot-row">
+      <span class="timeslot-lnum">Godz. ${esc(ts.label)}</span>
+      <input class="timeslot-inp" type="time" value="${esc(ts.start||'')}"
+        oninput="wTimeslots[${i}].start=this.value" placeholder="--:--"
+        title="Początek lekcji">
+      <span class="timeslot-sep">–</span>
+      <input class="timeslot-inp" type="time" value="${esc(ts.end||'')}"
+        oninput="wTimeslots[${i}].end=this.value" placeholder="--:--"
+        title="Koniec lekcji">
+    </div>`).join('');
+}
+
+function fillTimeslotsDefault() {
+  const hoursVal = document.getElementById('wHours')?.value || '';
+  const hours = hoursVal.split(',').map(h=>h.trim()).filter(Boolean);
+  wTimeslots = hours.map(h => {
+    const def = TIMESLOTS_DEFAULT_45.find(t => t.label === h);
+    return def ? {...def} : { label: h, start: '', end: '' };
+  });
+  renderTimeslotEditor();
+}
+
+function clearTimeslots() {
+  wTimeslots = wTimeslots.map(t => ({ label: t.label, start: '', end: '' }));
+  renderTimeslotEditor();
+}
+
+// ================================================================
+//  SŁOWNIK PRZEDMIOTÓW
+// ================================================================
+
+const SUBJECTS_PRESET = [
+  {name:'Język polski',        abbr:'J.pol'},
+  {name:'Język angielski',     abbr:'J.ang'},
+  {name:'Język niemiecki',     abbr:'J.niem'},
+  {name:'Język rosyjski',      abbr:'J.ros'},
+  {name:'Język francuski',     abbr:'J.fr'},
+  {name:'Matematyka',          abbr:'Mat'},
+  {name:'Fizyka',              abbr:'Fiz'},
+  {name:'Chemia',              abbr:'Chem'},
+  {name:'Biologia',            abbr:'Bio'},
+  {name:'Geografia',           abbr:'Geo'},
+  {name:'Historia',            abbr:'Hist'},
+  {name:'Wiedza o społeczeństwie', abbr:'WOS'},
+  {name:'Informatyka',         abbr:'Inf'},
+  {name:'Technika',            abbr:'Tech'},
+  {name:'Plastyka',            abbr:'Plas'},
+  {name:'Muzyka',              abbr:'Muz'},
+  {name:'Wychowanie fizyczne', abbr:'WF'},
+  {name:'Religia',             abbr:'Rel'},
+  {name:'Etyka',               abbr:'Etyka'},
+  {name:'Wychowanie do życia w rodzinie', abbr:'WDŻ'},
+  {name:'Edukacja dla bezpieczeństwa',    abbr:'EDB'},
+  {name:'Podstawy przedsiębiorczości',    abbr:'PP'},
+  {name:'Godzina wychowawcza',            abbr:'GW'},
+];
+
+// Renderuje listę przedmiotów w kreatorze
+function renderSubjectList() {
+  const container = document.getElementById('wSubjectList');
+  if (!container) return;
+  if (!wSubjects.length) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:0.8rem;padding:6px 0">Brak przedmiotów — dodaj poniżej lub wczytaj predefiniowane.</div>';
+    return;
+  }
+  container.innerHTML = wSubjects.map((s, i) => `
+    <div class="subject-item" id="subjectItem${i}">
+      <input class="subject-name-inp" value="${esc(s.name)}" placeholder="Nazwa przedmiotu"
+        oninput="wSubjects[${i}].name=this.value;scheduleSubjectAbbrUpdate(${i})">
+      <input class="subject-abbr-inp" value="${esc(s.abbr||'')}" placeholder="Skrót" maxlength="8"
+        oninput="wSubjects[${i}].abbr=this.value">
+      <button class="icon-btn danger" onclick="removeSubject(${i})" title="Usuń">🗑</button>
+    </div>`).join('');
+}
+
+function scheduleSubjectAbbrUpdate(i) {
+  // Autogeneruj skrót jeśli pole jest puste
+  clearTimeout(wSubjects[i]?._abbrTimer);
+  if (wSubjects[i]) {
+    wSubjects[i]._abbrTimer = setTimeout(() => {
+      const abbrInp = document.querySelector(`#subjectItem${i} .subject-abbr-inp`);
+      if (abbrInp && !abbrInp.value.trim()) {
+        const auto = autoSubjectAbbr(wSubjects[i].name);
+        wSubjects[i].abbr = auto;
+        abbrInp.value = auto;
+      }
+    }, 600);
+  }
+}
+
+function autoSubjectAbbr(name) {
+  if (!name) return '';
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return name.slice(0,4);
+  // Inicjały pierwszych 3 znaczących słów
+  const SKIP = new Set(['do','w','z','i','o','na','dla','ze','lub','a','po','od']);
+  return words.filter(w => !SKIP.has(w.toLowerCase())).slice(0,3).map(w=>w[0].toUpperCase()).join('');
+}
+
+function addSubject() {
+  wSubjects.push({ name: '', abbr: '' });
+  renderSubjectList();
+  wizardSaveDraft();
+  // Fokus na nowym polu
+  setTimeout(() => {
+    const items = document.querySelectorAll('.subject-name-inp');
+    if (items.length) items[items.length-1].focus();
+  }, 50);
+}
+
+function removeSubject(i) {
+  wSubjects.splice(i, 1);
+  renderSubjectList();
+  wizardSaveDraft();
+}
+
+function loadSubjectPreset() {
+  function _doLoad() {
+    wSubjects = JSON.parse(JSON.stringify(SUBJECTS_PRESET));
+    renderSubjectList();
+    wizardSaveDraft();
+  }
+  if (wSubjects.length > 0) {
+    showConfirm({
+      message: 'Zastąpić bieżącą listę przedmiotów listą predefiniowaną?<br><span style="font-size:0.78rem;color:var(--text-muted)">Bieżące wpisy zostaną utracone.</span>',
+      confirmLabel: '📋 Zastąp',
+      danger: false,
+      onConfirm: _doLoad,
+    });
+  } else {
+    _doLoad();
+  }
+}
+
+// ── Autocomplete w modalu edycji komórki ──
+
+// Zwraca posortowaną listę unikalnych przedmiotów ze słownika + z istniejących wpisów w planie
+function getSubjectSuggestions() {
+  const fromDict = (appState?.subjects || []).map(s => ({ name: s.name, abbr: s.abbr }));
+  // Zbierz też wpisane ręcznie przedmioty z planu (uniq)
+  const yk = appState?.yearKey;
+  const seen = new Set(fromDict.map(s => s.name.toLowerCase()));
+  if (yk && schedData[yk]) {
+    Object.values(schedData[yk]).forEach(dayData => {
+      Object.values(dayData).forEach(hourData => {
+        Object.values(hourData).forEach(entry => {
+          if (entry.subject && !seen.has(entry.subject.toLowerCase())) {
+            seen.add(entry.subject.toLowerCase());
+            fromDict.push({ name: entry.subject, abbr: '' });
+          }
+        });
+      });
+    });
+  }
+  return fromDict.sort((a,b) => a.name.localeCompare(b.name, 'pl', {sensitivity:'base'}));
+}
+
+let _subjectDropdownVisible = false;
+
+function initSubjectAutocomplete() {
+  const inp = document.getElementById('inpSubject');
+  if (!inp) return;
+  inp.setAttribute('autocomplete','off');
+  inp.addEventListener('input', _onSubjectInput);
+  inp.addEventListener('focus', _onSubjectInput);
+  inp.addEventListener('keydown', _onSubjectKeydown);
+  inp.addEventListener('blur', () => setTimeout(_hideSubjectDropdown, 150));
+}
+
+function _onSubjectInput() {
+  const inp = document.getElementById('inpSubject');
+  const q = (inp?.value || '').trim().toLowerCase();
+  const suggestions = getSubjectSuggestions();
+  const filtered = q
+    ? suggestions.filter(s => s.name.toLowerCase().includes(q) || (s.abbr||'').toLowerCase().includes(q))
+    : suggestions;
+  if (!filtered.length) { _hideSubjectDropdown(); return; }
+  _showSubjectDropdown(filtered, inp);
+}
+
+function _showSubjectDropdown(items, inp) {
+  let dd = document.getElementById('subjectDropdown');
+  if (!dd) {
+    dd = document.createElement('div');
+    dd.id = 'subjectDropdown';
+    dd.className = 'subject-dropdown';
+    document.body.appendChild(dd);
+  }
+  const rect = inp.getBoundingClientRect();
+  dd.style.cssText = `position:fixed;z-index:9999;left:${rect.left}px;top:${rect.bottom+2}px;width:${rect.width}px`;
+  dd.innerHTML = items.slice(0,12).map((s,i) =>
+    `<div class="subject-dd-item" data-idx="${i}" onmousedown="pickSubject(${JSON.stringify(s.name)})">
+      <span class="subject-dd-name">${esc(s.name)}</span>
+      ${s.abbr ? `<span class="subject-dd-abbr">${esc(s.abbr)}</span>` : ''}
+    </div>`).join('');
+  dd.style.display = 'block';
+  _subjectDropdownVisible = true;
+  _subjectDropdownItems = items.slice(0,12);
+  _subjectDropdownIdx = -1;
+}
+
+let _subjectDropdownItems = [];
+let _subjectDropdownIdx = -1;
+
+function _onSubjectKeydown(e) {
+  if (!_subjectDropdownVisible) return;
+  const dd = document.getElementById('subjectDropdown');
+  const items = dd?.querySelectorAll('.subject-dd-item');
+  if (!items?.length) return;
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _subjectDropdownIdx = Math.min(_subjectDropdownIdx+1, items.length-1);
+    items.forEach((el,i) => el.classList.toggle('active', i===_subjectDropdownIdx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _subjectDropdownIdx = Math.max(_subjectDropdownIdx-1, 0);
+    items.forEach((el,i) => el.classList.toggle('active', i===_subjectDropdownIdx));
+  } else if (e.key === 'Enter' && _subjectDropdownIdx >= 0) {
+    e.preventDefault();
+    e.stopPropagation();
+    pickSubject(_subjectDropdownItems[_subjectDropdownIdx].name);
+  } else if (e.key === 'Escape') {
+    _hideSubjectDropdown();
+  }
+}
+
+function pickSubject(name) {
+  const inp = document.getElementById('inpSubject');
+  if (inp) inp.value = name;
+  _hideSubjectDropdown();
+}
+
+function _hideSubjectDropdown() {
+  const dd = document.getElementById('subjectDropdown');
+  if (dd) dd.style.display = 'none';
+  _subjectDropdownVisible = false;
+  _subjectDropdownIdx = -1;
 }
 
 // ================================================================
@@ -2031,6 +3021,7 @@ function openEditModal(day, hour, key) {
   document.getElementById('inpNote').value = entry.note||'';
   renderMcSelect();
   document.getElementById('editModal').classList.add('show');
+  initSubjectAutocomplete();
   selT.focus();
 }
 function closeEditModal() {
@@ -2110,6 +3101,7 @@ function mcRemoveClass(idx) {
   renderMultiClassList(_selectedClasses);
 }function saveCellData() {
   const yk = appState.yearKey;
+  undoPush(`Zapis ${_mKey}, godz. ${_mHour+1}, ${appState.days[_mDay]}`);
   if (!schedData[yk]) schedData[yk]={};
   if (!schedData[yk][_mDay]) schedData[yk][_mDay]={};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour]={};
@@ -2125,6 +3117,7 @@ function mcRemoveClass(idx) {
   persistAll(); closeEditModal(); renderSchedule(); sbSet('Wpis zaktualizowany');
 }
 function clearCellData() {
+  undoPush(`Wyczyszczenie ${_mKey}, godz. ${_mHour+1}, ${appState.days[_mDay]}`);
   if (schedData[appState.yearKey]?.[_mDay]?.[_mHour]) schedData[appState.yearKey][_mDay][_mHour][_mKey]={};
   persistAll(); closeEditModal(); renderSchedule(); sbSet('Wpis wyczyszczony');
 }
@@ -2132,7 +3125,76 @@ function clearCellData() {
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){closeEditModal();}
   if(e.key==='Enter'&&e.ctrlKey&&document.getElementById('editModal').classList.contains('show'))saveCellData();
+  // Undo / Redo — tylko gdy modal edycji jest zamknięty i nie piszemy w input
+  const tag = (e.target.tagName||'').toLowerCase();
+  const inInput = tag === 'input' || tag === 'textarea' || tag === 'select';
+  const modalOpen = document.getElementById('editModal')?.classList.contains('show');
+  if (!inInput && !modalOpen) {
+    if (e.ctrlKey && !e.shiftKey && e.key === 'z') { e.preventDefault(); undoAction(); }
+    if (e.ctrlKey && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) { e.preventDefault(); redoAction(); }
+  }
 });
+
+
+// ================================================================
+//  MODAL POTWIERDZENIA — zastępuje window.confirm()
+// ================================================================
+
+// Użycie:
+//   showConfirm({ message, confirmLabel, danger, onConfirm, onCancel })
+// onConfirm i onCancel to funkcje wywoływane po wyborze.
+
+function showConfirm({ message, confirmLabel = 'Tak', cancelLabel = 'Anuluj', danger = false, onConfirm, onCancel }) {
+  let modal = document.getElementById('confirmModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'confirmModal';
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '10000';
+    modal.innerHTML = `
+      <div class="modal confirm-box" style="max-width:360px">
+        <div class="confirm-msg" id="confirmMsg"></div>
+        <div class="modal-footer" style="gap:8px;justify-content:flex-end">
+          <button class="btn btn-ghost" id="confirmCancelBtn"></button>
+          <button class="btn"          id="confirmOkBtn"></button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) _dismissConfirm(); });
+    document.addEventListener('keydown', _confirmKeydown);
+  }
+
+  document.getElementById('confirmMsg').innerHTML = message;
+  const okBtn = document.getElementById('confirmOkBtn');
+  const cancelBtn = document.getElementById('confirmCancelBtn');
+  okBtn.textContent = confirmLabel;
+  okBtn.className = 'btn ' + (danger ? 'btn-red' : 'btn-primary');
+  cancelBtn.textContent = cancelLabel;
+
+  // Odepnij stare handlery
+  okBtn.onclick = null;
+  cancelBtn.onclick = null;
+
+  okBtn.onclick = () => { _dismissConfirm(); if (onConfirm) onConfirm(); };
+  cancelBtn.onclick = () => { _dismissConfirm(); if (onCancel) onCancel(); };
+
+  modal.classList.add('show');
+  cancelBtn.focus();
+}
+
+function _dismissConfirm() {
+  document.getElementById('confirmModal')?.classList.remove('show');
+}
+
+function _confirmKeydown(e) {
+  const modal = document.getElementById('confirmModal');
+  if (!modal?.classList.contains('show')) return;
+  if (e.key === 'Escape') { e.preventDefault(); _dismissConfirm(); }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('confirmOkBtn')?.click();
+  }
+}
 
 // ================================================================
 //  ARCHIVE
@@ -2177,20 +3239,32 @@ function renderArchiveBody() {
 function restoreYear(yearKey) {
   const item = archive.find(a=>a.yearKey===yearKey);
   if (!item?.config) { notify('⚠ Brak danych konfiguracji — utwórz rok ponownie przez kreator.', true); return; }
-  if (!confirm(`Przywrócić rok ${item.label}? Bieżący rok zostanie zarchiwizowany.`)) return;
-  if (appState) {
-    const ex = archive.find(a=>a.yearKey===appState.yearKey);
-    if (!ex) archive.push({yearKey:appState.yearKey,label:appState.yearLabel,savedAt:new Date().toISOString(),config:appState});
-  }
-  appState={homerooms: item.config?.homerooms || {}, ...item.config}; archive=archive.filter(a=>a.yearKey!==yearKey);
-  persistAll(); closeArchive(); currentDay=0; mountApp();
-  notify('📁 Przywrócono rok '+item.label);
+  showConfirm({
+    message: `Przywrócić rok <strong>${esc(item.label)}</strong>?<br><span style="font-size:0.78rem;color:var(--text-muted)">Bieżący rok zostanie zarchiwizowany.</span>`,
+    confirmLabel: '📁 Przywróć',
+    danger: false,
+    onConfirm: () => {
+      if (appState) {
+        const ex = archive.find(a=>a.yearKey===appState.yearKey);
+        if (!ex) archive.push({yearKey:appState.yearKey,label:appState.yearLabel,savedAt:new Date().toISOString(),config:appState});
+      }
+      appState={homerooms: item.config?.homerooms || {}, ...item.config}; archive=archive.filter(a=>a.yearKey!==yearKey);
+      persistAll(); closeArchive(); currentDay=0; mountApp();
+      notify('📁 Przywrócono rok '+item.label);
+    }
+  });
 }
 function deleteArchive(yearKey) {
   const item = archive.find(a=>a.yearKey===yearKey);
-  if (!confirm(`Trwale usunąć archiwum: ${item?.label}?`)) return;
-  archive=archive.filter(a=>a.yearKey!==yearKey); delete schedData[yearKey];
-  persistAll(); renderArchiveBody(); notify('🗑 Usunięto archiwum');
+  showConfirm({
+    message: `Trwale usunąć archiwum:<br><strong>${esc(item?.label||yearKey)}</strong>?<br><span style="font-size:0.78rem;color:var(--text-muted)">Tej operacji nie można cofnąć.</span>`,
+    confirmLabel: '🗑 Usuń na zawsze',
+    danger: true,
+    onConfirm: () => {
+      archive=archive.filter(a=>a.yearKey!==yearKey); delete schedData[yearKey];
+      persistAll(); renderArchiveBody(); notify('🗑 Usunięto archiwum');
+    }
+  });
 }
 (function(){var _ap=document.getElementById('archivePanel');if(_ap)_ap.addEventListener('click',e=>{if(e.target===_ap)closeArchive();});})();
 
@@ -2198,11 +3272,19 @@ function deleteArchive(yearKey) {
 //  OTHER ACTIONS
 // ================================================================
 function clearDay() {
-  if (!confirm(`Wyczyścić wszystkie wpisy: ${appState.days[currentDay]}?`)) return;
-  const yk=appState.yearKey;
-  schedData[yk][currentDay]={};
-  appState.hours.forEach(h=>{schedData[yk][currentDay][h]={};});
-  renderSchedule(); notify('🗑 Dzień wyczyszczony');
+  const dayName = appState.days[currentDay];
+  showConfirm({
+    message: `Wyczyścić wszystkie wpisy dla:<br><strong>${esc(dayName)}</strong>?<br><span style="font-size:0.78rem;color:var(--text-muted)">Możesz cofnąć tę operację przez Ctrl+Z.</span>`,
+    confirmLabel: '🗑 Wyczyść dzień',
+    danger: true,
+    onConfirm: () => {
+      undoPush(`Wyczyszczenie dnia: ${dayName}`);
+      const yk=appState.yearKey;
+      schedData[yk][currentDay]={};
+      appState.hours.forEach(h=>{schedData[yk][currentDay][h]={};});
+      persistAll(); renderSchedule(); notify('🗑 Dzień wyczyszczony');
+    }
+  });
 }
 function exportPDF() {
   const vf = document.getElementById('validFrom').value;
@@ -2672,18 +3754,69 @@ if ('serviceWorker' in navigator) {
       .then(reg => {
         // Sprawdź aktualizację co 60 sekund
         setInterval(() => reg.update(), 60000);
+
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
           if (!nw) return;
           nw.addEventListener('statechange', () => {
+            // SW zainstalowany i gotowy — pokaż banner
             if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-              notify('🔄 Dostępna aktualizacja — odśwież stronę');
+              _showSwUpdateBanner();
             }
           });
         });
       })
       .catch(err => console.warn('SW registration failed:', err));
+
+    // ── Listener na wiadomości z Service Workera ──────────────────
+    // SW wysyła { type: 'SW_UPDATED' } w activate() po przejęciu klientów.
+    // To jest główna ścieżka powiadomień w Chrome/Edge/Firefox.
+    navigator.serviceWorker.addEventListener('message', event => {
+      if (event.data?.type === 'SW_UPDATED') {
+        _showSwUpdateBanner();
+      }
+    });
+
+    // ── Fallback: controllerchange ────────────────────────────────
+    // Nowy SW przejął kontrolę — oznacza że aktualizacja jest aktywna.
+    // Działa np. w Safari gdzie postMessage z SW może nie dotrzeć.
+    let _firstController = navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // Ignoruj pierwsze przypisanie kontrolera (cold start)
+      if (!_firstController) {
+        _firstController = navigator.serviceWorker.controller;
+        return;
+      }
+      _showSwUpdateBanner();
+    });
   });
+}
+
+// ── Banner aktualizacji ───────────────────────────────────────────
+
+let _swUpdateBannerShown = false; // zapobiega wielokrotnemu pokazaniu
+
+function _showSwUpdateBanner() {
+  if (_swUpdateBannerShown) return;
+  _swUpdateBannerShown = true;
+  const banner = document.getElementById('swUpdateBanner');
+  if (banner) {
+    banner.classList.add('show');
+  } else {
+    // Fallback — notify jeśli DOM nie jest gotowy
+    notify('🔄 Dostępna nowa wersja — odśwież stronę');
+  }
+}
+
+function swUpdateReload() {
+  // Przeładuj stronę — nowy SW przejmie kontrolę i zaserwuje świeżą wersję
+  window.location.reload();
+}
+
+function swUpdateDismiss() {
+  const banner = document.getElementById('swUpdateBanner');
+  if (banner) banner.classList.remove('show');
+  // Nie kasujemy _swUpdateBannerShown — baner nie pojawi się ponownie w tej sesji
 }
 
 window.addEventListener('beforeinstallprompt', e => {
@@ -2769,8 +3902,8 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '1.2.0';
-const APP_LAST_UPDATE = '2026-04-07';
+const APP_VERSION = '2.0.0';
+const APP_LAST_UPDATE = '2026-04-22';
 
 function showAboutModal() {
   const vEl = document.getElementById('aboutVersionText');

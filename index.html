@@ -201,10 +201,14 @@ if ('serviceWorker' in navigator) {
     <p>Dodaj klasy — nazwa (np. <code>4A</code>), skrót i opcjonalna <strong>grupa</strong> dla klas dzielonych.</p>
   </div>
   <div class="wp-step" id="wp4">
+    <h5>Przedmioty</h5>
+    <p>Słownik przedmiotów i ich <strong>skrótów</strong> — ułatwia wpisywanie w planie. Ten krok jest <strong>opcjonalny</strong>.</p>
+  </div>
+  <div class="wp-step" id="wp5">
     <h5>Nauczyciele</h5>
     <p>Imię, nazwisko i <strong>skrót</strong> (np. <code>KJUR</code>). Ten krok jest <strong>opcjonalny</strong>.</p>
   </div>
-  <div class="wp-step" id="wp5">
+  <div class="wp-step" id="wp6">
     <h5>Przypisania klas do sal</h5>
     <p>Opcjonalnie przypisz klasy do sal — pojawią się w wierszu <strong>Gospod.</strong> w tabeli.</p>
   </div>
@@ -246,11 +250,16 @@ if ('serviceWorker' in navigator) {
     <div class="wstep-line" id="wl3"></div>
     <div class="wstep" id="ws4">
       <div class="wstep-num">5</div>
-      <div class="wstep-label">Nauczyciele</div>
+      <div class="wstep-label">Przedmioty</div>
     </div>
     <div class="wstep-line" id="wl4"></div>
     <div class="wstep" id="ws5">
       <div class="wstep-num">6</div>
+      <div class="wstep-label">Nauczyciele</div>
+    </div>
+    <div class="wstep-line" id="wl5"></div>
+    <div class="wstep" id="ws6">
+      <div class="wstep-num">7</div>
       <div class="wstep-label">Przypisania</div>
     </div>
   </div>
@@ -297,7 +306,23 @@ if ('serviceWorker' in navigator) {
     <div class="wcard">
       <div class="wcard-title">⏱ Godziny lekcyjne</div>
       <div class="wcard-desc">Podaj numery godzin lekcyjnych (oddzielone przecinkami).</div>
-      <input type="text" class="big-input" id="wHours" placeholder="np. 0,1,2,3,4,5,6,7,8,9,10" value="0,1,2,3,4,5,6,7,8,9,10">
+      <input type="text" class="big-input" id="wHours" placeholder="np. 0,1,2,3,4,5,6,7,8,9,10" value="0,1,2,3,4,5,6,7,8,9,10"
+        oninput="initTimeslotEditor()">
+    </div>
+    <div class="wcard" style="margin-top:12px">
+      <div class="wcard-title">🕐 Przedziały czasowe lekcji</div>
+      <div class="wcard-desc">
+        Podaj godziny rozpoczęcia i zakończenia każdej lekcji — będą wyświetlane w siatce planu i na wydrukach.<br>
+        Ten krok jest <strong>opcjonalny</strong> — możesz zostawić pola puste.
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn btn-ghost" style="font-size:0.75rem;padding:6px 12px" onclick="fillTimeslotsDefault()">⚡ Wypełnij domyślne (7:00, co 50 min)</button>
+        <button class="btn btn-ghost" style="font-size:0.75rem;padding:6px 12px" onclick="clearTimeslots()">✕ Wyczyść czasy</button>
+      </div>
+      <div class="timeslot-col-header">
+        <span>Lekcja</span><span>Początek</span><span></span><span>Koniec</span>
+      </div>
+      <div id="wTimeslotList"></div>
     </div>
   </div>
 
@@ -369,7 +394,7 @@ if ('serviceWorker' in navigator) {
   </div>
 
   <!-- STEP 5: Teachers -->
-  <div class="wizard-step" id="wStep4">
+  <div class="wizard-step" id="wStep6">
     <div class="wcard">
       <div class="wcard-title">👨‍🏫 Lista nauczycieli</div>
       <div class="wcard-desc">Wpisz nauczycieli ręcznie lub zaimportuj z pliku <strong style="color:var(--accent)">.txt</strong> (format: Imię Nazwisko, każdy w nowej linii). Skrót generowany automatycznie.</div>
@@ -395,6 +420,25 @@ if ('serviceWorker' in navigator) {
         <span>Imię</span><span>Nazwisko</span><span>Skrót</span><span></span>
       </div>
       <div class="teacher-list" id="teacherList"></div>
+    </div>
+  </div>
+
+  <!-- STEP 5: Subjects dictionary -->
+  <div class="wizard-step" id="wStep4">
+    <div class="wcard">
+      <div class="wcard-title">📚 Słownik przedmiotów</div>
+      <div class="wcard-desc">Zdefiniuj listę przedmiotów i ich skrótów. Skróty są wyświetlane w siatce planu i na wydrukach. Możesz wczytać gotową listę lub dodać własne pozycje.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="add-teacher-btn" onclick="addSubject()">＋ Dodaj przedmiot</button>
+        <button class="btn btn-ghost" style="font-size:0.75rem;padding:7px 12px" onclick="loadSubjectPreset()">📋 Wczytaj predefiniowane</button>
+      </div>
+      <div class="subject-col-header">
+        <span>Nazwa przedmiotu</span><span>Skrót (max 8 znaków)</span><span></span>
+      </div>
+      <div id="wSubjectList"></div>
+      <div style="margin-top:10px;font-size:0.72rem;color:var(--text-dim)">
+        💡 Krok opcjonalny — skróty możesz też dodawać lub edytować później.
+      </div>
     </div>
   </div>
 
@@ -446,6 +490,14 @@ if ('serviceWorker' in navigator) {
       </div>
     </div>
     <div class="topbar-center" id="dayTabs"></div>
+    <div class="topbar-right" id="undoRedoBtns" style="display:none;gap:4px;align-items:center">
+      <button id="btnUndo" class="btn btn-ghost btn-xs" onclick="undoAction()" disabled
+        title="Brak operacji do cofnięcia" aria-label="Cofnij (Ctrl+Z)"
+        style="font-size:1rem;padding:4px 8px;line-height:1">↩</button>
+      <button id="btnRedo" class="btn btn-ghost btn-xs" onclick="redoAction()" disabled
+        title="Brak operacji do przywrócenia" aria-label="Przywróć (Ctrl+Y)"
+        style="font-size:1rem;padding:4px 8px;line-height:1">↪</button>
+    </div>
   </div>
 
   <!-- ── Menu hamburger ── -->
@@ -460,8 +512,11 @@ if ('serviceWorker' in navigator) {
     </div>
     <div class="hmenu-sep"></div>
     <button class="hmenu-item" onclick="saveData();toggleMobileMenu()">💾 Zapisz</button>
+    <button class="hmenu-item" id="hmenuUndo" onclick="undoAction();toggleMobileMenu()" style="opacity:0.5" disabled>↩ Cofnij (Ctrl+Z)</button>
+    <button class="hmenu-item" id="hmenuRedo" onclick="redoAction();toggleMobileMenu()" style="opacity:0.5" disabled>↪ Przywróć (Ctrl+Y)</button>
     <button class="hmenu-item" onclick="exportPDF();toggleMobileMenu()">⬇ Eksportuj PDF</button>
     <button class="hmenu-item" onclick="exportJSON();toggleMobileMenu()">⬆ Eksportuj JSON</button>
+    <button class="hmenu-item" onclick="openCSVModal();toggleMobileMenu()">📊 Eksportuj CSV</button>
     <label class="hmenu-item">⬇ Importuj JSON<input type="file" accept=".json" style="display:none" onchange="handleImportFile(this.files[0]);this.value='';toggleMobileMenu()"></label>
     <div class="hmenu-sep"></div>
     <button class="hmenu-item" onclick="openEditWizard();toggleMobileMenu()">✏️ Edytuj rok</button>
@@ -484,6 +539,17 @@ if ('serviceWorker' in navigator) {
       <span class="pdf-from"></span>
     </div>
   </div>
+  <!-- ── Pasek trybu widoku ── -->
+  <div id="viewModeBar" class="view-mode-bar" style="display:none">
+    <div class="view-mode-btns">
+      <button id="viewBtnRooms"   class="btn-view active" onclick="setViewMode('rooms')">🏢 Sale</button>
+      <button id="viewBtnTeacher" class="btn-view"        onclick="setViewMode('teacher',document.getElementById('viewFilterSelect').value)">👤 Nauczyciel</button>
+      <button id="viewBtnClass"   class="btn-view"        onclick="setViewMode('class',document.getElementById('viewFilterSelect').value)">🏫 Klasa</button>
+    </div>
+    <select id="viewFilterSelect" class="view-filter-select" style="display:none"
+            onchange="onViewFilterChange(this.value)"></select>
+  </div>
+
   <div class="main">
     <div class="schedule-wrap" id="scheduleWrap"></div>
   </div>
@@ -498,6 +564,8 @@ if ('serviceWorker' in navigator) {
     <span id="collisionCount" class="none" onclick="scrollToFirstCollision()" title="Kliknij żeby przejść do pierwszej kolizji" style="cursor:pointer"></span>
     <span class="sb-sep">|</span>
     <span id="sbYear" style="color:var(--accent)"></span>
+    <span class="sb-sep">|</span>
+    <span id="sbStorage" style="font-size:0.7rem"></span>
   </div>
 
   <div class="app-footer">© 2025 Krzysztof Jureczek · SalePlan · Wszelkie prawa zastrzeżone · <button onclick="showTermsModal()" style="background:none;border:none;color:inherit;cursor:pointer;text-decoration:underline;font:inherit;padding:0">Regulamin</button></div>
@@ -664,8 +732,10 @@ if ('serviceWorker' in navigator) {
     <ul class="help-list">
       <li>Wszystkie opcje dostępne przez przycisk <b>☰</b> (lewy górny róg)</li>
       <li><b>💾 Zapisz</b> — ręczny zapis do przeglądarki</li>
-      <li><b>✏️ Edytuj rok</b> — zmień sale, klasy, nauczycieli, godziny</li>
+      <li><b>↩ Cofnij / ↪ Przywróć</b> — cofaj i przywracaj zmiany w planie</li>
+      <li><b>✏️ Edytuj rok</b> — zmień sale, klasy, nauczycieli, godziny, przedmioty</li>
       <li><b>🗑 Wyczyść dzień</b> — usuwa wszystkie wpisy bieżącego dnia</li>
+      <li><b>📊 Eksportuj CSV</b> — eksport do arkusza kalkulacyjnego</li>
       <li><b>🌙 Zmień motyw</b> — jasny / ciemny</li>
     </ul>
   </div>
@@ -675,8 +745,40 @@ if ('serviceWorker' in navigator) {
     <ul class="help-list">
       <li>Kliknij komórkę (<b>＋</b>) aby dodać lub edytować zajęcia</li>
       <li>Wybierz nauczyciela, klasę/grupę i wpisz przedmiot</li>
+      <li>Pole przedmiotu: zacznij pisać — pojawi się lista podpowiedzi ze słownika</li>
       <li><b>Ctrl+Enter</b> — zapisz wpis &nbsp;·&nbsp; <b>Esc</b> — zamknij</li>
       <li>Kilka klas tej samej grupy łączy się w komórce: <b>4ABC MN</b></li>
+      <li>Godziny lekcyjne pokazują numer i przedział czasowy (np. <b>7:55–8:40</b>)</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">👤 Widok nauczyciela / klasy</div>
+    <ul class="help-list">
+      <li>Pasek <b>🏢 Sale / 👤 Nauczyciel / 🏫 Klasa</b> pod zakładkami dni</li>
+      <li>Widok nauczyciela lub klasy pokazuje cały tydzień w jednej tabeli</li>
+      <li>Wybierz osobę lub klasę z listy obok przycisków</li>
+      <li>Kliknij komórkę aby edytować zajęcia w odpowiednim dniu</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">↩ Cofnij / Przywróć</div>
+    <ul class="help-list">
+      <li><b>Ctrl+Z</b> — cofnij ostatnią operację (do 30 kroków wstecz)</li>
+      <li><b>Ctrl+Y</b> lub <b>Ctrl+Shift+Z</b> — przywróć cofniętą operację</li>
+      <li>Przyciski ↩ ↪ widoczne w górnym pasku po załadowaniu planu</li>
+      <li>Cofanie obejmuje: zapis komórki, wyczyszczenie komórki, wyczyszczenie dnia, przeciąganie</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
+    <div class="help-title">📚 Słownik przedmiotów</div>
+    <ul class="help-list">
+      <li>Definiowany w kreatorze (krok 5) — nazwa i skrót każdego przedmiotu</li>
+      <li>Przycisk <b>Wczytaj predefiniowane</b> ładuje 23 standardowe przedmioty</li>
+      <li>W oknie edycji: kliknij pole Przedmiot — pojawi się lista z filtrowania</li>
+      <li>Nawigacja klawiaturą: <b>↑↓</b> — wybierz, <b>Enter</b> — zatwierdź, <b>Esc</b> — zamknij</li>
     </ul>
   </div>
 
@@ -685,7 +787,7 @@ if ('serviceWorker' in navigator) {
     <ul class="help-list">
       <li>Przeciągnij wypełnioną komórkę na inne miejsce — skopiuje wpis</li>
       <li>Aby <b>przenieść</b>: przeciągnij, a następnie wyczyść oryginał</li>
-      <li>Gdy cel jest zajęty — pojawi się pytanie przed nadpisaniem</li>
+      <li>Gdy cel jest zajęty — pojawi się okno potwierdzenia przed nadpisaniem</li>
     </ul>
   </div>
 
@@ -722,11 +824,12 @@ if ('serviceWorker' in navigator) {
   </div>
 
   <div class="help-section">
-    <div class="help-title">🔄 JSON &amp; 📄 PDF</div>
+    <div class="help-title">🔄 JSON &amp; 📄 PDF &amp; 📊 CSV</div>
     <ul class="help-list">
       <li><b>⬆ Eksportuj JSON</b> — kopia zapasowa całego planu z archiwum</li>
       <li><b>⬇ Importuj JSON</b> — lub przeciągnij plik .json na okno</li>
       <li><b>⬇ Eksportuj PDF</b> — plan gotowy do wydruku (orientacja pozioma)</li>
+      <li><b>📊 Eksportuj CSV</b> — plan dzienny, tygodniowy lub zestawienie wpisów</li>
     </ul>
   </div>
 
@@ -739,10 +842,22 @@ if ('serviceWorker' in navigator) {
   </div>
 
   <div class="help-section">
+    <div class="help-title">💾 Pamięć przeglądarki</div>
+    <ul class="help-list">
+      <li>Wskaźnik <b>💾 XX KB (YY%)</b> w dolnym pasku pokazuje użycie localStorage</li>
+      <li>Przy żółtym kolorze &gt;65% — czas na eksport kopii zapasowej JSON</li>
+      <li>Przy czerwonym &gt;85% — aplikacja spróbuje zwolnić miejsce automatycznie</li>
+    </ul>
+  </div>
+
+  <div class="help-section">
     <div class="help-title">⌨️ Skróty klawiszowe</div>
     <ul class="help-list">
       <li><b>Ctrl+Enter</b> — zapisz wpis w komórce</li>
-      <li><b>Escape</b> — zamknij okno lub panel pomocy</li>
+      <li><b>Ctrl+Z</b> — cofnij ostatnią operację</li>
+      <li><b>Ctrl+Y</b> / <b>Ctrl+Shift+Z</b> — przywróć cofniętą operację</li>
+      <li><b>↑ / ↓ / Enter</b> — nawigacja w liście autouzupełniania przedmiotów</li>
+      <li><b>Escape</b> — zamknij okno, panel lub menu</li>
     </ul>
   </div>
 </div>
@@ -814,15 +929,15 @@ if ('serviceWorker' in navigator) {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">1.2.0</span></span>
-      <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">7 kwietnia 2026</strong></span>
+      <span class="about-version">v<span id="aboutVersionText">2.0.0</span></span>
+      <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
       <h3>🚀 Strona powitalna</h3>
       <p>Przy pierwszym uruchomieniu wyświetla się strona powitalna z czterema opcjami:</p>
       <table>
         <tr><th>Opcja</th><th>Opis</th></tr>
-        <tr><td>✨ Utwórz nowy plan</td><td>Kreator od zera — 6 kroków</td></tr>
+        <tr><td>✨ Utwórz nowy plan</td><td>Kreator od zera — 7 kroków</td></tr>
         <tr><td>📋 Nowy rok szkolny</td><td>Kopiuje konfigurację z bieżącego roku</td></tr>
         <tr><td>📂 Importuj z pliku</td><td>Wczytaj plan z pliku .json</td></tr>
         <tr><td>🎬 Wersja demo</td><td>Przykładowa szkoła — dane nie są zapisywane</td></tr>
@@ -833,10 +948,12 @@ if ('serviceWorker' in navigator) {
       <ul>
         <li><b>Obowiązuje od</b> — data obowiązywania planu (osobna dla każdego dnia)</li>
         <li><b>💾 Zapisz</b> — ręczny zapis do pamięci przeglądarki</li>
+        <li><b>↩ Cofnij / ↪ Przywróć</b> — cofaj i przywracaj zmiany w planie (Ctrl+Z / Ctrl+Y)</li>
         <li><b>⬇ Eksportuj PDF</b> — plan gotowy do wydruku</li>
         <li><b>⬆ Eksportuj JSON</b> — kopia zapasowa planu</li>
+        <li><b>📊 Eksportuj CSV</b> — plan dzienny, tygodniowy lub zestawienie wpisów</li>
         <li><b>⬇ Importuj JSON</b> — wczytaj plan z pliku</li>
-        <li><b>✏️ Edytuj rok</b> — zmień sale, klasy, nauczycieli, godziny</li>
+        <li><b>✏️ Edytuj rok</b> — zmień sale, klasy, nauczycieli, godziny, przedmioty</li>
         <li><b>🗑 Wyczyść dzień</b> — usuwa wszystkie wpisy bieżącego dnia</li>
         <li><b>❓ Pomoc</b> — panel z podpowiedziami</li>
         <li><b>🌙 Zmień motyw</b> — przełącz jasny / ciemny motyw</li>
@@ -846,9 +963,25 @@ if ('serviceWorker' in navigator) {
       <h3>📋 Planowanie sal</h3>
       <ul>
         <li>Kliknij komórkę — wybierz nauczyciela, klasę/grupę, przedmiot</li>
+        <li>Pole przedmiotu podpowiada wartości ze słownika — zacznij pisać lub kliknij pole</li>
         <li>Kilka klas tego samego poziomu i grupy łączy się automatycznie: <b>4A MN + 4B MN + 4C MN → 4ABC MN</b></li>
+        <li>Godziny lekcyjne pokazują numer i przedział czasowy (np. <b>7:55–8:40</b>)</li>
         <li>Wypełnioną komórkę możesz <b>przeciągnąć</b> na inną godzinę lub salę</li>
         <li><b>Ctrl+Enter</b> — zapisz wpis &nbsp;·&nbsp; <b>Esc</b> — zamknij okno</li>
+      </ul>
+
+      <h3>👤 Widok nauczyciela / klasy</h3>
+      <ul>
+        <li>Pasek <b>🏢 Sale / 👤 Nauczyciel / 🏫 Klasa</b> pod zakładkami dni</li>
+        <li>Widok nauczyciela lub klasy pokazuje cały tydzień w jednej tabeli (godziny × dni)</li>
+        <li>Wybierz osobę lub klasę z listy obok przycisków</li>
+      </ul>
+
+      <h3>↩ Cofnij / Przywróć</h3>
+      <ul>
+        <li><b>Ctrl+Z</b> — cofnij ostatnią operację (do 30 kroków wstecz)</li>
+        <li><b>Ctrl+Y</b> / <b>Ctrl+Shift+Z</b> — przywróć cofniętą operację</li>
+        <li>Cofanie obejmuje: zapis komórki, wyczyszczenie komórki, wyczyszczenie dnia, przeciąganie</li>
       </ul>
 
       <h3>🏠 Gospodarz sali</h3>
@@ -873,7 +1006,7 @@ if ('serviceWorker' in navigator) {
       <ul>
         <li>Wypełnioną komórkę przeciągnij na inne miejsce — skopiuje wpis</li>
         <li>Aby <b>przenieść</b>: przeciągnij, a następnie wyczyść oryginał</li>
-        <li>Gdy cel jest zajęty — pojawi się pytanie przed nadpisaniem</li>
+        <li>Gdy cel jest zajęty — pojawi się okno potwierdzenia przed nadpisaniem</li>
       </ul>
 
       <h3>🔄 Eksport i import JSON</h3>
@@ -887,6 +1020,16 @@ if ('serviceWorker' in navigator) {
       <ul>
         <li>Menu ☰ → <b>⬇ Eksportuj PDF</b> — orientacja pozioma, gotowy do wydruku</li>
         <li>Nagłówek zawiera szkołę, rok, dzień i datę obowiązywania</li>
+        <li>Godziny lekcyjne zawierają przedziały czasowe jeśli są zdefiniowane</li>
+      </ul>
+
+      <h3>📊 Eksport do CSV</h3>
+      <ul>
+        <li>Menu ☰ → <b>📊 Eksportuj CSV</b> — wybierz jeden z trzech formatów</li>
+        <li><b>Plan dzienny</b> — aktywny dzień, kolumny: sale, wiersze: godziny</li>
+        <li><b>Plan tygodniowy</b> — wszystkie sale × wszystkie dni tygodnia</li>
+        <li><b>Zestawienie wpisów</b> — każdy wpis jako osobny wiersz, do analizy w Excelu</li>
+        <li>Kodowanie UTF-8 z BOM — Excel otwiera bez konieczności konwersji</li>
       </ul>
 
       <h3>📁 Archiwum</h3>
@@ -895,22 +1038,23 @@ if ('serviceWorker' in navigator) {
         <li>Można przywrócić lub trwale usunąć stary rok</li>
       </ul>
 
-      <h3>🧙 Kreator — 6 kroków</h3>
+      <h3>🧙 Kreator — 7 kroków</h3>
       <table>
         <tr><th>Krok</th><th>Opis</th></tr>
         <tr><td>1 — Szkoła</td><td>Nazwa, skrót, telefon, strona www + lista budynków</td></tr>
-        <tr><td>2 — Rok szkolny</td><td>Rok i numery godzin lekcyjnych</td></tr>
+        <tr><td>2 — Rok szkolny</td><td>Rok, numery godzin i przedziały czasowe lekcji</td></tr>
         <tr><td>3 — Piętra i sale</td><td>Piętra, segmenty, numery sal</td></tr>
         <tr><td>4 — Klasy i grupy</td><td>Lista klas z podziałem na grupy</td></tr>
-        <tr><td>5 — Nauczyciele</td><td>Lista nauczycieli ze skrótami</td></tr>
-        <tr><td>6 — Przypisania</td><td>Domyślne przypisania klas do sal</td></tr>
+        <tr><td>5 — Przedmioty</td><td>Słownik przedmiotów i skrótów do autouzupełniania</td></tr>
+        <tr><td>6 — Nauczyciele</td><td>Lista nauczycieli ze skrótami</td></tr>
+        <tr><td>7 — Przypisania</td><td>Domyślne przypisania klas do sal</td></tr>
       </table>
 
       <h3>🔒 Prywatność i dane</h3>
       <p>Wszystkie dane przechowywane są wyłącznie lokalnie w przeglądarce (<em>localStorage</em>). Żadne dane nie są wysyłane na serwery.</p>
       <table>
         <tr><th>Klucz</th><th>Zawartość</th></tr>
-        <tr><td><code>sp_active</code></td><td>Konfiguracja aktywnego roku</td></tr>
+        <tr><td><code>sp_active</code></td><td>Konfiguracja aktywnego roku (klasy, nauczyciele, przedmioty, timesloty)</td></tr>
         <tr><td><code>sp_sched</code></td><td>Wpisy planu zajęć</td></tr>
         <tr><td><code>sp_archive</code></td><td>Zarchiwizowane lata</td></tr>
         <tr><td><code>sp_vfdates</code></td><td>Daty „obowiązuje od"</td></tr>
@@ -927,6 +1071,20 @@ if ('serviceWorker' in navigator) {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.0.0 <span class="changelog-date">22 kwietnia 2026</span></div>
+          <ul>
+            <li>Obsługa przepełnienia localStorage — strategia ratunkowa, modal awaryjny, wskaźnik użycia <code>💾 XX KB (YY%)</code> w statusbarze</li>
+            <li>Undo / Redo — stos do 30 operacji; <b>Ctrl+Z</b> / <b>Ctrl+Y</b>; przyciski ↩ ↪ w topbarze i menu ☰</li>
+            <li>Widok nauczyciela / klasy — pasek 🏢/👤/🏫; tygodniowa tabela godziny × dni; filtr z listą wyboru</li>
+            <li>Słownik przedmiotów — krok 5 kreatora; 23 predefiniowane przedmioty; dropdown z autouzupełnianiem w modalu edycji</li>
+            <li>Modalne potwierdzenia — 7 wywołań <code>window.confirm()</code> zastąpione spójnym modalem (Enter/Escape)</li>
+            <li>Przedziały czasowe lekcji — edytor w kroku 2 kreatora; godziny start–end w siatce i na wydruku PDF</li>
+            <li>Listener wiadomości Service Workera — 3 ścieżki wykrywania aktualizacji; baner 🔄 z przyciskiem „Odśwież teraz"</li>
+            <li>Eksport CSV — 3 warianty: plan dzienny, plan tygodniowy (per sala), zestawienie płaskie; UTF-8 z BOM</li>
+            <li>Kreator rozszerzony z 6 do 7 kroków</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v1.2.0 <span class="changelog-date">7 kwietnia 2026</span></div>
           <ul>
@@ -1095,6 +1253,19 @@ if ('serviceWorker' in navigator) {
   <div class="pwa-banner-btns">
     <button class="btn btn-primary" id="pwaInstallBtn">Zainstaluj</button>
     <button class="btn btn-ghost" onclick="pwaDismiss()">✕</button>
+  </div>
+</div>
+
+<!-- Banner aktualizacji SW -->
+<div id="swUpdateBanner" aria-live="polite" aria-label="Dostępna aktualizacja aplikacji">
+  <span class="swu-icon">🔄</span>
+  <div class="swu-text">
+    <div class="swu-title">Dostępna nowa wersja SalePlan</div>
+    <div class="swu-sub">Kliknij "Odśwież", aby załadować aktualizację.</div>
+  </div>
+  <div class="swu-btns">
+    <button class="btn btn-primary swu-btn-reload" onclick="swUpdateReload()">Odśwież teraz</button>
+    <button class="btn btn-ghost" onclick="swUpdateDismiss()" aria-label="Zamknij powiadomienie">✕</button>
   </div>
 </div>
 

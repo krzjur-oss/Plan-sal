@@ -2530,3 +2530,317 @@ body.light #tutBox { background: #fff; }
   text-decoration: underline; text-align: center;
 }
 .terms-banner-footer .terms-read-link:hover { color: #1d4ed8; }
+
+/* ================================================================
+   WIDOK NAUCZYCIELA / KLASY
+================================================================ */
+.view-mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.view-mode-btns { display: flex; gap: 4px; }
+.btn-view {
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-view:hover { background: var(--hover); }
+.btn-view.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.view-filter-select {
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.75rem;
+  max-width: 220px;
+}
+.view-mode-banner {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.th-view-day {
+  font-size: 0.72rem;
+  padding: 6px 4px;
+  text-align: center;
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.th-view-day-active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+}
+.view-cell { font-size: 0.7rem; }
+.view-mode-table td { vertical-align: top; min-width: 110px; }
+
+/* ================================================================
+   UNDO / REDO BUTTONS
+================================================================ */
+.topbar-right {
+  margin-left: auto;
+  padding-right: 6px;
+}
+.btn-xs {
+  font-size: 0.8rem !important;
+  padding: 3px 7px !important;
+}
+.btn-ghost:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ================================================================
+   SŁOWNIK PRZEDMIOTÓW — kreator
+================================================================ */
+.subject-col-header {
+  display: grid;
+  grid-template-columns: 1fr 120px 32px;
+  gap: 6px;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 0 2px 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.subject-item {
+  display: grid;
+  grid-template-columns: 1fr 120px 32px;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 5px;
+}
+.subject-name-inp,
+.subject-abbr-inp {
+  background: var(--input-bg, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.8rem;
+  padding: 5px 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.subject-name-inp:focus,
+.subject-abbr-inp:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ── Autocomplete dropdown w modalu edycji ── */
+.subject-dropdown {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+}
+.subject-dd-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 12px;
+  cursor: pointer;
+  gap: 8px;
+  transition: background 0.1s;
+}
+.subject-dd-item:hover,
+.subject-dd-item.active {
+  background: var(--hover);
+}
+.subject-dd-name { flex: 1; color: var(--text); }
+.subject-dd-abbr {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+/* ================================================================
+   MODAL POTWIERDZENIA
+================================================================ */
+.confirm-box {
+  padding: 28px 28px 20px;
+  border-radius: 14px;
+}
+.confirm-msg {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+/* ================================================================
+   PRZEDZIAŁY CZASOWE LEKCJI
+================================================================ */
+
+/* Komórka czasu w siatce — numer lekcji + zakres */
+.time-cell {
+  min-width: 56px;
+  text-align: center;
+  vertical-align: middle;
+  padding: 2px 4px;
+  line-height: 1.3;
+}
+.time-num {
+  display: block;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+.time-range {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* Kreator — edytor timeslotów */
+.timeslot-col-header {
+  display: grid;
+  grid-template-columns: 72px 90px 16px 90px;
+  gap: 6px;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 0 2px 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.timeslot-row {
+  display: grid;
+  grid-template-columns: 72px 90px 16px 90px;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+.timeslot-lnum {
+  font-size: 0.78rem;
+  color: var(--text);
+  font-weight: 600;
+}
+.timeslot-sep {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.timeslot-inp {
+  background: var(--input-bg, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.78rem;
+  padding: 4px 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.timeslot-inp:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ================================================================
+   BANER AKTUALIZACJI SERVICE WORKERA
+================================================================ */
+#swUpdateBanner {
+  display: none;
+  position: fixed;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-top: 2px solid #10b981; /* zielony — nowa wersja */
+  border-radius: 14px;
+  padding: 12px 18px;
+  z-index: 850; /* powyżej pwaInstallBanner */
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  align-items: center;
+  gap: 14px;
+  min-width: 280px;
+  max-width: 440px;
+  animation: notifIn 0.25s ease;
+}
+#swUpdateBanner.show { display: flex; }
+.swu-icon { font-size: 1.6rem; flex-shrink: 0; }
+.swu-text { flex: 1; }
+.swu-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.swu-sub   { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+.swu-btns  { display: flex; gap: 6px; flex-shrink: 0; }
+.swu-btn-reload { background: #10b981 !important; border-color: #10b981 !important; }
+.swu-btn-reload:hover { background: #059669 !important; border-color: #059669 !important; }
+
+/* Dodaj do print: ukryj baner aktualizacji */
+@media print {
+  #swUpdateBanner { display: none !important; }
+}
+
+/* ================================================================
+   MODAL EKSPORTU CSV
+================================================================ */
+.csv-modal {
+  max-width: 420px;
+}
+.csv-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  color: var(--text);
+}
+.csv-export-btn:hover {
+  background: var(--hover);
+  border-color: var(--accent);
+}
+.csv-btn-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+.csv-btn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.csv-btn-text strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.csv-btn-text span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
