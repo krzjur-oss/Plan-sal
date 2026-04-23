@@ -196,8 +196,7 @@ function undoApply(stack, targetStack, action) {
 
   // Przełącz na właściwy dzień jeśli inny
   if (entry.day !== currentDay) {
-    currentDay = entry.day;
-    renderDayTabs();
+    switchDay(entry.day);
   }
   renderSchedule();
   updateStatusBar();
@@ -1115,7 +1114,7 @@ function handleImportFile(file) {
   reader.onload = e => {
     try {
       const data = JSON.parse(e.target.result);
-      if (!data.schedData) { notify('⚠ Nieprawidłowy format pliku', true); return; }
+      if (!data.schedData && !data.appState) { notify('⚠ Nieprawidłowy format pliku', true); return; } // BUG-11 fix: spójne z welcomeHandleFile
       openImportModal(data);
     } catch(ex) {
       notify('⚠ Błąd odczytu pliku: ' + ex.message, true);
@@ -1437,7 +1436,7 @@ function saveData() {
 //  SAMPLE DATA
 // ================================================================
 
-function openWizardNewYear(preload) {
+function openWizardNewYear() { // BUG-09 fix: usunięto nieużywany parametr preload
   wStep = 0;
   wAssignments = {};
   wSubjects = JSON.parse(JSON.stringify(appState?.subjects || []));
@@ -1521,11 +1520,7 @@ function wizardNext() {
     wClasses = getClassesFromDOM();
     if (wClasses.filter(c=>c.name).length === 0) { notify('⚠ Dodaj przynajmniej jedną klasę', true); return; }
   }
-  if (wStep === 1) {
-    // Po opuszczeniu kroku godzin odśwież timeslots (mogły się zmienić numery)
-    initTimeslotEditor();
-  }
-  if (wStep === 4) {
+  if (wStep === 4) {  // BUG-08 fix: usunięto redundantne wołanie init-timeslot (zostaje tylko post-increment poniżej)
     // Przedmioty — opcjonalne, bez walidacji; tylko odśwież listę
     renderSubjectList();
   }
@@ -1592,7 +1587,8 @@ function finishWizard() {
   const subjects = wSubjects.filter(s => s.name && s.name.trim());
   const timeslots = wTimeslots.filter(t => t.label).map(t => ({label:t.label,start:t.start||'',end:t.end||''}));
   appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, subjects, timeslots, days: DAYS_DEFAULT, school, homerooms: prevHomerooms };
-  _wizardEditMode = false; // reset flagi
+  const wasEditMode = _wizardEditMode; // zapamiętaj przed resetem (BUG-03 fix)
+  _wizardEditMode = false;
 
   // Zawsze uzupełnij brakujące godziny i dni (bez kasowania istniejących wpisów)
   if (!schedData[yearKey]) schedData[yearKey] = {};
@@ -1603,11 +1599,12 @@ function finishWizard() {
     });
   });
 
+  invalidateColumnCache(); // OPT-02: piętra mogły się zmienić w kreatorze
   persistAll();
   wizardClearDraft();
   stopWizardAutosave();
   document.getElementById('wizardOverlay').classList.remove('show');
-  if (!_wizardEditMode) currentDay = 0; // edycja zachowuje bieżący dzień
+  if (!wasEditMode) currentDay = 0; // edycja zachowuje bieżący dzień (BUG-03 fix)
   mountApp();
   const msg = (appState.yearKey === yearKey && document.getElementById('wizardTitle')?.textContent?.includes('Edycja'))
     ? '✓ Zmiany zapisane dla roku ' + yearLabel
@@ -2030,14 +2027,21 @@ function renderAssignTable() {
   const tbl = document.getElementById('assignmentsTable');
   const cols = flattenColumns(wFloors);
   // Build options grouped by class name
-  const classOptsList = ['<option value="">—</option>'];
-  const seen = new Set();
+  // BUG-06 fix: buduj opcje per-sala z poprawnym `selected`, nie przez fragile String.replace()
+  const classEntries = [{ val: '', label: '—' }];
+  const seen = new Set(['']);
   wClasses.filter(c=>c.name).forEach(c => {
     const val = c.abbr || c.name;
     const label = c.group && c.group !== c.name ? `${c.name} — ${c.group}` : c.name;
-    if (!seen.has(val)) { seen.add(val); classOptsList.push(`<option value="${esc(val)}">${esc(label)}</option>`); }
+    if (!seen.has(val)) { seen.add(val); classEntries.push({ val, label }); }
   });
-  const classOptions = classOptsList.join('');
+
+  function buildClassOptions(savedVal) {
+    return classEntries.map(e =>
+      `<option value="${esc(e.val)}"${e.val === savedVal ? ' selected' : ''}>${esc(e.label)}</option>`
+    ).join('');
+  }
+
   if (!cols.length) { tbl.innerHTML='<tr><td style="padding:20px;color:var(--text-muted)">Brak sal</td></tr>'; return; }
   tbl.innerHTML = '<tr><th>Budynek</th><th>Piętro</th><th>Segment</th><th>Sala</th><th>Klasa</th></tr>' +
     cols.map(col => {
@@ -2050,7 +2054,7 @@ function renderAssignTable() {
         <td style="font-size:0.68rem;color:${col.floor.color};font-weight:700;padding:5px 8px">${esc(col.floor.name)}</td>
         <td style="font-size:0.68rem;color:var(--text-muted);padding:5px 8px">${esc(col.seg.name)}</td>
         <td style="font-family:var(--mono);font-size:0.72rem;color:var(--accent);padding:5px 8px">Sala ${esc(col.room.num)}</td>
-        <td><select class="assign-select" onchange="setAssign(${currentAssignDay},'${key}',this.value)">${classOptions.replace(`value="${esc(saved)}"`,`value="${esc(saved)}" selected`)}</select></td>
+        <td><select class="assign-select" onchange="setAssign(${currentAssignDay},'${key}',this.value)">${buildClassOptions(saved)}</select></td>
       </tr>`;
     }).join('');
 }
@@ -2061,10 +2065,25 @@ function getAssignmentsFromDOM() { return wAssignments; }
 //  COLUMN UTILS
 // ================================================================
 function colKey(col) { const n = (col.room.num||'').trim(); return n ? `f${col.floorIdx}_s${col.segIdx}_${n}` : `f${col.floorIdx}_s${col.segIdx}_r${col.roomIdx}`; }
+
+// OPT-02: Memoizowany flattenColumns — cache kasowany po zmianach pięter
+let _flatColsCache = null;
+let _flatColsFloorRef = null; // referencja do tablicy floors przy ostatnim przeliczeniu
+
 function flattenColumns(floors) {
+  // Invaliduj jeśli zmienił się obiekt floors (nowa referencja = edycja kreatora lub mount)
+  if (_flatColsCache && _flatColsFloorRef === floors) return _flatColsCache;
   const cols = [];
   floors.forEach((floor,fi) => floor.segments.forEach((seg,si) => seg.rooms.forEach((room,ri) => cols.push({floorIdx:fi,segIdx:si,roomIdx:ri,floor,seg,room}))));
+  _flatColsCache    = cols;
+  _flatColsFloorRef = floors;
   return cols;
+}
+
+// Wywołaj po każdej zmianie struktury sal (kreator, mountApp)
+function invalidateColumnCache() {
+  _flatColsCache    = null;
+  _flatColsFloorRef = null;
 }
 
 // ================================================================
@@ -2139,6 +2158,7 @@ function buildClassSelectOptions(selectedVal) {
 // ================================================================
 function mountApp() {
   if (!appState) return;
+  invalidateColumnCache(); // OPT-02: przeładowanie aplikacji = nowe piętra
   document.getElementById('appOverlay').classList.add('show');
   document.getElementById('currentYearLabel').textContent = appState.yearLabel;
   document.getElementById('sbYear').textContent = appState.yearLabel;
@@ -2170,12 +2190,10 @@ function mountApp() {
   _redoStack = [];
   _undoUpdateUI();
 
-  // Pokaż pasek widoku i resetuj tryb
-  const viewBar = document.getElementById('viewModeBar');
-  if (viewBar) viewBar.style.display = 'flex';
+  // Resetuj tryb widoku i wyrenderuj toolbar
   _viewMode   = 'rooms';
   _viewFilter = '';
-  _updateViewToolbar();
+  _updateViewToolbar(); // pokaże dayTabs, schowa viewModeBtnsTopbar
 
   // Ustaw wysokość .main po tym jak DOM jest gotowy (rAF gwarantuje że topbar jest widoczny)
   requestAnimationFrame(() => {
@@ -2279,7 +2297,7 @@ function dndDrop(e, day, hour, key) {
 
   // Jeśli cel jest wypełniony — zapytaj; inaczej skopiuj od razu
   function _doDrop() {
-    undoPush(`DnD → ${key}, godz. ${hour+1}, ${appState.days[day]}`);
+    undoPush(`DnD → ${key}, godz. ${hour}, ${appState.days[day]}`); // BUG-04 fix
     if (!schedData[yk][day]) schedData[yk][day] = {};
     if (!schedData[yk][day][hour]) schedData[yk][day][hour] = {};
     schedData[yk][day][hour][key] = JSON.parse(JSON.stringify(srcEntry));
@@ -2331,19 +2349,30 @@ function setViewMode(mode, filter) {
 }
 
 function _updateViewToolbar() {
-  const btns = {
-    rooms:   document.getElementById('viewBtnRooms'),
-    teacher: document.getElementById('viewBtnTeacher'),
-    class:   document.getElementById('viewBtnClass'),
-  };
-  Object.entries(btns).forEach(([k, el]) => {
-    if (el) el.classList.toggle('active', k === _viewMode);
+  const isRooms = _viewMode === 'rooms';
+
+  // Przyciski aktywne
+  ['viewBtnRooms','viewBtnTeacher','viewBtnClass'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const mode = id === 'viewBtnRooms' ? 'rooms' : id === 'viewBtnTeacher' ? 'teacher' : 'class';
+    el.classList.toggle('active', mode === _viewMode);
   });
+
+  // Select filtra — widoczny tylko gdy tryb ≠ rooms
   const sel = document.getElementById('viewFilterSelect');
   if (sel) {
-    sel.style.display = (_viewMode === 'rooms') ? 'none' : '';
-    if (_viewMode !== 'rooms') _populateViewFilter(sel);
+    sel.style.display = isRooms ? 'none' : '';
+    if (!isRooms) _populateViewFilter(sel);
   }
+
+  // Zakładki dni w topbarze — widoczne tylko w trybie sal
+  const dayTabsEl = document.getElementById('dayTabs');
+  if (dayTabsEl) dayTabsEl.style.display = isRooms ? 'flex' : 'none';
+
+  // Pasek Sale/Nauczyciel/Klasa — zawsze widoczny po załadowaniu planu
+  const vmBar = document.getElementById('viewModeBar');
+  if (vmBar) vmBar.style.display = 'flex';
 }
 
 function _populateViewFilter(sel) {
@@ -2428,8 +2457,10 @@ function renderViewTable(mode, filter) {
     days.forEach((_,di) => {
       const entries = byDayHour[di][h] || [];
       if (!entries.length) {
-        tbody += `<td><div class="cell-inner" onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','')"
-          style="cursor:pointer"><div class="cell-plus">＋</div></div></td>`;
+        // BUG-05 fix: pusta komórka w widoku nauczyciela/klasy — brak konkretnej sali,
+        // więc zamiast otwierać zepsuty modal z kluczem '' pokazujemy tooltip
+        tbody += `<td><div class="cell-inner cell-inner-view-empty" title="Brak zajęć — przełącz na widok sal aby edytować"
+          style="cursor:default"><div class="cell-plus" style="opacity:0.25">—</div></div></td>`;
       } else {
         tbody += `<td style="padding:2px;vertical-align:top">`;
         entries.forEach(({ col, key, entry }) => {
@@ -3101,7 +3132,7 @@ function mcRemoveClass(idx) {
   renderMultiClassList(_selectedClasses);
 }function saveCellData() {
   const yk = appState.yearKey;
-  undoPush(`Zapis ${_mKey}, godz. ${_mHour+1}, ${appState.days[_mDay]}`);
+  undoPush(`Zapis ${_mKey}, godz. ${_mHour}, ${appState.days[_mDay]}`); // BUG-04 fix: _mHour jest stringiem
   if (!schedData[yk]) schedData[yk]={};
   if (!schedData[yk][_mDay]) schedData[yk][_mDay]={};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour]={};
@@ -3117,7 +3148,7 @@ function mcRemoveClass(idx) {
   persistAll(); closeEditModal(); renderSchedule(); sbSet('Wpis zaktualizowany');
 }
 function clearCellData() {
-  undoPush(`Wyczyszczenie ${_mKey}, godz. ${_mHour+1}, ${appState.days[_mDay]}`);
+  undoPush(`Wyczyszczenie ${_mKey}, godz. ${_mHour}, ${appState.days[_mDay]}`); // BUG-04 fix
   if (schedData[appState.yearKey]?.[_mDay]?.[_mHour]) schedData[appState.yearKey][_mDay][_mHour][_mKey]={};
   persistAll(); closeEditModal(); renderSchedule(); sbSet('Wpis wyczyszczony');
 }
@@ -3902,8 +3933,8 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.0.0';
-const APP_LAST_UPDATE = '2026-04-22';
+const APP_VERSION = '2.1.0';
+const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {
   const vEl = document.getElementById('aboutVersionText');

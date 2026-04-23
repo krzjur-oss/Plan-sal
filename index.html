@@ -12,16 +12,12 @@
 <html lang="pl">
 <head>
 <script>
-// Force SW update — wyrejestruj stary SW jeśli nie ma aktualnej wersji
+// BUG-02 fix: usunięto handler SW_UPDATED z auto-reload — obsługa przeniesiona do app.js
+// (tam pokazuje baner z wyborem użytkownika zamiast wymuszać przeładowanie)
+// Wymuszenie sprawdzenia aktualizacji SW przy każdym załadowaniu strony
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
     regs.forEach(r => r.update());
-  });
-  // Nasłuchuj wiadomości od SW o aktualizacji → przeładuj stronę
-  navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data && e.data.type === 'SW_UPDATED') {
-      window.location.reload();
-    }
   });
 }
 </script>
@@ -539,9 +535,9 @@ if ('serviceWorker' in navigator) {
       <span class="pdf-from"></span>
     </div>
   </div>
-  <!-- ── Pasek trybu widoku ── -->
+  <!-- ── Pasek widoku: Sale / Nauczyciel / Klasa — zawsze widoczny pod topbarem ── -->
   <div id="viewModeBar" class="view-mode-bar" style="display:none">
-    <div class="view-mode-btns">
+    <div class="topbar-center" id="viewModeBtnsTopbar">
       <button id="viewBtnRooms"   class="btn-view active" onclick="setViewMode('rooms')">🏢 Sale</button>
       <button id="viewBtnTeacher" class="btn-view"        onclick="setViewMode('teacher',document.getElementById('viewFilterSelect').value)">👤 Nauczyciel</button>
       <button id="viewBtnClass"   class="btn-view"        onclick="setViewMode('class',document.getElementById('viewFilterSelect').value)">🏫 Klasa</button>
@@ -929,7 +925,7 @@ if ('serviceWorker' in navigator) {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.0.0</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.1.0</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
@@ -1071,6 +1067,21 @@ if ('serviceWorker' in navigator) {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.1.0 <span class="changelog-date">23 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Naprawiono crash Undo cross-day</b> — <code>renderDayTabs()</code> nie istniało; zastąpione poprawnym <code>switchDay()</code></li>
+            <li><b>Naprawiono wymuszone przeładowanie strony</b> — duplikat handlera <code>SW_UPDATED</code> w <code>index.html</code> powodował auto-reload bez zgody użytkownika</li>
+            <li><b>Naprawiono edycję roku</b> — flaga <code>_wizardEditMode</code> była kasowana przed sprawdzeniem, resetując aktywny dzień do poniedziałku</li>
+            <li><b>Naprawiono etykiety Undo</b> — konkatenacja <code>_mHour + 1</code> zwracała string zamiast liczby (np. „godz. 31" zamiast „godz. 3")</li>
+            <li><b>Naprawiono widok nauczyciela/klasy</b> — kliknięcie pustej komórki otwierało zepsuty modal; teraz wyświetlany jest tooltip</li>
+            <li><b>Naprawiono wybór klasy w przypisaniach</b> — <code>String.replace()</code> mogło zaznaczać błędną opcję; zastąpione przez <code>buildClassOptions()</code></li>
+            <li><b>Naprawiono walidację importu</b> — <code>handleImportFile</code> odrzucał pliki bez <code>schedData</code>; ujednolicone z <code>welcomeHandleFile</code></li>
+            <li>Usunięto podwójne wywołanie <code>initTimeslotEditor()</code> przy przejściu krok 1→2 kreatora</li>
+            <li>Usunięto nieużywany parametr <code>preload</code> z <code>openWizardNewYear()</code></li>
+            <li>Optymalizacja: <code>flattenColumns()</code> memoizowana — wynik cache'owany do czasu zmiany struktury pięter</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.0.0 <span class="changelog-date">22 kwietnia 2026</span></div>
           <ul>
