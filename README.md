@@ -10,7 +10,7 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.1.0 |
+| **Aktualna wersja** | v2.3.0 |
 | **Ostatnia aktualizacja** | 23 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
@@ -268,6 +268,32 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.3.0 — 23 kwietnia 2026
+
+Nowa funkcja — Panel Ustawień Szkoły:
+
+- **⚙️ Panel Ustawień Szkoły** — przycisk w topbarze i menu ☰, panel wysuwa się z prawej strony
+- Zakładka **Klasy** — dodawanie, edycja nazwy/skrótu/grupy/klasy bazowej inline; zmiana skrótu kaskadowo aktualizuje cały plan
+- Zakładka **Nauczyciele** — edycja imienia, nazwiska i skrótu; zmiana skrótu aktualizuje wszystkie wpisy w planie
+- Zakładka **Przedmioty** — zarządzanie listą przedmiotów używanych w podpowiedziach
+- Zakładka **Godziny** — dodawanie/usuwanie godzin lekcyjnych, edycja czasów rozpoczęcia i zakończenia
+- Zakładka **Sale** — podgląd drzewa pięter/segmentów/sal z linkiem do kreatora
+- Znacznik **„w planie"** przy elementach używanych w aktywnym planie
+- Potwierdzenie przed usunięciem elementów używanych w planie
+
+---
+
+### v2.2.0 — 23 kwietnia 2026
+
+Nowa funkcja — klasa bazowa:
+
+- **Pole „klasa bazowa"** w kreatorze i ustawieniach — jawne przypisanie podgrupy do klasy nadrzędnej (np. `1A-religia` → `1A`)
+- Widok **„Klasa"** agreguje wszystkie podgrupy — jedna tabela pokazuje zajęcia całej klasy i równoległych grup
+- Dropdown filtra widoku pokazuje klasy bazowe z licznikiem podgrup (np. `1A (+2 gr.)`)
+- Automatyczna migracja starych danych — pole `baseClass: ''` dodawane bez utraty wpisów
+
+---
 
 ### v2.1.0 — 23 kwietnia 2026
 

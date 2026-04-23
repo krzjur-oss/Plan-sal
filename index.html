@@ -383,7 +383,7 @@ if ('serviceWorker' in navigator) {
       </div>
 
       <div class="class-col-header">
-        <span>Klasa</span><span>Skrót</span><span>Grupa</span><span></span>
+        <span>Klasa</span><span>Skrót</span><span>Grupa</span><span>Klasa bazowa</span><span></span>
       </div>
       <div class="class-list" id="classGrid"></div>
     </div>
@@ -493,6 +493,9 @@ if ('serviceWorker' in navigator) {
       <button id="btnRedo" class="btn btn-ghost btn-xs" onclick="redoAction()" disabled
         title="Brak operacji do przywrócenia" aria-label="Przywróć (Ctrl+Y)"
         style="font-size:1rem;padding:4px 8px;line-height:1">↪</button>
+      <button id="btnSettings" class="btn btn-ghost btn-xs" onclick="openSettingsPanel()"
+        title="Ustawienia szkoły" aria-label="Ustawienia"
+        style="font-size:1.1rem;padding:4px 8px;line-height:1">⚙️</button>
     </div>
   </div>
 
@@ -516,6 +519,7 @@ if ('serviceWorker' in navigator) {
     <label class="hmenu-item">⬇ Importuj JSON<input type="file" accept=".json" style="display:none" onchange="handleImportFile(this.files[0]);this.value='';toggleMobileMenu()"></label>
     <div class="hmenu-sep"></div>
     <button class="hmenu-item" onclick="openEditWizard();toggleMobileMenu()">✏️ Edytuj rok</button>
+    <button class="hmenu-item" onclick="openSettingsPanel();toggleMobileMenu()">⚙️ Ustawienia szkoły</button>
     <button class="hmenu-item hmenu-item-red" onclick="clearDay();toggleMobileMenu()">🗑 Wyczyść dzień</button>
     <div class="hmenu-sep"></div>
     <button class="hmenu-item" onclick="toggleAppHelp();toggleMobileMenu()">❓ Pomoc</button>
@@ -925,7 +929,7 @@ if ('serviceWorker' in navigator) {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.1.0</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.3.0</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
@@ -1067,6 +1071,30 @@ if ('serviceWorker' in navigator) {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.3.0 <span class="changelog-date">23 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Nowa funkcja: Panel Ustawień Szkoły</b> (⚙️ w topbarze i menu ☰)</li>
+            <li>Zakładka <em>Klasy</em> — dodawanie, edycja nazwy/skrótu/grupy/klasy bazowej, usuwanie z ostrzeżeniem</li>
+            <li>Zakładka <em>Nauczyciele</em> — pełna lista z edycją inline; zmiana skrótu kaskadowo aktualizuje plan</li>
+            <li>Zakładka <em>Przedmioty</em> — zarządzanie listą przedmiotów</li>
+            <li>Zakładka <em>Godziny</em> — dodaj/usuń godziny lekcyjne, edytuj czasy rozpoczęcia i zakończenia</li>
+            <li>Zakładka <em>Sale</em> — podgląd struktury sal z linkiem do kreatora</li>
+            <li>Wskaźnik „w planie" przy elementach używanych w aktywnym planie</li>
+            <li>Potwierdzenie przed usunięciem elementów używanych w planie</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.2.0 <span class="changelog-date">23 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Nowa funkcja: klasa bazowa</b> — każda podgrupa (np. <em>1A religia</em>, <em>1A mniejszość niem.</em>) może mieć jawnie przypisaną klasę bazową (<em>1A</em>)</li>
+            <li>Widok „Klasa" agreguje wszystkie podgrupy — w jednej tabeli widać zajęcia całej klasy i równoległych podgrup</li>
+            <li>Kreator klas: nowa kolumna „Klasa bazowa" — dropdown widoczny tylko dla podgrup</li>
+            <li>Dropdown filtra widoku pokazuje klasy bazowe z licznikiem podgrup (np. <em>1A (+2 gr.)</em>)</li>
+            <li>Banner widoku wyświetla: <em>🏫 Klasa: 1A (+2 gr.)</em></li>
+            <li>Migracja danych: stare plany otrzymują <code>baseClass: ''</code> bez utraty danych</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.1.0 <span class="changelog-date">23 kwietnia 2026</span></div>
           <ul>
@@ -1280,5 +1308,26 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 
+
+  <!-- ══════════════════════════════════════════════════════
+       PANEL USTAWIEŃ SZKOŁY
+  ══════════════════════════════════════════════════════ -->
+  <div id="settingsPanelOverlay" class="settings-overlay" onclick="closeSettingsPanel()"></div>
+  <aside id="settingsPanel" class="settings-panel" aria-label="Ustawienia szkoły" role="dialog">
+    <div class="settings-header">
+      <h2 class="settings-title">⚙️ Ustawienia szkoły</h2>
+      <button class="settings-close" onclick="closeSettingsPanel()" title="Zamknij">✕</button>
+    </div>
+    <!-- Zakładki -->
+    <div class="settings-tabs" role="tablist">
+      <button class="settings-tab active" data-tab="classes"    onclick="switchSettingsTab('classes')"    role="tab">🏫 Klasy</button>
+      <button class="settings-tab"        data-tab="teachers"   onclick="switchSettingsTab('teachers')"   role="tab">👤 Nauczyciele</button>
+      <button class="settings-tab"        data-tab="subjects"   onclick="switchSettingsTab('subjects')"   role="tab">📚 Przedmioty</button>
+      <button class="settings-tab"        data-tab="hours"      onclick="switchSettingsTab('hours')"      role="tab">🕐 Godziny</button>
+      <button class="settings-tab"        data-tab="rooms"      onclick="switchSettingsTab('rooms')"      role="tab">🗺 Sale</button>
+    </div>
+    <!-- Treść zakładki -->
+    <div class="settings-body" id="settingsBody"></div>
+  </aside>
 </body>
 </html>

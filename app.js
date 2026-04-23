@@ -312,6 +312,7 @@ function showWelcomeScreen() {
   const planBtn = document.getElementById('wlCurrentPlanBtn');
   if (planBtn) planBtn.style.display = appState ? '' : 'none';
 
+  closeSettingsPanel();
   document.getElementById('welcomeScreen').classList.add('show');
 }
 
@@ -623,6 +624,7 @@ function openEditWizard() {
   const subEl = document.getElementById('wizardSubtitle');
   if (subEl) subEl.textContent = 'Zmień sale, klasy, nauczycieli lub godziny lekcyjne. Istniejący plan zostanie zachowany.';
 
+  closeSettingsPanel();
   document.getElementById('wizardOverlay').classList.add('show');
   startWizardAutosave();
 }
@@ -1725,18 +1727,40 @@ function addRoom(fi,si) {
 function removeRoom(fi,si,ri) { wFloors[fi].segments[si].rooms.splice(ri,1); renderFloorList(); }
 
 // ── Classes ──
+
+// Buduje opcje selecta "klasa bazowa" dla wiersza i w renderClassGrid
+function _baseClassOptions(currentBaseClass, selfName) {
+  // Wszystkie unikalne nazwy klas INNE niż bieżąca (bez duplikatów)
+  const names = [...new Set(wClasses.map(c => c.name).filter(n => n && n !== selfName))];
+  names.sort((a,b) => a.localeCompare(b,'pl',{sensitivity:'base'}));
+  const opts = names.map(n =>
+    `<option value="${esc(n)}"${n === currentBaseClass ? ' selected' : ''}>${esc(n)}</option>`
+  ).join('');
+  return `<option value=""${!currentBaseClass ? ' selected' : ''}>— (samodzielna)</option>${opts}`;
+}
+
 function renderClassGrid() {
-  document.getElementById('classGrid').innerHTML = wClasses.map((c,i) => `
-    <div class="class-item">
+  document.getElementById('classGrid').innerHTML = wClasses.map((c,i) => {
+    const isSubgroup = c.group && c.group.trim().toLowerCase() !== 'cała klasa' && c.group.trim() !== '';
+    return `
+    <div class="class-item${isSubgroup ? ' class-item-subgroup' : ''}">
       <input class="class-input" value="${esc(c.name)}" placeholder="np. 1A"
-        oninput="wClasses[${i}].name=normalizeClassName(this.value);this.value=wClasses[${i}].name;this.setSelectionRange(this.value.length,this.value.length); wClassAutoAbbr(${i})">
+        oninput="wClasses[${i}].name=normalizeClassName(this.value);this.value=wClasses[${i}].name;this.setSelectionRange(this.value.length,this.value.length); wClassAutoAbbr(${i});renderClassGrid()">
       <input class="class-abbr-inp" id="wca${i}" value="${esc(c.abbr)}" placeholder="skrót (auto)" maxlength="12"
         oninput="wClasses[${i}].abbr=this.value.toUpperCase();this.value=this.value.toUpperCase()"
         title="Edytuj ręcznie aby nadpisać auto-skrót">
       <input class="class-group-inp" value="${esc(c.group)}" placeholder="np. gr1 lub cała klasa"
-        oninput="wClasses[${i}].group=this.value; wClassAutoAbbr(${i})">
+        oninput="wClasses[${i}].group=this.value; wClassAutoAbbr(${i}); renderClassGrid()">
+      ${isSubgroup
+        ? `<select class="class-base-sel" title="Klasa bazowa — plan widoku Klasa agreguje po tym polu"
+              onchange="wClasses[${i}].baseClass=this.value">
+            ${_baseClassOptions(c.baseClass||'', c.name)}
+          </select>`
+        : `<div class="class-base-placeholder" title="Klasa samodzielna — nie należy do żadnej grupy nadrzędnej"></div>`
+      }
       <button class="icon-btn danger" onclick="removeClassAt(${i})">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   updateClassCountBadge();
 }
 
@@ -1750,7 +1774,7 @@ function wClassAutoAbbr(i) {
   if (inp) { inp.value = generated; }
 }
 function addClass() {
-  wClasses.push({name:'', abbr:'', group:'cała klasa'});
+  wClasses.push({name:'', abbr:'', group:'cała klasa', baseClass:''});
   renderClassGrid();
   document.querySelectorAll('.class-input')[wClasses.length-1]?.focus();
 }
@@ -1768,7 +1792,8 @@ function migrateClassNames(state) {
   state.classes = state.classes.map(cl => ({
     ...cl,
     name: normalizeClassName(cl.name || ''),
-    abbr: (cl.abbr || '').toUpperCase()
+    abbr: (cl.abbr || '').toUpperCase(),
+    baseClass: cl.baseClass ?? '' // migracja: stare dane nie mają pola baseClass
   }));
 }
 
@@ -1777,9 +1802,11 @@ function getClassesFromDOM() {
   document.querySelectorAll('.class-item').forEach((row,i) => {
     if (!wClasses[i]) return;
     const inps = row.querySelectorAll('input');
-    wClasses[i].name  = normalizeClassName(inps[0].value);
-    wClasses[i].abbr  = inps[1].value.trim().toUpperCase();
-    wClasses[i].group = inps[2].value.trim();
+    wClasses[i].name      = normalizeClassName(inps[0].value);
+    wClasses[i].abbr      = inps[1].value.trim().toUpperCase();
+    wClasses[i].group     = inps[2].value.trim();
+    const bcSel = row.querySelector('.class-base-sel');
+    wClasses[i].baseClass = bcSel ? bcSel.value : '';
   });
   return wClasses.filter(c => c.name);
 }
@@ -2388,13 +2415,28 @@ function _populateViewFilter(sel) {
       sel.appendChild(opt);
     });
   } else {
-    const classes = (appState?.classes || [])
-      .filter((c,i,arr) => arr.findIndex(x => (x.abbr||x.name) === (c.abbr||c.name)) === i)
-      .slice().sort((a,b) => (a.name||'').localeCompare(b.name||'','pl',{sensitivity:'base'}));
-    classes.forEach(c => {
+    // Widok agregowany — dropdown pokazuje klasy bazowe:
+    // • klasy samodzielne (baseClass === '' lub 'cała klasa')
+    // • klasy będące baseClass innych wpisów
+    const allClasses = (appState?.classes || []);
+    // Zbierz nazwy wszystkich klas bazowych
+    const basesFromChildren = new Set(
+      allClasses.filter(c => c.baseClass).map(c => c.baseClass)
+    );
+    // Zbierz nazwy klas samodzielnych (bez zdefiniowanej klasy bazowej)
+    const selfBases = new Set(
+      allClasses.filter(c => !c.baseClass).map(c => c.name)
+    );
+    // Unia — unikalne, posortowane
+    const allBases = [...new Set([...selfBases, ...basesFromChildren])]
+      .sort((a,b) => a.localeCompare(b,'pl',{sensitivity:'base'}));
+
+    allBases.forEach(baseName => {
+      // Policz podgrupy podpięte pod tę klasę bazową
+      const childCount = allClasses.filter(c => c.baseClass === baseName).length;
       const opt = document.createElement('option');
-      opt.value = c.abbr || c.name;
-      opt.textContent = c.name + (c.group && c.group.toLowerCase() !== 'cała klasa' ? ` — ${c.group}` : '');
+      opt.value = baseName;
+      opt.textContent = baseName + (childCount > 0 ? ` (+${childCount} gr.)` : '');
       sel.appendChild(opt);
     });
   }
@@ -2418,6 +2460,19 @@ function renderViewTable(mode, filter) {
 
   // Zbierz wszystkie wpisy pasujące do filtra we wszystkich dniach
   // Struktura: result[dayIdx][hourIdx] = [{col, entry}]
+  // Dla trybu klasy: zbierz abbry WSZYSTKICH wpisów należących do klasy bazowej `filter`
+  // Wpis należy jeśli: jego baseClass === filter LUB (brak baseClass i c.name === filter)
+  const classAbbrSet = new Set();
+  if (mode === 'class') {
+    (appState.classes||[]).forEach(c => {
+      const isBase  = !c.baseClass && c.name === filter;
+      const isChild = c.baseClass === filter;
+      if (isBase || isChild) classAbbrSet.add(c.abbr || c.name);
+    });
+    // Fallback: stare dane bez baseClass — dopasuj po nazwie
+    if (!classAbbrSet.size) classAbbrSet.add(filter);
+  }
+
   const byDayHour = {};
   days.forEach((_,di) => {
     byDayHour[di] = {};
@@ -2429,9 +2484,14 @@ function renderViewTable(mode, filter) {
         const entry = dayData[h]?.[key] || {};
         const filled = !!(entry.teacherAbbr || entry.subject || entry.className || (entry.classes||[]).length);
         if (!filled) return;
-        const match = mode === 'teacher'
-          ? entry.teacherAbbr === filter
-          : ((entry.classes||[]).includes(filter) || entry.className === filter);
+        let match;
+        if (mode === 'teacher') {
+          match = entry.teacherAbbr === filter;
+        } else {
+          // Dopasuj jeśli którakolwiek klasa/podgrupa należy do wybranej klasy bazowej
+          const entryCls = (entry.classes||[]).length ? entry.classes : (entry.className ? [entry.className] : []);
+          match = entryCls.some(cls => classAbbrSet.has(cls));
+        }
         if (match) byDayHour[di][h].push({ col, key, entry });
       });
     });
@@ -2440,7 +2500,11 @@ function renderViewTable(mode, filter) {
   // Nagłówek — dni tygodnia
   const filterLabel = mode === 'teacher'
     ? (() => { const t = getTeacherByAbbr(filter); return t ? teacherDisplayName(t) : filter; })()
-    : filter;
+    : (() => {
+        if (mode !== 'class') return filter;
+        const childCount = (appState.classes||[]).filter(c => c.baseClass === filter).length;
+        return filter + (childCount > 0 ? ` (+${childCount} gr.)` : '');
+      })();
   const modeLabel = mode === 'teacher' ? '👤 Nauczyciel' : '🏫 Klasa';
 
   let thead = `<thead><tr>
@@ -3891,6 +3955,477 @@ function pwaDismiss() {
 // ================================================================
 const TERMS_KEY = 'sp_terms_accepted';
 
+// ══════════════════════════════════════════════════════════════════
+//  PANEL USTAWIEŃ SZKOŁY
+// ══════════════════════════════════════════════════════════════════
+
+let _settingsTab = 'classes';
+
+function openSettingsPanel(tab) {
+  if (!appState) return;
+  _settingsTab = tab || _settingsTab || 'classes';
+  document.getElementById('settingsPanelOverlay').classList.add('show');
+  document.getElementById('settingsPanel').classList.add('open');
+  _renderSettingsTab(_settingsTab);
+}
+function closeSettingsPanel() {
+  document.getElementById('settingsPanelOverlay').classList.remove('show');
+  document.getElementById('settingsPanel').classList.remove('open');
+}
+function switchSettingsTab(tab) {
+  _settingsTab = tab;
+  document.querySelectorAll('.settings-tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.tab === tab));
+  _renderSettingsTab(tab);
+}
+function _renderSettingsTab(tab) {
+  const body = document.getElementById('settingsBody');
+  if (!body) return;
+  switch(tab) {
+    case 'classes':   body.innerHTML = _spBuildClasses();   break;
+    case 'teachers':  body.innerHTML = _spBuildTeachers();  break;
+    case 'subjects':  body.innerHTML = _spBuildSubjects();  break;
+    case 'hours':     body.innerHTML = _spBuildHours();     break;
+    case 'rooms':     body.innerHTML = _spBuildRooms();     break;
+    default:          body.innerHTML = '';
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────
+
+/** Zwraca Set abbr klas/nauczycieli/przedmiotów używanych w planie */
+function _spUsedClasses() {
+  const used = new Set();
+  const yk = appState.yearKey;
+  Object.values(schedData[yk] || {}).forEach(day =>
+    Object.values(day).forEach(hour =>
+      Object.values(hour).forEach(entry => {
+        (entry.classes || []).forEach(c => used.add(c));
+        if (entry.className) used.add(entry.className);
+      })
+    )
+  );
+  return used;
+}
+function _spUsedTeachers() {
+  const used = new Set();
+  const yk = appState.yearKey;
+  Object.values(schedData[yk] || {}).forEach(day =>
+    Object.values(day).forEach(hour =>
+      Object.values(hour).forEach(entry => {
+        if (entry.teacherAbbr) used.add(entry.teacherAbbr);
+      })
+    )
+  );
+  return used;
+}
+function _spUsedSubjects() {
+  const used = new Set();
+  const yk = appState.yearKey;
+  Object.values(schedData[yk] || {}).forEach(day =>
+    Object.values(day).forEach(hour =>
+      Object.values(hour).forEach(entry => {
+        if (entry.subject) used.add(entry.subject);
+      })
+    )
+  );
+  return used;
+}
+
+// ── Zakładka KLASY ────────────────────────────────────────────────
+
+function _spBuildClasses() {
+  const usedAbbrs = _spUsedClasses();
+  const all = appState.classes || [];
+  // Opcje klas bazowych dla dropdownów
+  const baseNames = [...new Set(all.filter(c => !c.baseClass).map(c => c.name))].sort();
+
+  const rows = all.map((c, i) => {
+    const abbr    = c.abbr || c.name;
+    const inUse   = usedAbbrs.has(abbr);
+    const isSubgroup = c.group && c.group.trim().toLowerCase() !== 'cała klasa' && c.group.trim() !== '';
+    const baseOpts = baseNames
+      .filter(n => n !== c.name)
+      .map(n => `<option value="${esc(n)}"${n === (c.baseClass||'') ? ' selected' : ''}>${esc(n)}</option>`)
+      .join('');
+
+    return `<div class="sp-row${inUse ? '' : ''}">
+      <input class="sp-inp" style="max-width:72px;font-family:var(--mono);font-weight:700" value="${esc(c.name)}"
+        placeholder="np. 1A" title="Nazwa klasy"
+        onchange="spClassSetName(${i},this.value)">
+      <input class="sp-inp-mono" value="${esc(abbr)}" maxlength="12" placeholder="skrót" title="Skrót (unikalny identyfikator)"
+        onchange="spClassSetAbbr(${i},this.value)">
+      <input class="sp-inp" value="${esc(c.group||'')}" placeholder="cała klasa / gr.1 / religia…" title="Nazwa grupy"
+        onchange="spClassSetGroup(${i},this.value)">
+      ${isSubgroup
+        ? `<select class="class-base-sel" style="font-size:0.72rem;width:80px;flex-shrink:0" title="Klasa bazowa"
+              onchange="spClassSetBase(${i},this.value)">
+            <option value=""${!c.baseClass ? ' selected' : ''}>—</option>${baseOpts}
+          </select>`
+        : `<span style="width:80px;flex-shrink:0"></span>`}
+      ${inUse ? `<span class="sp-badge-used" title="Używana w planie">w planie</span>` : ''}
+      <button class="icon-btn danger" title="${inUse ? 'Uwaga: używana w planie!' : 'Usuń'}"
+        onclick="spClassDelete(${i})" style="${inUse ? 'opacity:0.5' : ''}">✕</button>
+    </div>`;
+  }).join('');
+
+  return `<div class="sp-section-title">Klasy i grupy</div>
+    ${rows || '<div class="sp-info-box">Brak klas — dodaj poniżej.</div>'}
+    <button class="btn btn-sm sp-add-btn" onclick="spClassAdd()">＋ Dodaj klasę</button>`;
+}
+
+function spClassAdd() {
+  if (!appState.classes) appState.classes = [];
+  appState.classes.push({ name: '', abbr: '', group: 'cała klasa', baseClass: '' });
+  persistAll();
+  _renderSettingsTab('classes');
+  // Focus na ostatni input
+  setTimeout(() => {
+    const inps = document.querySelectorAll('#settingsBody .sp-row .sp-inp');
+    if (inps.length) inps[inps.length - 3]?.focus();
+  }, 50);
+}
+function spClassSetName(i, val) {
+  if (!appState.classes[i]) return;
+  appState.classes[i].name = normalizeClassName(val);
+  persistAll();
+  _renderSettingsTab('classes');
+}
+function spClassSetAbbr(i, newAbbr) {
+  const cls = appState.classes[i];
+  if (!cls) return;
+  const oldAbbr = cls.abbr || cls.name;
+  newAbbr = newAbbr.trim().toUpperCase();
+  if (!newAbbr || newAbbr === oldAbbr) return;
+  // Sprawdź unikalność
+  if (appState.classes.some((c, j) => j !== i && (c.abbr || c.name) === newAbbr)) {
+    notify('⚠ Skrót „' + newAbbr + '" jest już używany przez inną klasę', true);
+    _renderSettingsTab('classes');
+    return;
+  }
+  // Kaskadowa zmiana w schedData
+  const yk = appState.yearKey;
+  let changed = 0;
+  Object.values(schedData[yk] || {}).forEach(day =>
+    Object.values(day).forEach(hour =>
+      Object.values(hour).forEach(entry => {
+        if (entry.classes) {
+          const idx = entry.classes.indexOf(oldAbbr);
+          if (idx >= 0) { entry.classes[idx] = newAbbr; changed++; }
+        }
+        if (entry.className === oldAbbr) { entry.className = newAbbr; changed++; }
+      })
+    )
+  );
+  cls.abbr = newAbbr;
+  persistAll();
+  if (changed) notify(`✓ Skrót zmieniony. Zaktualizowano ${changed} wpisów w planie.`);
+  _renderSettingsTab('classes');
+}
+function spClassSetGroup(i, val) {
+  if (!appState.classes[i]) return;
+  appState.classes[i].group = val;
+  persistAll();
+  _renderSettingsTab('classes');
+}
+function spClassSetBase(i, val) {
+  if (!appState.classes[i]) return;
+  appState.classes[i].baseClass = val;
+  persistAll();
+}
+function spClassDelete(i) {
+  const cls = appState.classes[i];
+  if (!cls) return;
+  const abbr = cls.abbr || cls.name;
+  const used = _spUsedClasses().has(abbr);
+  const doDelete = () => {
+    appState.classes.splice(i, 1);
+    persistAll();
+    renderSchedule();
+    _renderSettingsTab('classes');
+    notify('🗑 Klasa usunięta');
+  };
+  if (used) {
+    showConfirm({
+      message: `Klasa „${abbr}" jest używana w planie. Usunięcie nie wyczyści istniejących wpisów — pojawią się jako nieznane. Kontynuować?`,
+      confirmLabel: '🗑 Usuń mimo to',
+      danger: true,
+      onConfirm: doDelete
+    });
+  } else {
+    doDelete();
+  }
+}
+
+
+// ── Zakładka NAUCZYCIELE ─────────────────────────────────────────
+
+function _spBuildTeachers() {
+  const usedAbbrs = _spUsedTeachers();
+  const all = appState.teachers || [];
+
+  const rows = all.map((t, i) => {
+    const inUse = usedAbbrs.has(t.abbr);
+    return `<div class="sp-row">
+      <input class="sp-inp" value="${esc(t.last||'')}" placeholder="Nazwisko"
+        title="Nazwisko" onchange="spTeacherSet(${i},'last',this.value)">
+      <input class="sp-inp" value="${esc(t.first||'')}" placeholder="Imię" style="max-width:80px"
+        title="Imię" onchange="spTeacherSet(${i},'first',this.value)">
+      <input class="sp-inp-mono" value="${esc(t.abbr||'')}" maxlength="6" placeholder="SKR"
+        title="Skrót (unikalny)"
+        onchange="spTeacherSetAbbr(${i},this.value)">
+      ${inUse ? `<span class="sp-badge-used" title="Nauczyciel ma zajęcia w planie">w planie</span>` : ''}
+      <button class="icon-btn danger" title="${inUse ? 'Uwaga: ma zajęcia w planie!' : 'Usuń'}"
+        onclick="spTeacherDelete(${i})" style="${inUse ? 'opacity:0.5' : ''}">✕</button>
+    </div>`;
+  }).join('');
+
+  return `<div class="sp-section-title">Nauczyciele</div>
+    ${rows || '<div class="sp-info-box">Brak nauczycieli — dodaj poniżej.</div>'}
+    <button class="btn btn-sm sp-add-btn" onclick="spTeacherAdd()">＋ Dodaj nauczyciela</button>`;
+}
+
+function spTeacherAdd() {
+  if (!appState.teachers) appState.teachers = [];
+  appState.teachers.push({ last: '', first: '', abbr: '' });
+  persistAll();
+  _renderSettingsTab('teachers');
+  setTimeout(() => {
+    const inps = document.querySelectorAll('#settingsBody .sp-row .sp-inp');
+    if (inps.length) inps[inps.length - 2]?.focus();
+  }, 50);
+}
+function spTeacherSet(i, field, val) {
+  if (!appState.teachers[i]) return;
+  appState.teachers[i][field] = val.trim();
+  persistAll();
+}
+function spTeacherSetAbbr(i, newAbbr) {
+  const t = appState.teachers[i];
+  if (!t) return;
+  const oldAbbr = t.abbr;
+  newAbbr = newAbbr.trim().toUpperCase();
+  if (!newAbbr || newAbbr === oldAbbr) return;
+  if (appState.teachers.some((x, j) => j !== i && x.abbr === newAbbr)) {
+    notify('⚠ Skrót „' + newAbbr + '" jest już używany przez innego nauczyciela', true);
+    _renderSettingsTab('teachers');
+    return;
+  }
+  // Kaskadowa zmiana w schedData
+  const yk = appState.yearKey;
+  let changed = 0;
+  Object.values(schedData[yk] || {}).forEach(day =>
+    Object.values(day).forEach(hour =>
+      Object.values(hour).forEach(entry => {
+        if (entry.teacherAbbr === oldAbbr) { entry.teacherAbbr = newAbbr; changed++; }
+      })
+    )
+  );
+  t.abbr = newAbbr;
+  persistAll();
+  if (changed) notify(`✓ Skrót zmieniony. Zaktualizowano ${changed} wpisów w planie.`);
+  _renderSettingsTab('teachers');
+}
+function spTeacherDelete(i) {
+  const t = appState.teachers[i];
+  if (!t) return;
+  const used = _spUsedTeachers().has(t.abbr);
+  const doDelete = () => {
+    appState.teachers.splice(i, 1);
+    persistAll();
+    renderSchedule();
+    _renderSettingsTab('teachers');
+    notify('🗑 Nauczyciel usunięty');
+  };
+  if (used) {
+    showConfirm({
+      message: `Nauczyciel „${t.abbr}" ma zajęcia w planie. Wpisy pozostaną, ale nauczyciel nie będzie rozpoznawany. Kontynuować?`,
+      confirmLabel: '🗑 Usuń mimo to', danger: true, onConfirm: doDelete
+    });
+  } else doDelete();
+}
+
+// ── Zakładka PRZEDMIOTY ───────────────────────────────────────────
+
+function _spBuildSubjects() {
+  const usedNames = _spUsedSubjects();
+  const all = appState.subjects || [];
+
+  const rows = all.map((s, i) => {
+    const inUse = usedNames.has(s.name);
+    return `<div class="sp-row">
+      <input class="sp-inp" value="${esc(s.name||'')}" placeholder="Nazwa przedmiotu"
+        onchange="spSubjectSet(${i},'name',this.value)">
+      ${inUse ? `<span class="sp-badge-used">w planie</span>` : ''}
+      <button class="icon-btn danger" onclick="spSubjectDelete(${i})"
+        title="${inUse ? 'Uwaga: używany w planie!' : 'Usuń'}"
+        style="${inUse ? 'opacity:0.5' : ''}">✕</button>
+    </div>`;
+  }).join('');
+
+  return `<div class="sp-section-title">Przedmioty</div>
+    ${rows || '<div class="sp-info-box">Brak przedmiotów — dodaj poniżej.</div>'}
+    <button class="btn btn-sm sp-add-btn" onclick="spSubjectAdd()">＋ Dodaj przedmiot</button>`;
+}
+
+function spSubjectAdd() {
+  if (!appState.subjects) appState.subjects = [];
+  appState.subjects.push({ name: '' });
+  persistAll();
+  _renderSettingsTab('subjects');
+  setTimeout(() => {
+    const inps = document.querySelectorAll('#settingsBody .sp-row .sp-inp');
+    if (inps.length) inps[inps.length - 1]?.focus();
+  }, 50);
+}
+function spSubjectSet(i, field, val) {
+  if (!appState.subjects[i]) return;
+  appState.subjects[i][field] = val.trim();
+  persistAll();
+}
+function spSubjectDelete(i) {
+  const s = appState.subjects[i];
+  if (!s) return;
+  const used = _spUsedSubjects().has(s.name);
+  const doDelete = () => {
+    appState.subjects.splice(i, 1);
+    persistAll();
+    _renderSettingsTab('subjects');
+    notify('🗑 Przedmiot usunięty');
+  };
+  if (used) {
+    showConfirm({
+      message: `Przedmiot „${s.name}" jest używany w planie. Wpisy pozostaną, ale przedmiot zniknie z podpowiedzi. Kontynuować?`,
+      confirmLabel: '🗑 Usuń mimo to', danger: true, onConfirm: doDelete
+    });
+  } else doDelete();
+}
+
+// ── Zakładka GODZINY ─────────────────────────────────────────────
+
+function _spBuildHours() {
+  const hours     = appState.hours || [];
+  const timeslots = appState.timeslots || [];
+
+  const getTs = h => timeslots.find(t => String(t.label) === String(h)) || { label: h, start: '', end: '' };
+
+  const rows = hours.map((h, i) => {
+    const ts = getTs(h);
+    const usedInPlan = Object.values(schedData[appState.yearKey] || {}).some(day =>
+      Object.values(day[h] || {}).some(entry =>
+        entry.teacherAbbr || entry.subject || (entry.classes||[]).length
+      )
+    );
+    return `<div class="sp-hour-row">
+      <span class="sp-hour-num">${esc(String(h))}</span>
+      <input class="sp-time-inp" type="time" value="${esc(ts.start||'')}" title="Godzina rozpoczęcia"
+        onchange="spHourSetTime(${i},'start',this.value)">
+      <input class="sp-time-inp" type="time" value="${esc(ts.end||'')}" title="Godzina zakończenia"
+        onchange="spHourSetTime(${i},'end',this.value)">
+      <input class="sp-time-inp" value="${esc(ts.label !== h ? String(ts.label) : '')}" placeholder="etykieta (opcja)"
+        title="Opcjonalna etykieta zastępująca numer" style="font-size:0.72rem"
+        onchange="spHourSetLabel(${i},this.value)">
+      <button class="icon-btn danger" onclick="spHourDelete(${i})"
+        title="${usedInPlan ? 'Uwaga: ma zajęcia!' : 'Usuń godzinę'}"
+        style="${usedInPlan ? 'opacity:0.5' : ''}">✕</button>
+    </div>`;
+  }).join('');
+
+  const header = `<div class="sp-hour-row" style="background:none;border-color:transparent;padding-bottom:0">
+    <span class="sp-label" style="text-align:center">Nr</span>
+    <span class="sp-label">Początek</span>
+    <span class="sp-label">Koniec</span>
+    <span class="sp-label">Etykieta</span>
+    <span></span>
+  </div>`;
+
+  return `<div class="sp-section-title">Godziny lekcyjne</div>
+    ${header}${rows || '<div class="sp-info-box">Brak godzin.</div>'}
+    <button class="btn btn-sm sp-add-btn" onclick="spHourAdd()">＋ Dodaj godzinę</button>`;
+}
+
+function spHourAdd() {
+  const hours = appState.hours || [];
+  const last  = hours.length ? Math.max(...hours.map(Number).filter(n => !isNaN(n))) : 0;
+  const next  = last + 1;
+  appState.hours = [...hours, next];
+  const yk = appState.yearKey;
+  // Dodaj pusty slot w schedData
+  Object.keys(schedData[yk] || {}).forEach(di => {
+    if (!schedData[yk][di][next]) schedData[yk][di][next] = {};
+  });
+  persistAll();
+  renderSchedule();
+  _renderSettingsTab('hours');
+}
+function spHourSetTime(i, field, val) {
+  const h = (appState.hours || [])[i];
+  if (h === undefined) return;
+  if (!appState.timeslots) appState.timeslots = [];
+  let ts = appState.timeslots.find(t => String(t.label) === String(h));
+  if (!ts) { ts = { label: h, start: '', end: '' }; appState.timeslots.push(ts); }
+  ts[field] = val;
+  persistAll();
+}
+function spHourSetLabel(i, val) {
+  const h = (appState.hours || [])[i];
+  if (h === undefined) return;
+  if (!appState.timeslots) appState.timeslots = [];
+  let ts = appState.timeslots.find(t => String(t.label) === String(h) || t.label === h);
+  if (!ts) { ts = { label: h, start: '', end: '' }; appState.timeslots.push(ts); }
+  ts.label = val.trim() || h;
+  persistAll();
+}
+function spHourDelete(i) {
+  const hours = appState.hours || [];
+  const h = hours[i];
+  if (h === undefined) return;
+  const yk = appState.yearKey;
+  const usedInPlan = Object.values(schedData[yk] || {}).some(day =>
+    Object.values(day[h] || {}).some(e => e.teacherAbbr || e.subject || (e.classes||[]).length)
+  );
+  const doDelete = () => {
+    appState.hours = hours.filter((_, j) => j !== i);
+    appState.timeslots = (appState.timeslots||[]).filter(t => String(t.label) !== String(h));
+    // Usuń dane z schedData
+    Object.keys(schedData[yk] || {}).forEach(di => { delete schedData[yk][di][h]; });
+    persistAll();
+    renderSchedule();
+    _renderSettingsTab('hours');
+    notify('🗑 Godzina ' + h + ' usunięta');
+  };
+  if (usedInPlan) {
+    showConfirm({
+      message: `Godzina ${h} ma zajęcia w planie — zostaną trwale usunięte. Kontynuować?`,
+      confirmLabel: '🗑 Usuń z danymi', danger: true, onConfirm: doDelete
+    });
+  } else doDelete();
+}
+
+// ── Zakładka SALE ────────────────────────────────────────────────
+
+function _spBuildRooms() {
+  const floors = appState.floors || [];
+  let tree = '';
+  floors.forEach((floor, fi) => {
+    tree += `<div class="sp-room-floor">📐 ${esc(floor.name)}</div>`;
+    (floor.segments || []).forEach((seg, si) => {
+      tree += `<div class="sp-room-seg">└ ${esc(seg.name)}</div>`;
+      (seg.rooms || []).forEach(room => {
+        tree += `<div class="sp-room-num">• Sala ${esc(room.num)}${room.sub ? ' — ' + esc(room.sub) : ''}</div>`;
+      });
+    });
+  });
+  const totalRooms = flattenColumns(floors).length;
+  return `<div class="sp-section-title">Struktura sal</div>
+    <div class="sp-info-box">
+      <strong>${totalRooms} sal</strong> w ${floors.length} piętrach/obszarach.<br>
+      Aby zmienić strukturę pięter, segmentów i sal, użyj kreatora roku szkolnego.
+    </div>
+    <div class="sp-info-box sp-room-tree" style="max-height:340px;overflow-y:auto">${tree || 'Brak danych.'}</div>
+    <button class="btn btn-sm sp-add-btn" onclick="openEditWizard();closeSettingsPanel()">✏️ Edytuj w kreatorze</button>`;
+}
+
 function initTermsBanner() {
   if (!localStorage.getItem(TERMS_KEY)) {
     document.getElementById('termsBanner').classList.add('show');
@@ -3933,7 +4468,7 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.3.0';
 const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {
