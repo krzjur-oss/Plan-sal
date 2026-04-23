@@ -10,8 +10,8 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.0.0 |
-| **Ostatnia aktualizacja** | 22 kwietnia 2026 |
+| **Aktualna wersja** | v2.1.0 |
+| **Ostatnia aktualizacja** | 23 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
 ---
@@ -268,6 +268,22 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.1.0 — 23 kwietnia 2026
+
+Wydanie naprawcze — 7 poprawek błędów i 1 optymalizacja:
+
+- **🔴 Naprawiono crash Undo cross-day** — funkcja `renderDayTabs()` nie istniała; zastąpiona poprawnym `switchDay()`
+- **🔴 Naprawiono wymuszone przeładowanie strony** — duplikat handlera `SW_UPDATED` w `index.html` powodował `window.location.reload()` bez zgody użytkownika, omijając baner z wyborem
+- **🔴 Naprawiono edycję roku szkolnego** — flaga `_wizardEditMode` była kasowana przed własnym sprawdzeniem, co resetowało aktywny dzień do poniedziałku po każdej edycji
+- **🟠 Naprawiono etykiety historii Undo** — `_mHour + 1` zwracał konkatenację stringów zamiast liczby (np. „godz. 31" zamiast „godz. 3")
+- **🟠 Naprawiono widok nauczyciela/klasy** — kliknięcie pustej komórki otwierało zepsuty modal z pustym kluczem; teraz wyświetlany jest tooltip informacyjny
+- **🟠 Naprawiono wybór klasy w przypisaniach** — `String.replace()` mogło zaznaczać błędną opcję gdy `saved = ''`; zastąpione przez dedykowaną funkcję `buildClassOptions()`
+- **🟡 Naprawiono walidację importu** — `handleImportFile` odrzucał pliki zawierające tylko `appState` bez `schedData`; ujednolicone z `welcomeHandleFile`
+- **⚡ Optymalizacja** — `flattenColumns()` memoizowana: wynik cache'owany do czasu zmiany struktury pięter, eliminując zbędne przebudowy tablicy kolumn przy każdym renderze
+- Bump Service Worker cache `sp-v92` → `sp-v93`
+
+---
 
 ### v2.0.0 — 22 kwietnia 2026
 
