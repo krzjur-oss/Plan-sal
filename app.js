@@ -4164,7 +4164,13 @@ function _spBuildTeachers() {
   const usedAbbrs = _spUsedTeachers();
   const all = appState.teachers || [];
 
-  const rows = all.map((t, i) => {
+  // Sortuj alfabetycznie po nazwisku, zachowując oryginalny indeks dla onchange/onclick
+  const sorted = all
+    .map((t, i) => ({ t, i }))
+    .sort((a, b) => (a.t.last || '').localeCompare(b.t.last || '', 'pl', { sensitivity: 'base' })
+                 || (a.t.first || '').localeCompare(b.t.first || '', 'pl', { sensitivity: 'base' }));
+
+  const rows = sorted.map(({ t, i }) => {
     const inUse = usedAbbrs.has(t.abbr);
     return `<div class="sp-row">
       <input class="sp-inp" value="${esc(t.last||'')}" placeholder="Nazwisko"
@@ -4174,15 +4180,15 @@ function _spBuildTeachers() {
       <input class="sp-inp-mono" value="${esc(t.abbr||'')}" maxlength="6" placeholder="SKR"
         title="Skrót (unikalny)"
         onchange="spTeacherSetAbbr(${i},this.value)">
-      ${inUse ? `<span class="sp-badge-used" title="Nauczyciel ma zajęcia w planie">w planie</span>` : ''}
+      ${inUse ? '<span class="sp-badge-used" title="Nauczyciel ma zajęcia w planie">w planie</span>' : ''}
       <button class="icon-btn danger" title="${inUse ? 'Uwaga: ma zajęcia w planie!' : 'Usuń'}"
         onclick="spTeacherDelete(${i})" style="${inUse ? 'opacity:0.5' : ''}">✕</button>
     </div>`;
   }).join('');
 
-  return `<div class="sp-section-title">Nauczyciele</div>
-    ${rows || '<div class="sp-info-box">Brak nauczycieli — dodaj poniżej.</div>'}
-    <button class="btn btn-sm sp-add-btn" onclick="spTeacherAdd()">＋ Dodaj nauczyciela</button>`;
+  return '<div class="sp-section-title">Nauczyciele</div>' +
+    '<button class="btn btn-sm sp-add-btn" onclick="spTeacherAdd()" style="margin-bottom:6px">＋ Dodaj nauczyciela</button>' +
+    (rows || '<div class="sp-info-box">Brak nauczycieli.</div>');
 }
 
 function spTeacherAdd() {
