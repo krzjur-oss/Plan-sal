@@ -928,7 +928,7 @@ if ('serviceWorker' in navigator) {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.5.0</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.5.1</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
@@ -1070,6 +1070,15 @@ if ('serviceWorker' in navigator) {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.5.1 <span class="changelog-date">24 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Poprawiono walidację numerów sal</b> — duplikat wykrywany po pełnym skrócie (piętro+segment+nr), nie po samym numerze</li>
+            <li>Sala 1 w Segmencie A i Sala 1 w Segmencie B to dwie różne sale (skróty: 0A1, 0B1) — teraz dozwolone</li>
+            <li>Komunikat błędu wskazuje pełny skrót sali zamiast samego numeru</li>
+            <li>Przycisk „＋ sala" generuje kolejny numer w obrębie segmentu (nie globalnie)</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.0 <span class="changelog-date">24 kwietnia 2026</span></div>
           <ul>

@@ -1505,33 +1505,35 @@ function wizardNext() {
   }
   if (wStep === 2) {
     if (wFloors.length === 0) { notify('⚠ Dodaj przynajmniej jedno piętro', true); return; }
-    // Sprawdź globalną unikalność numerów sal (wymagana dla migracji kluczy)
-    const seenNums = new Map(); // num → "Piętro X › Segment Y"
-    let dupNums = [], emptyFound = false;
+    // Duplikat = ten sam colKey (fFI_sSI_NR) — ta sama sala w tym samym seg i piętrze
+    // Sala 1 w Seg A i Sala 1 w Seg B to RÓŻNE sale (różne klucze) — dozwolone
+    const seenKeys = new Map(); // colKey → etykieta czytelna
+    let dupKeys = [], emptyFound = false;
     wFloors.forEach((fl, fi) => fl.segments.forEach((sg, si) => sg.rooms.forEach((r, ri) => {
       const n = (r.num || '').trim();
       if (!n) { emptyFound = true; return; }
-      const location = `${fl.name || ('Piętro ' + fi)} › ${sg.name || ('Segment ' + si)}`;
-      if (seenNums.has(n)) {
-        dupNums.push({ num: n, loc1: seenNums.get(n), loc2: location });
+      const key      = `f${fi}_s${si}_${n}`;
+      const label    = _roomLabel(fi, si, n);
+      const location = `${fl.name || ('Piętro ' + fi)} › ${sg.name || ('Segment ' + si)} › Sala ${n} (skrót: ${label})`;
+      if (seenKeys.has(key)) {
+        dupKeys.push({ key, loc1: seenKeys.get(key), loc2: location });
       } else {
-        seenNums.set(n, location);
+        seenKeys.set(key, location);
       }
     })));
     if (emptyFound) { notify('⚠ Każda sala musi mieć numer', true); return; }
-    if (dupNums.length) {
-      const first = dupNums[0];
+    if (dupKeys.length) {
+      const first = dupKeys[0];
       notify(
-        `⚠ Numer sali „${first.num}" powtarza się w dwóch miejscach:
+        `⚠ Skrót sali powtarza się:
 ` +
         `  • ${first.loc1}
   • ${first.loc2}
 ` +
-        `Numery sal muszą być unikalne w całej szkole.`,
+        `W tym samym segmencie numer sali musi być unikalny.`,
         true
       );
-      // Podświetl duplikaty
-      _highlightDuplicateRooms(dupNums.map(d => d.num));
+      _highlightDuplicateRooms(dupKeys.map(d => d.key));
       return;
     }
   }
@@ -1816,50 +1818,82 @@ function buildFloorEl(floor, fi) {
   return div;
 }
 function buildRoomChip(fi,si,ri,r) {
-  return `<div class="room-chip" data-room-num="${esc(r.num)}">Sala <input class="room-chip-name" value="${esc(r.num)}" placeholder="nr"
+  const label = _roomLabel(fi, si, r.num || '');
+  return `<div class="room-chip" data-room-num="${esc(r.num)}">Sala <input class="room-chip-name"
+    value="${esc(r.num)}" placeholder="nr"
+    data-fi="${fi}" data-si="${si}" data-ri="${ri}"
     onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].num=this.value.trim(); _validateRoomNums()"
     oninput="wFloors[${fi}].segments[${si}].rooms[${ri}].num=this.value; _validateRoomNums()"
-    title="Numer sali — musi być unikalny w całej szkole"
+    title="Skrót: ${label} — numer musi być unikalny w obrębie piętro+segment"
   ><input class="room-chip-sub" value="${esc(r.sub||'')}" placeholder="opis…" onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].sub=this.value"><button class="chip-del" onclick="removeRoom(${fi},${si},${ri})">✕</button></div>`;
 }
-// Walidacja numerów sal w czasie rzeczywistym (real-time)
+// Walidacja sal w czasie rzeczywistym — duplikat to ta sama kombinacja piętro+segment+nr
+// (colKey = fFI_sSI_NR), więc Sala 1 w Seg A i Sala 1 w Seg B są różnymi salami — OK
 function _validateRoomNums() {
-  const seenNums = new Map(); // num → first input element
-  const dupNums  = new Set();
-  document.querySelectorAll('.room-chip-name').forEach(inp => {
-    const n = inp.value.trim();
-    if (!n) return;
-    if (seenNums.has(n)) {
-      dupNums.add(n);
-      seenNums.get(n).classList.add('room-dup');
-    } else {
-      seenNums.set(n, inp);
-      inp.classList.remove('room-dup');
-    }
+  const seenKeys = new Map(); // colKey → input element
+  const dupKeys  = new Set();
+
+  wFloors.forEach((floor, fi) => {
+    floor.segments.forEach((seg, si) => {
+      seg.rooms.forEach((room, ri) => {
+        const n   = (room.num || '').trim();
+        if (!n) return;
+        const key = `f${fi}_s${si}_${n}`;
+        if (seenKeys.has(key)) {
+          dupKeys.add(key);
+          seenKeys.get(key).classList.add('room-dup');
+        } else {
+          // Znajdź input odpowiadający temu room
+          const inp = document.querySelector(
+            `.room-chip-name[data-fi="${fi}"][data-si="${si}"][data-ri="${ri}"]`
+          );
+          if (inp) seenKeys.set(key, inp);
+        }
+      });
+    });
   });
-  // Oznacz duplikaty
+
   document.querySelectorAll('.room-chip-name').forEach(inp => {
-    const n = inp.value.trim();
-    if (dupNums.has(n)) {
+    const fi = +inp.dataset.fi, si = +inp.dataset.si, ri = +inp.dataset.ri;
+    const n  = (inp.value || '').trim();
+    const key = `f${fi}_s${si}_${n}`;
+    if (dupKeys.has(key)) {
       inp.classList.add('room-dup');
-      inp.title = `Numer „${n}" już istnieje w innej sali!`;
+      inp.title = `Skrót sali „${_roomLabel(fi,si,n)}" już istnieje w tym samym segmencie!`;
     } else {
       inp.classList.remove('room-dup');
-      inp.title = 'Numer sali — musi być unikalny w całej szkole';
+      inp.title = `Skrót: ${_roomLabel(fi,si,n)} — unikalny w obrębie piętro+segment`;
     }
   });
-  return dupNums.size === 0;
+  return dupKeys.size === 0;
 }
 
-// Podświetl duplikaty numerów (po kliknięciu Dalej)
-function _highlightDuplicateRooms(dupNumArr) {
-  const dupSet = new Set(dupNumArr);
-  document.querySelectorAll('.room-chip-name').forEach(inp => {
-    if (dupSet.has(inp.value.trim())) {
-      inp.classList.add('room-dup');
-      inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+// Podświetl duplikaty colKey (po kliknięciu Dalej)
+function _highlightDuplicateRooms(dupKeys) {
+  const dupSet = new Set(dupKeys);
+  wFloors.forEach((floor, fi) => {
+    floor.segments.forEach((seg, si) => {
+      seg.rooms.forEach((room, ri) => {
+        const n = (room.num || '').trim();
+        if (dupSet.has(`f${fi}_s${si}_${n}`)) {
+          const inp = document.querySelector(
+            `.room-chip-name[data-fi="${fi}"][data-si="${si}"][data-ri="${ri}"]`
+          );
+          if (inp) {
+            inp.classList.add('room-dup');
+            inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      });
+    });
   });
+}
+
+// Zwraca czytelną etykietę sali np. "0A1", "1B3"
+function _roomLabel(fi, si, num) {
+  const floorNum  = fi;
+  const segLetter = String.fromCharCode(65 + si); // A, B, C…
+  return `${floorNum}${segLetter}${num}`;
 }
 
 
@@ -1869,22 +1903,13 @@ function addFloor() {
 }
 function addFloorForBuilding(bi) {
   const ci = wFloors.length % FLOOR_COLORS.length;
-  // Globalnie unikalny numer startowy dla nowej sali
-  const allNums = new Set();
-  wFloors.forEach(fl => fl.segments.forEach(sg => sg.rooms.forEach(r => {
-    const n = parseInt(r.num);
-    if (n > 0) allNums.add(n);
-  })));
-  let startNum = 1;
-  while (allNums.has(startNum)) startNum++;
-
   const floorsInBld = wFloors.filter(f => (f.buildingIdx || 0) === bi).length;
   const bldName = wBuildings[bi]?.name || ('Budynek ' + (bi + 1));
   wFloors.push({
     name: `${bldName} — piętro ${floorsInBld}`,
     color: FLOOR_COLORS[ci],
     buildingIdx: bi,
-    segments: [{ name: 'Segment A', rooms: [{ num: String(startNum), sub: '' }] }]
+    segments: [{ name: 'Segment A', rooms: [{ num: '1', sub: '' }] }]
   });
   renderFloorList();
   // Scroll do nowego piętra
@@ -1901,14 +1926,11 @@ function removeFloor(fi) { wFloors.splice(fi,1); renderFloorList(); renderBuildi
 function addSegment(fi) { wFloors[fi].segments.push({name:'',rooms:[{num:'1',sub:''}]}); renderFloorList(); }
 function removeSeg(fi,si) { wFloors[fi].segments.splice(si,1); renderFloorList(); }
 function addRoom(fi,si) {
-  // Szukaj globalnie unikalnego numeru (wszystkie sale we wszystkich piętrach i segmentach)
-  const allNums = new Set();
-  wFloors.forEach(fl => fl.segments.forEach(sg => sg.rooms.forEach(r => {
-    const n = parseInt(r.num);
-    if (n > 0) allNums.add(n);
-  })));
-  let nextNum = 1;
-  while (allNums.has(nextNum)) nextNum++;
+  // Per-segment auto-increment: numer unikalny w obrębie tego segmentu
+  // (Sala 1 w Seg A i Sala 1 w Seg B są dozwolone — różne colKey)
+  const existing = wFloors[fi].segments[si].rooms;
+  const nums = existing.map(r => parseInt(r.num)).filter(n => n > 0);
+  const nextNum = nums.length ? Math.max(...nums) + 1 : 1;
   wFloors[fi].segments[si].rooms.push({ num: String(nextNum), sub: '' });
   renderFloorList();
 }
@@ -4684,7 +4706,7 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.5.0';
+const APP_VERSION = '2.5.1';
 const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {

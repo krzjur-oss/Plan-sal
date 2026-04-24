@@ -10,7 +10,7 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.5.0 |
+| **Aktualna wersja** | v2.5.1 |
 | **Ostatnia aktualizacja** | 23 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
@@ -268,6 +268,16 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.5.1 — 24 kwietnia 2026
+
+Poprawka walidacji sal:
+
+- **Duplikat = ten sam skrót piętro+segment+nr** — Sala 1 w Seg A i Sala 1 w Seg B są dozwolone (różne skróty: `0A1`, `0B1`)
+- Komunikat błędu pokazuje pełny skrót sali (np. `0A1`) zamiast samego numeru
+- Przycisk „＋ sala" wróca do numeracji per-segment
+
+---
 
 ### v2.5.0 — 24 kwietnia 2026
 
