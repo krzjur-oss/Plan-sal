@@ -4040,7 +4040,13 @@ function _spBuildClasses() {
   // Opcje klas bazowych dla dropdownów
   const baseNames = [...new Set(all.filter(c => !c.baseClass).map(c => c.name))].sort();
 
-  const rows = all.map((c, i) => {
+  // Sortuj po nazwie klasy, a przy równej nazwie po grupie — zachowując oryginalny indeks
+  const sortedCls = all
+    .map((c, i) => ({ c, i }))
+    .sort((a, b) => (a.c.name || '').localeCompare(b.c.name || '', 'pl', { sensitivity: 'base' })
+                 || (a.c.group || '').localeCompare(b.c.group || '', 'pl', { sensitivity: 'base' }));
+
+  const rows = sortedCls.map(({ c, i }) => {
     const abbr    = c.abbr || c.name;
     const inUse   = usedAbbrs.has(abbr);
     const isSubgroup = c.group && c.group.trim().toLowerCase() !== 'cała klasa' && c.group.trim() !== '';
@@ -4069,9 +4075,9 @@ function _spBuildClasses() {
     </div>`;
   }).join('');
 
-  return `<div class="sp-section-title">Klasy i grupy</div>
-    ${rows || '<div class="sp-info-box">Brak klas — dodaj poniżej.</div>'}
-    <button class="btn btn-sm sp-add-btn" onclick="spClassAdd()">＋ Dodaj klasę</button>`;
+  return '<div class="sp-section-title">Klasy i grupy</div>' +
+    '<button class="btn btn-sm sp-add-btn" onclick="spClassAdd()" style="margin-bottom:6px">＋ Dodaj klasę</button>' +
+    (rows || '<div class="sp-info-box">Brak klas.</div>');
 }
 
 function spClassAdd() {
@@ -4079,10 +4085,13 @@ function spClassAdd() {
   appState.classes.push({ name: '', abbr: '', group: 'cała klasa', baseClass: '' });
   persistAll();
   _renderSettingsTab('classes');
-  // Focus na ostatni input
+  // Pusty string sortuje się na górę — focusuj pierwszy wiersz
   setTimeout(() => {
-    const inps = document.querySelectorAll('#settingsBody .sp-row .sp-inp');
-    if (inps.length) inps[inps.length - 3]?.focus();
+    const firstRow = document.querySelector('#settingsBody .sp-row');
+    if (firstRow) {
+      firstRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      firstRow.querySelector('.sp-inp')?.focus();
+    }
   }, 50);
 }
 function spClassSetName(i, val) {
@@ -4196,9 +4205,13 @@ function spTeacherAdd() {
   appState.teachers.push({ last: '', first: '', abbr: '' });
   persistAll();
   _renderSettingsTab('teachers');
+  // Pusty string sortuje się na górę listy — focusuj pierwszy input (Nazwisko nowego wiersza)
   setTimeout(() => {
-    const inps = document.querySelectorAll('#settingsBody .sp-row .sp-inp');
-    if (inps.length) inps[inps.length - 2]?.focus();
+    const firstRow = document.querySelector('#settingsBody .sp-row');
+    if (firstRow) {
+      firstRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      firstRow.querySelector('.sp-inp')?.focus();
+    }
   }, 50);
 }
 function spTeacherSet(i, field, val) {
@@ -4257,7 +4270,12 @@ function _spBuildSubjects() {
   const usedNames = _spUsedSubjects();
   const all = appState.subjects || [];
 
-  const rows = all.map((s, i) => {
+  // Sortuj alfabetycznie po nazwie — zachowując oryginalny indeks
+  const sortedSubj = all
+    .map((s, i) => ({ s, i }))
+    .sort((a, b) => (a.s.name || '').localeCompare(b.s.name || '', 'pl', { sensitivity: 'base' }));
+
+  const rows = sortedSubj.map(({ s, i }) => {
     const inUse = usedNames.has(s.name);
     return `<div class="sp-row">
       <input class="sp-inp" value="${esc(s.name||'')}" placeholder="Nazwa przedmiotu"
@@ -4269,9 +4287,9 @@ function _spBuildSubjects() {
     </div>`;
   }).join('');
 
-  return `<div class="sp-section-title">Przedmioty</div>
-    ${rows || '<div class="sp-info-box">Brak przedmiotów — dodaj poniżej.</div>'}
-    <button class="btn btn-sm sp-add-btn" onclick="spSubjectAdd()">＋ Dodaj przedmiot</button>`;
+  return '<div class="sp-section-title">Przedmioty</div>' +
+    '<button class="btn btn-sm sp-add-btn" onclick="spSubjectAdd()" style="margin-bottom:6px">＋ Dodaj przedmiot</button>' +
+    (rows || '<div class="sp-info-box">Brak przedmiotów.</div>');
 }
 
 function spSubjectAdd() {
@@ -4279,9 +4297,13 @@ function spSubjectAdd() {
   appState.subjects.push({ name: '' });
   persistAll();
   _renderSettingsTab('subjects');
+  // Pusty string sortuje się na górę — focusuj pierwszy wiersz
   setTimeout(() => {
-    const inps = document.querySelectorAll('#settingsBody .sp-row .sp-inp');
-    if (inps.length) inps[inps.length - 1]?.focus();
+    const firstRow = document.querySelector('#settingsBody .sp-row');
+    if (firstRow) {
+      firstRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      firstRow.querySelector('.sp-inp')?.focus();
+    }
   }, 50);
 }
 function spSubjectSet(i, field, val) {
@@ -4474,7 +4496,7 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.3.0';
+const APP_VERSION = '2.3.1';
 const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {

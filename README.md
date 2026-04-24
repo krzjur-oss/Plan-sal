@@ -10,7 +10,7 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.3.0 |
+| **Aktualna wersja** | v2.3.1 |
 | **Ostatnia aktualizacja** | 23 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
@@ -268,6 +268,16 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.3.1 — 23 kwietnia 2026
+
+Poprawki panelu ustawień:
+
+- Zakładka **Klasy** — sortowanie alfabetyczne po nazwie i grupie; przycisk „Dodaj klasę" na górze listy
+- Zakładka **Nauczyciele** — naprawiono focus przy dodawaniu (kursor trafia do nowego wiersza, nie ostatniego istniejącego)
+- Zakładka **Przedmioty** — sortowanie alfabetyczne; przycisk „Dodaj przedmiot" na górze listy
+
+---
 
 ### v2.3.0 — 23 kwietnia 2026
 
