@@ -1505,18 +1505,35 @@ function wizardNext() {
   }
   if (wStep === 2) {
     if (wFloors.length === 0) { notify('⚠ Dodaj przynajmniej jedno piętro', true); return; }
-    // Sprawdź czy wszystkie sale mają unikalny numer
-    const allKeys = [];
-    let dupFound = false, emptyFound = false;
-    wFloors.forEach((fl,fi) => fl.segments.forEach((sg,si) => sg.rooms.forEach((r,ri) => {
-      const n = (r.num||'').trim();
+    // Sprawdź globalną unikalność numerów sal (wymagana dla migracji kluczy)
+    const seenNums = new Map(); // num → "Piętro X › Segment Y"
+    let dupNums = [], emptyFound = false;
+    wFloors.forEach((fl, fi) => fl.segments.forEach((sg, si) => sg.rooms.forEach((r, ri) => {
+      const n = (r.num || '').trim();
       if (!n) { emptyFound = true; return; }
-      const k = `f${fi}_s${si}_${n}`;
-      if (allKeys.includes(k)) dupFound = true;
-      allKeys.push(k);
+      const location = `${fl.name || ('Piętro ' + fi)} › ${sg.name || ('Segment ' + si)}`;
+      if (seenNums.has(n)) {
+        dupNums.push({ num: n, loc1: seenNums.get(n), loc2: location });
+      } else {
+        seenNums.set(n, location);
+      }
     })));
     if (emptyFound) { notify('⚠ Każda sala musi mieć numer', true); return; }
-    if (dupFound)   { notify('⚠ Numery sal muszą być unikalne w segmencie', true); return; }
+    if (dupNums.length) {
+      const first = dupNums[0];
+      notify(
+        `⚠ Numer sali „${first.num}" powtarza się w dwóch miejscach:
+` +
+        `  • ${first.loc1}
+  • ${first.loc2}
+` +
+        `Numery sal muszą być unikalne w całej szkole.`,
+        true
+      );
+      // Podświetl duplikaty
+      _highlightDuplicateRooms(dupNums.map(d => d.num));
+      return;
+    }
   }
   if (wStep === 3) {
     wClasses = getClassesFromDOM();
@@ -1561,6 +1578,62 @@ function updateWizardStep() {
   document.getElementById('wBtnNext').textContent = wStep === TOTAL_STEPS-1 ? (_wizardEditMode ? '✓ Zapisz zmiany' : '✓ Zakończ i przejdź do planu') : 'Dalej →';
 }
 
+// ── Migracja kluczy schedData po zmianie struktury pięter ────────────────────
+// Wywoływana z finishWizard gdy user edytuje rok i mogła zmienić kolejność pięter.
+// Buduje mapę oldKey → newKey na podstawie numeru sali (unikalny identyfikator sali).
+// Jeśli sala o danym numerze istnieje w nowej strukturze pod innym indeksem piętra/segmentu,
+// jej klucz jest automatycznie zaktualizowany w schedData — dane nie giną.
+function migrateScheduleKeys(oldFloors, newFloors, yearKey) {
+  // Zbuduj mapę: numer sali → nowy klucz
+  const newKeyByRoomNum = {};
+  newFloors.forEach((floor, fi) =>
+    floor.segments.forEach((seg, si) =>
+      seg.rooms.forEach((room, ri) => {
+        const n = (room.num || '').trim();
+        const key = n ? `f${fi}_s${si}_${n}` : `f${fi}_s${si}_r${ri}`;
+        if (n) newKeyByRoomNum[n] = key; // numer sali → nowy klucz
+      })
+    )
+  );
+
+  // Zbuduj mapę: stary klucz → nowy klucz
+  const keyMap = {}; // oldKey → newKey
+  let remapped = 0;
+  oldFloors.forEach((floor, fi) =>
+    floor.segments.forEach((seg, si) =>
+      seg.rooms.forEach((room, ri) => {
+        const n = (room.num || '').trim();
+        const oldKey = n ? `f${fi}_s${si}_${n}` : `f${fi}_s${si}_r${ri}`;
+        const newKey = newKeyByRoomNum[n] || oldKey; // jeśli numer istnieje → nowy klucz
+        if (oldKey !== newKey) { keyMap[oldKey] = newKey; remapped++; }
+      })
+    )
+  );
+
+  if (!remapped || !schedData[yearKey]) return 0;
+
+  // Zastosuj mapę kluczy w całym schedData dla danego roku
+  let updated = 0;
+  Object.keys(schedData[yearKey]).forEach(di => {
+    Object.keys(schedData[yearKey][di] || {}).forEach(h => {
+      const hour = schedData[yearKey][di][h];
+      const toRename = Object.keys(hour).filter(k => keyMap[k]);
+      toRename.forEach(oldK => {
+        const newK = keyMap[oldK];
+        if (!hour[newK]) { // nie nadpisuj jeśli nowy klucz już zajęty
+          hour[newK] = hour[oldK];
+          updated++;
+        }
+        delete hour[oldK];
+      });
+    });
+  });
+
+  console.log(`[migrateScheduleKeys] ${remapped} kluczy do zmiany → ${updated} wpisów zaktualizowanych`);
+  return updated;
+}
+
+
 function finishWizard() {
   syncBuildingsFromDOM();
   syncTeachersFromDOM();
@@ -1586,6 +1659,8 @@ function finishWizard() {
   }
 
   const prevHomerooms = appState?.homerooms || {};
+  // Zapisz stare piętra PRZED nadpisaniem appState — potrzebne do migracji kluczy
+  const prevFloors = _wizardEditMode ? JSON.parse(JSON.stringify(appState?.floors || [])) : [];
   const subjects = wSubjects.filter(s => s.name && s.name.trim());
   const timeslots = wTimeslots.filter(t => t.label).map(t => ({label:t.label,start:t.start||'',end:t.end||''}));
   appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, subjects, timeslots, days: DAYS_DEFAULT, school, homerooms: prevHomerooms };
@@ -1601,6 +1676,11 @@ function finishWizard() {
     });
   });
 
+  // Migracja kluczy schedData gdy edytujemy rok i zmieniono strukturę/kolejność pięter
+  if (wasEditMode && prevFloors.length) {
+    const migrated = migrateScheduleKeys(prevFloors, wFloors, yearKey);
+    if (migrated > 0) notify(`✓ Przeniesiono ${migrated} wpisów planu do zaktualizowanej struktury sal`);
+  }
   invalidateColumnCache(); // OPT-02: piętra mogły się zmienić w kreatorze
   persistAll();
   wizardClearDraft();
@@ -1707,8 +1787,53 @@ function buildFloorEl(floor, fi) {
   return div;
 }
 function buildRoomChip(fi,si,ri,r) {
-  return `<div class="room-chip">Sala <input class="room-chip-name" value="${esc(r.num)}" placeholder="nr" onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].num=this.value"><input class="room-chip-sub" value="${esc(r.sub||'')}" placeholder="opis…" onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].sub=this.value"><button class="chip-del" onclick="removeRoom(${fi},${si},${ri})">✕</button></div>`;
+  return `<div class="room-chip" data-room-num="${esc(r.num)}">Sala <input class="room-chip-name" value="${esc(r.num)}" placeholder="nr"
+    onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].num=this.value.trim(); _validateRoomNums()"
+    oninput="wFloors[${fi}].segments[${si}].rooms[${ri}].num=this.value; _validateRoomNums()"
+    title="Numer sali — musi być unikalny w całej szkole"
+  ><input class="room-chip-sub" value="${esc(r.sub||'')}" placeholder="opis…" onchange="wFloors[${fi}].segments[${si}].rooms[${ri}].sub=this.value"><button class="chip-del" onclick="removeRoom(${fi},${si},${ri})">✕</button></div>`;
 }
+// Walidacja numerów sal w czasie rzeczywistym (real-time)
+function _validateRoomNums() {
+  const seenNums = new Map(); // num → first input element
+  const dupNums  = new Set();
+  document.querySelectorAll('.room-chip-name').forEach(inp => {
+    const n = inp.value.trim();
+    if (!n) return;
+    if (seenNums.has(n)) {
+      dupNums.add(n);
+      seenNums.get(n).classList.add('room-dup');
+    } else {
+      seenNums.set(n, inp);
+      inp.classList.remove('room-dup');
+    }
+  });
+  // Oznacz duplikaty
+  document.querySelectorAll('.room-chip-name').forEach(inp => {
+    const n = inp.value.trim();
+    if (dupNums.has(n)) {
+      inp.classList.add('room-dup');
+      inp.title = `Numer „${n}" już istnieje w innej sali!`;
+    } else {
+      inp.classList.remove('room-dup');
+      inp.title = 'Numer sali — musi być unikalny w całej szkole';
+    }
+  });
+  return dupNums.size === 0;
+}
+
+// Podświetl duplikaty numerów (po kliknięciu Dalej)
+function _highlightDuplicateRooms(dupNumArr) {
+  const dupSet = new Set(dupNumArr);
+  document.querySelectorAll('.room-chip-name').forEach(inp => {
+    if (dupSet.has(inp.value.trim())) {
+      inp.classList.add('room-dup');
+      inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+}
+
+
 function addFloor() {
   const ci = wFloors.length % FLOOR_COLORS.length;
   wFloors.push({name:`Piętro ${wFloors.length}`,color:FLOOR_COLORS[ci],buildingIdx:0,segments:[{name:'Segment A',rooms:[{num:'1',sub:''}]}]});
@@ -1718,10 +1843,15 @@ function removeFloor(fi) { wFloors.splice(fi,1); renderFloorList(); renderBuildi
 function addSegment(fi) { wFloors[fi].segments.push({name:'',rooms:[{num:'1',sub:''}]}); renderFloorList(); }
 function removeSeg(fi,si) { wFloors[fi].segments.splice(si,1); renderFloorList(); }
 function addRoom(fi,si) {
-  const existing = wFloors[fi].segments[si].rooms;
-  const nums = existing.map(r => parseInt(r.num)||0).filter(n=>n>0);
-  const nextNum = nums.length ? Math.max(...nums)+1 : existing.length+1;
-  wFloors[fi].segments[si].rooms.push({num: String(nextNum), sub:''});
+  // Szukaj globalnie unikalnego numeru (wszystkie sale we wszystkich piętrach i segmentach)
+  const allNums = new Set();
+  wFloors.forEach(fl => fl.segments.forEach(sg => sg.rooms.forEach(r => {
+    const n = parseInt(r.num);
+    if (n > 0) allNums.add(n);
+  })));
+  let nextNum = 1;
+  while (allNums.has(nextNum)) nextNum++;
+  wFloors[fi].segments[si].rooms.push({ num: String(nextNum), sub: '' });
   renderFloorList();
 }
 function removeRoom(fi,si,ri) { wFloors[fi].segments[si].rooms.splice(ri,1); renderFloorList(); }
@@ -4496,7 +4626,7 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.3.1';
+const APP_VERSION = '2.4.1';
 const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {

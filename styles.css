@@ -3087,3 +3087,17 @@ body.light #tutBox { background: #fff; }
   transition: border-color 0.15s;
 }
 .sp-time-inp:focus { border-color: var(--accent); }
+
+/* Duplikat numeru sali — podświetlenie w kreatorze */
+.room-chip-name.room-dup {
+  border-color: var(--danger, #e53e3e) !important;
+  background: rgba(229, 62, 62, 0.08);
+  color: var(--danger, #e53e3e);
+  box-shadow: 0 0 0 2px rgba(229, 62, 62, 0.25);
+  animation: roomDupPulse 0.4s ease;
+}
+@keyframes roomDupPulse {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}

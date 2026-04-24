@@ -929,7 +929,7 @@ if ('serviceWorker' in navigator) {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.3.1</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.4.1</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
@@ -1071,6 +1071,23 @@ if ('serviceWorker' in navigator) {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.4.1 <span class="changelog-date">23 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Walidacja unikalności numerów sal — globalnie</b> (poprzednio sprawdzana tylko w obrębie segmentu)</li>
+            <li>Błąd wskazuje konkretne miejsca: <em>„Numer sali „1" powtarza się: Parter › Skrzydło A i I piętro › Skrzydło B"</em></li>
+            <li>Duplikaty podświetlane na czerwono w czasie rzeczywistym podczas wpisywania</li>
+            <li>Przycisk „＋ sala" generuje globalnie unikalny numer (nie tylko w obrębie segmentu)</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.4.0 <span class="changelog-date">23 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Nowa funkcja: migracja kluczy sal po zmianie struktury budynków</b> — dodanie budynku sportowego lub zmiana układu pięter w połowie roku nie powoduje utraty istniejących danych w planie</li>
+            <li>Sala identyfikowana jest po numerze (np. <code>H1</code>), nie po pozycji w liście — nawet jeśli piętro trafia na inny indeks, wpisy są automatycznie przepisywane</li>
+            <li>Po zakończeniu kreatora wyświetlana jest informacja ile wpisów zostało zaktualizowanych</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.3.1 <span class="changelog-date">23 kwietnia 2026</span></div>
           <ul>

@@ -10,7 +10,7 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.3.1 |
+| **Aktualna wersja** | v2.4.1 |
 | **Ostatnia aktualizacja** | 23 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
@@ -268,6 +268,27 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.4.1 — 23 kwietnia 2026
+
+Poprawki unikalności numerów sal:
+
+- **Walidacja globalna** — duplikat numeru sali wykrywany w całej szkole, nie tylko w segmencie
+- Komunikat błędu wskazuje dokładnie gdzie powtarza się numer (piętro i segment)
+- **Podświetlanie duplikatów w czasie rzeczywistym** — czerwone obramowanie przy wpisywaniu
+- Przycisk „＋ sala" generuje globalnie unikalny numer automatycznie
+
+---
+
+### v2.4.0 — 23 kwietnia 2026
+
+Nowa funkcja — migracja struktury budynków:
+
+- **Migracja kluczy sal po zmianie struktury budynków** — dodanie nowego budynku (np. hali sportowej) lub zmiana układu pięter w połowie roku nie powoduje utraty danych w planie lekcji
+- Sale identyfikowane są po numerze, nie po pozycji — wpisy automatycznie przepisywane do nowych kluczy
+- Po zamknięciu kreatora wyświetlana jest informacja o liczbie zaktualizowanych wpisów
+
+---
 
 ### v2.3.1 — 23 kwietnia 2026
 
