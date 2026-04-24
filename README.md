@@ -10,7 +10,7 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.4.1 |
+| **Aktualna wersja** | v2.5.0 |
 | **Ostatnia aktualizacja** | 23 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
@@ -268,6 +268,17 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.5.0 — 24 kwietnia 2026
+
+Przeprojektowany kreator — krok „Budynek":
+
+- **Piętra pogrupowane pod budynkami** — każdy budynek to oddzielna sekcja z własnym przyciskiem „＋ Dodaj piętro"
+- Nowy budynek (np. hala sportowa) pokazuje pustą kartę z wyraźnym komunikatem zamiast dezorientującego dropdownu
+- Dodanie piętra do konkretnego budynku poprzez przycisk w nagłówku sekcji
+- Usunięto dropdown „przynależność do budynku" z kart pięter (był przyczyną zamieszania)
+
+---
 
 ### v2.4.1 — 23 kwietnia 2026
 

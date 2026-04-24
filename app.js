@@ -1742,24 +1742,54 @@ function syncBuildingsFromDOM() {
   document.querySelectorAll('.building-addr-inp').forEach(el => { const bi=+el.dataset.bi; if(wBuildings[bi]) wBuildings[bi].address=el.value; });
 }
 function updateFloorBuildingSelects() {
-  document.querySelectorAll('.floor-building-select').forEach(sel => {
-    const fi = +sel.dataset.fi;
-    const cur = wFloors[fi]?.buildingIdx || 0;
-    sel.innerHTML = wBuildings.map((b,bi) => `<option value="${bi}" ${bi===cur?'selected':''}>${esc(BUILDING_LETTERS[bi]||bi+1)}: ${esc(b.name||'Budynek '+(bi+1))}</option>`).join('');
-  });
-  // Nie wywołuj renderBuildingList() — zniszczyłoby focus w polach input
+  // Dropdown budynku przy piętrach usunięty — piętra są teraz pogrupowane w sekcje budynków
+  // Funkcja zachowana dla kompatybilności, teraz tylko odświeża nazwy w nagłówkach sekcji
+  renderFloorList();
 }
 
-// ── Floor builder ──
+// ── Floor builder — piętra pogrupowane pod budynkami ──
 function renderFloorList() {
   const container = document.getElementById('floorList');
   container.innerHTML = '';
-  wFloors.forEach((floor, fi) => container.appendChild(buildFloorEl(floor, fi)));
+
+  if (wBuildings.length === 0) return;
+
+  wBuildings.forEach((bld, bi) => {
+    const bldFloors = wFloors
+      .map((f, fi) => ({ f, fi }))
+      .filter(({ f }) => (f.buildingIdx || 0) === bi);
+
+    const bldSection = document.createElement('div');
+    bldSection.className = 'floor-building-section';
+
+    // Nagłówek sekcji budynku
+    const bldColor = BUILDING_COLORS[bi % BUILDING_COLORS.length];
+    const bldLetter = BUILDING_LETTERS[bi] || String(bi + 1);
+    bldSection.innerHTML = `<div class="floor-bld-header">
+      <span class="floor-bld-badge" style="background:${bldColor}">${bldLetter}</span>
+      <span class="floor-bld-name">${esc(bld.name || 'Budynek ' + (bi + 1))}</span>
+      <button class="add-floor-btn" onclick="addFloorForBuilding(${bi})" style="margin-left:auto">＋ Dodaj piętro</button>
+    </div>`;
+
+    if (bldFloors.length === 0) {
+      // Pusty stan — wyraźna informacja
+      const empty = document.createElement('div');
+      empty.className = 'floor-bld-empty';
+      empty.innerHTML = `<span>Brak pięter / stref — kliknij „＋ Dodaj piętro" aby zacząć</span>`;
+      bldSection.appendChild(empty);
+    } else {
+      bldFloors.forEach(({ f, fi }) => {
+        bldSection.appendChild(buildFloorEl(f, fi));
+      });
+    }
+
+    container.appendChild(bldSection);
+  });
 }
+
 function buildFloorEl(floor, fi) {
   const div = document.createElement('div');
   div.className = 'floor-item';
-  const buildingOptions = wBuildings.map((b,bi) => `<option value="${bi}" ${bi===(floor.buildingIdx||0)?'selected':''}>${BUILDING_LETTERS[bi]||bi+1}: ${b.name||'Budynek '+(bi+1)}</option>`).join('');
   const segsHtml = floor.segments.map((seg,si) => `
     <div class="segment-item">
       <div class="segment-header">
@@ -1776,8 +1806,7 @@ function buildFloorEl(floor, fi) {
     <div class="floor-item-header">
       <div class="floor-color-dot" style="background:${floor.color}"></div>
       <input class="floor-name-input" value="${esc(floor.name)}" placeholder="Nazwa piętra / strefy" onchange="wFloors[${fi}].name=this.value">
-      <select class="floor-building-select" data-fi="${fi}" onchange="wFloors[${fi}].buildingIdx=+this.value; renderBuildingList()">${buildingOptions}</select>
-      <div class="floor-actions"><button class="icon-btn danger" onclick="removeFloor(${fi})">🗑</button></div>
+      <div class="floor-actions"><button class="icon-btn danger" onclick="removeFloor(${fi})" title="Usuń piętro">🗑</button></div>
     </div>
     <div class="segments-area">
       <div class="segments-label">Segmenty</div>
@@ -1835,9 +1864,38 @@ function _highlightDuplicateRooms(dupNumArr) {
 
 
 function addFloor() {
+  // Jeśli jest tylko jeden budynek — dodaj do niego
+  addFloorForBuilding(0);
+}
+function addFloorForBuilding(bi) {
   const ci = wFloors.length % FLOOR_COLORS.length;
-  wFloors.push({name:`Piętro ${wFloors.length}`,color:FLOOR_COLORS[ci],buildingIdx:0,segments:[{name:'Segment A',rooms:[{num:'1',sub:''}]}]});
+  // Globalnie unikalny numer startowy dla nowej sali
+  const allNums = new Set();
+  wFloors.forEach(fl => fl.segments.forEach(sg => sg.rooms.forEach(r => {
+    const n = parseInt(r.num);
+    if (n > 0) allNums.add(n);
+  })));
+  let startNum = 1;
+  while (allNums.has(startNum)) startNum++;
+
+  const floorsInBld = wFloors.filter(f => (f.buildingIdx || 0) === bi).length;
+  const bldName = wBuildings[bi]?.name || ('Budynek ' + (bi + 1));
+  wFloors.push({
+    name: `${bldName} — piętro ${floorsInBld}`,
+    color: FLOOR_COLORS[ci],
+    buildingIdx: bi,
+    segments: [{ name: 'Segment A', rooms: [{ num: String(startNum), sub: '' }] }]
+  });
   renderFloorList();
+  // Scroll do nowego piętra
+  setTimeout(() => {
+    const sections = document.querySelectorAll('.floor-building-section');
+    if (sections[bi]) {
+      const items = sections[bi].querySelectorAll('.floor-item');
+      const last = items[items.length - 1];
+      if (last) last.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, 80);
 }
 function removeFloor(fi) { wFloors.splice(fi,1); renderFloorList(); renderBuildingList(); }
 function addSegment(fi) { wFloors[fi].segments.push({name:'',rooms:[{num:'1',sub:''}]}); renderFloorList(); }
@@ -4626,7 +4684,7 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.4.1';
+const APP_VERSION = '2.5.0';
 const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {

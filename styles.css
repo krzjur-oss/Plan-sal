@@ -3101,3 +3101,50 @@ body.light #tutBox { background: #fff; }
   40%  { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   FLOOR BUILDER — sekcje per budynek
+══════════════════════════════════════════════════════════════ */
+.floor-building-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+  margin-bottom: 14px;
+  background: var(--surface);
+}
+.floor-bld-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.floor-bld-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+.floor-bld-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.floor-bld-empty {
+  background: var(--surface2);
+  border: 1.5px dashed var(--border2);
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}

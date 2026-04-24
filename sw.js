@@ -1,5 +1,5 @@
 // SalePlan Service Worker
-const CACHE = 'sp-v98'; // v2.4.1 room uniqueness // v2.4.0 building migration // v2.3.1 sort fix // v2.3.0 settings panel // v2.2.0 baseClass feature // v2.1.0 bugfix release
+const CACHE = 'sp-v99'; // v2.5.0 building UX // v2.4.1 room uniqueness // v2.4.0 building migration // v2.3.1 sort fix // v2.3.0 settings panel // v2.2.0 baseClass feature // v2.1.0 bugfix release
 const ASSETS = [
   './',
   './index.html',

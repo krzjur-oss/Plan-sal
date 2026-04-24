@@ -351,7 +351,6 @@ if ('serviceWorker' in navigator) {
       <div class="import-preview" id="floorImportPreview"></div>
 
       <div class="floor-list" id="floorList"></div>
-      <button class="add-floor-btn" onclick="addFloor()" style="margin-top:8px">＋ Dodaj piętro / strefę ręcznie</button>
     </div>
   </div>
 
@@ -929,7 +928,7 @@ if ('serviceWorker' in navigator) {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.4.1</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.5.0</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
@@ -1071,6 +1070,15 @@ if ('serviceWorker' in navigator) {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.5.0 <span class="changelog-date">24 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Przeprojektowany krok „Budynek" w kreatorze</b> — piętra pogrupowane pod budynkami zamiast płaskiej listy z dropdownem</li>
+            <li>Każdy budynek ma własną sekcję z przyciskiem „＋ Dodaj piętro" i pustym stanem gdy brak pięter</li>
+            <li>Dodanie nowego budynku w trakcie roku tworzy od razu widoczną pustą kartę gotową do uzupełnienia</li>
+            <li>Nowe piętro automatycznie trafia do właściwego budynku i otrzymuje globalnie unikalny numer sali</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.4.1 <span class="changelog-date">23 kwietnia 2026</span></div>
           <ul>
