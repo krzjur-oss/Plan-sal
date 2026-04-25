@@ -3651,13 +3651,13 @@ function exportPDF() {
   validFromDates[appState.yearKey][currentDay] = vf;
 
   // Wypełnij nagłówek PDF
-  const schoolFull = appState.school?.name || appState.school?.short || '';
+  const schoolFull  = appState.school?.name || appState.school?.short || '';
   const schoolShort = appState.school?.short || '';
   const schoolLabel = schoolFull && schoolShort && schoolFull !== schoolShort
     ? `${schoolFull} (${schoolShort})`
     : schoolFull || schoolShort || 'SalePlan';
-  const yearLabel  = appState.yearLabel || appState.yearKey || '';
-  const dayLabel   = (appState.days || [])[currentDay] || '';
+  const yearLabel = appState.yearLabel || appState.yearKey || '';
+  const dayLabel  = (appState.days || [])[currentDay] || '';
   const vfFormatted = vf
     ? new Date(vf).toLocaleDateString('pl-PL', {day:'2-digit', month:'long', year:'numeric'})
     : 'nie podano';
@@ -3665,19 +3665,51 @@ function exportPDF() {
   const hdr = document.getElementById('pdfHeader');
   hdr.querySelector('.pdf-school').textContent = schoolLabel;
   hdr.querySelector('.pdf-year').textContent   = `Rok szkolny ${yearLabel}`;
-  hdr.querySelector('.pdf-day').textContent    = `· ${dayLabel}`;
-  hdr.querySelector('.pdf-from').textContent   = vfFormatted;
 
-  // Build filename — skrót_dnia_rok_szkolny_v
-  const DAY_ABBR = ['PN','WT','SR','CZW','PT'];
-  const dayAbbr  = DAY_ABBR[currentDay] || String(currentDay+1);
-  const yearShort = yearLabel.replace(/20(\d{2})\/20(\d{2})/, '$1-$2')
-                             .replace(/\//g, '-');
-  const vfDate   = vf ? vf.replace(/-/g, '').slice(2) : '';
-  document.title = `${dayAbbr}_${yearShort}_v`;
+  const filterEl  = hdr.querySelector('.pdf-filter');
+  const DAY_ABBR  = ['PN','WT','SR','CZW','PT'];
+  const dayAbbr   = DAY_ABBR[currentDay] || String(currentDay + 1);
+  const yearShort = yearLabel.replace(/20(\d{2})\/20(\d{2})/, '$1-$2').replace(/\//g, '-');
+  const vfDate    = vf ? vf.replace(/-/g, '').slice(2) : '';
+
+  if (_viewMode === 'rooms') {
+    // Widok sal — jak dotychczas: dzień + data obowiązywania
+    hdr.querySelector('.pdf-day').textContent  = `· ${dayLabel}`;
+    hdr.querySelector('.pdf-from').textContent = vfFormatted;
+    filterEl.style.display = 'none';
+    filterEl.textContent   = '';
+    document.title = `${dayAbbr}_${yearShort}${vfDate ? '_v' + vfDate : ''}`;
+
+  } else if (_viewMode === 'teacher') {
+    // Widok nauczyciela — imię i nazwisko + skrót
+    const teacher = getTeacherByAbbr(_viewFilter);
+    const tName   = teacher ? teacherDisplayName(teacher) : _viewFilter;
+    const tAbbr   = _viewFilter || '';
+    hdr.querySelector('.pdf-day').textContent  = '';
+    hdr.querySelector('.pdf-from').textContent = '';
+    filterEl.style.display = 'inline';
+    filterEl.textContent   = `👤 ${tName}${tAbbr && tAbbr !== tName ? ' (' + tAbbr + ')' : ''}  —  plan tygodniowy`;
+    document.title = `nauczyciel_${tAbbr}_${yearShort}`;
+
+  } else if (_viewMode === 'class') {
+    // Widok klasy — nazwa klasy z liczbą podgrup
+    const classObj   = (appState.classes || []).find(c => (c.abbr || c.name) === _viewFilter);
+    const className  = classObj ? classObj.name : _viewFilter;
+    const childCount = (appState.classes || []).filter(c => c.baseClass === _viewFilter).length;
+    const classLabel = childCount > 0 ? `${className} (+${childCount} gr.)` : className;
+    hdr.querySelector('.pdf-day').textContent  = '';
+    hdr.querySelector('.pdf-from').textContent = '';
+    filterEl.style.display = 'inline';
+    filterEl.textContent   = `🏫 Klasa ${classLabel}  —  plan tygodniowy`;
+    document.title = `klasa_${_viewFilter}_${yearShort}`;
+  }
 
   window.print();
-  document.title = 'SalePlan — Plan Sal Zajęciowych';
+
+  // Przywróć tytuł i ukryj filtr
+  document.title         = 'SalePlan — Plan Sal Zajęciowych';
+  filterEl.style.display = 'none';
+  filterEl.textContent   = '';
 }
 (function(){const _vf=document.getElementById('validFrom');if(_vf)_vf.addEventListener('change',()=>{
   if(!appState)return;
@@ -4762,7 +4794,7 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.5.6';
+const APP_VERSION = '2.5.7';
 const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {

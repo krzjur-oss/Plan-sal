@@ -10,7 +10,7 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.5.6 |
+| **Aktualna wersja** | v2.5.7 |
 | **Ostatnia aktualizacja** | 25 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
@@ -268,6 +268,17 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.5.7 — 25 kwietnia 2026
+
+Drukowanie widoku Nauczyciela i Klasy:
+
+- **Funkcja „Eksportuj PDF" obsługuje teraz wszystkie trzy widoki** — Sale, Nauczyciel, Klasa; wcześniej działała wyłącznie dla widoku Sal
+- **Nagłówek wydruku** zawiera imię i nazwisko nauczyciela (ze skrótem w nawiasie) lub nazwę klasy z liczbą podgrup, zamiast dnia tygodnia i daty obowiązywania
+- **Nazwa pliku PDF** generowana automatycznie: `nauczyciel_KJUR_25-26` lub `klasa_1A_25-26`
+- **Nowe style `@media print`** dla tabeli tygodniowej — ukryte przyciski filtrowania i pasek widoku, poprawne formatowanie komórek i skrótów sal
+
+---
 
 ### v2.5.6 — 25 kwietnia 2026
 

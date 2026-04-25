@@ -536,6 +536,7 @@ if ('serviceWorker' in navigator) {
       <span class="pdf-year"></span>
       <span class="pdf-day"></span>
       <span class="pdf-from"></span>
+      <span class="pdf-filter" style="display:none"></span>
     </div>
   </div>
   <!-- ── Pasek widoku: Sale / Nauczyciel / Klasa — zawsze widoczny pod topbarem ── -->
@@ -928,7 +929,7 @@ if ('serviceWorker' in navigator) {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.5.6</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.5.7</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
@@ -1070,6 +1071,15 @@ if ('serviceWorker' in navigator) {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.5.7 <span class="changelog-date">25 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Drukowanie widoku Nauczyciela i Klasy</b> — funkcja „Eksportuj PDF" obsługuje teraz wszystkie trzy widoki: Sale, Nauczyciel, Klasa</li>
+            <li>Nagłówek wydruku zawiera imię i nazwisko nauczyciela (ze skrótem) lub nazwę klasy z liczbą podgrup zamiast dnia tygodnia</li>
+            <li>Nazwa pliku PDF: <code>nauczyciel_KJUR_25-26</code> lub <code>klasa_1A_25-26</code></li>
+            <li>Nowe style druku (<code>@media print</code>) dla tabeli widoku tygodniowego — ukryte przyciski filtrowania, poprawne formatowanie komórek, skróty sal w druku</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.6 <span class="changelog-date">25 kwietnia 2026</span></div>
           <ul>

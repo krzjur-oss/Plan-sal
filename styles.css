@@ -1205,14 +1205,20 @@ body {
 .pdf-year  { font-weight: 600; }
 .pdf-from  { color: #1a56db; font-weight: 600; }
 .pdf-from::before { content: 'Od: '; font-weight: 400; color: #555; }
+.pdf-filter { font-weight: 700; color: #1a56db; }
+.pdf-filter::before { content: '· '; font-weight: 400; color: #555; }
 
 @media print {
   .topbar, .statusbar, .modal-overlay, #wizardOverlay, #archivePanel, #pwaInstallBanner,
   #homeroomModal, .notif, .pwa-install-banner { display: none !important; }
+  #viewModeBar { display: none !important; }
   #pdfHeader { display: block !important; }
+  .pdf-filter { display: inline !important; }
   body, body.light { background: #fff !important; color: #000 !important; }
   .main { padding: 0 !important; overflow: visible !important; }
   .schedule-wrap { min-width: unset !important; overflow: visible !important; }
+
+  /* ── Widok Sal ── */
   .schedule-table {
     width: 100% !important;
     table-layout: auto !important;
@@ -1241,8 +1247,56 @@ body {
   .cell-subject { color: #000 !important; font-size: 0.58rem !important; }
   .cell-note   { font-size: 0.5rem !important; }
   .schedule-table td.time-cell { background: #f5f5f5 !important; }
-  .app-footer { display: none !important; }
   .schedule-table td { min-width: unset !important; }
+
+  /* ── Widok Nauczyciela / Klasy ── */
+  .view-mode-banner { display: none !important; }
+  .view-mode-table {
+    width: 100% !important;
+    table-layout: fixed !important;
+    font-size: 0.62rem !important;
+    border-collapse: collapse !important;
+  }
+  .view-mode-table th, .view-mode-table td {
+    border: 0.5px solid #bbb !important;
+    padding: 2px 4px !important;
+    vertical-align: top !important;
+  }
+  .view-mode-table th {
+    background: #f0f0f0 !important;
+    color: #333 !important;
+    position: static !important;
+    font-size: 0.62rem !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+  .th-view-day-active {
+    background: #e8eeff !important;
+    color: #1a56db !important;
+    border-bottom: 2px solid #1a56db !important;
+  }
+  .view-mode-table td.time-cell {
+    background: #f5f5f5 !important;
+    text-align: center !important;
+    font-size: 0.58rem !important;
+    white-space: nowrap !important;
+  }
+  .view-cell {
+    font-size: 0.62rem !important;
+    border-left: 2px solid #4b7cf6 !important;
+    background: #f0f4ff !important;
+    padding: 2px 3px !important;
+    margin-bottom: 1px !important;
+    border-radius: 0 !important;
+  }
+  .cell-inner-view-empty { display: none !important; }
+  .cell-row-cls    { font-size: 0.6rem !important; }
+  .cell-row-subject { font-size: 0.58rem !important; color: #000 !important; }
+  .cell-row-teacher { font-size: 0.55rem !important; color: #555 !important; }
+  .cell-abbr-cls   { background: #d0e4ff !important; color: #1a56db !important;
+                     border: none !important; padding: 0 2px !important; }
+
+  .app-footer { display: none !important; }
   @page { margin: 8mm; size: A4 landscape; }
 }
 
