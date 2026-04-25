@@ -10,8 +10,8 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.5.1 |
-| **Ostatnia aktualizacja** | 23 kwietnia 2026 |
+| **Aktualna wersja** | v2.5.2 |
+| **Ostatnia aktualizacja** | 25 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
 ---
@@ -268,6 +268,16 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.5.2 — 25 kwietnia 2026
+
+Naprawki błędów:
+
+- **Naprawiono wykrywanie kolizji klas** — wpisy z tablicą `classes[]` bez pola `className` były pomijane w detekcji kolizji (`detectCollisions`); klasy przypisane nowym formatem danych są teraz poprawnie wykrywane
+- **System migracji wersji pliku importu** — aplikacja automatycznie aktualizuje strukturę plików JSON ze starszych wersji; plik nowszy niż aplikacja generuje ostrzeżenie w konsoli zamiast cichego błędu
+- **Optymalizacja wydajności** — zastąpiono wszystkie 29 wywołań `JSON.parse(JSON.stringify(…))` natywnymi `structuredClone()` — szybszy deep clone, poprawna obsługa typów Date/Map/Set
+
+---
 
 ### v2.5.1 — 24 kwietnia 2026
 

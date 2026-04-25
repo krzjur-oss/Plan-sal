@@ -39,7 +39,7 @@ function detectCollisions(dayData, hours, cols) {
     cols.forEach(function(col) {
       const key   = colKey(col);
       const entry = row[key] || {};
-      if (entry.teacherAbbr || entry.className) {
+      if (entry.teacherAbbr || entry.className || (entry.classes && entry.classes.length)) {
         entries.push({ key, entry, col });
       }
     });
@@ -169,7 +169,7 @@ function undoPush(label) {
     label,
     yearKey: yk,
     day: currentDay,
-    snapshot: JSON.parse(JSON.stringify(schedData[yk]?.[currentDay] || {})),
+    snapshot: structuredClone(schedData[yk]?.[currentDay] || {}),
   });
   if (_undoStack.length > UNDO_LIMIT) _undoStack.shift();
   _redoStack = []; // nowa operacja kasuje redo
@@ -186,12 +186,12 @@ function undoApply(stack, targetStack, action) {
     label: entry.label,
     yearKey: yk,
     day: entry.day,
-    snapshot: JSON.parse(JSON.stringify(schedData[yk]?.[entry.day] || {})),
+    snapshot: structuredClone(schedData[yk]?.[entry.day] || {}),
   });
 
   // Przywróć
   if (!schedData[yk]) schedData[yk] = {};
-  schedData[yk][entry.day] = JSON.parse(JSON.stringify(entry.snapshot));
+  schedData[yk][entry.day] = structuredClone(entry.snapshot);
   persistAll();
 
   // Przełącz na właściwy dzień jeśli inny
@@ -352,10 +352,11 @@ function welcomeHandleFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const data = JSON.parse(e.target.result);
+      let data = JSON.parse(e.target.result);
       if (!data.schedData && !data.appState) {
         notify('⚠ Nieprawidłowy format pliku', true); return;
       }
+      data = migrateImportData(data);
       _wlPendingImport = data;
       // Pokaż panel wyboru trybu
       const fnEl = document.getElementById('wlIcFileName');
@@ -591,17 +592,17 @@ function openEditWizard() {
   if (!appState) return;
   _wizardEditMode = true;
   wStep = 0;
-  wAssignments = appState.assignments ? JSON.parse(JSON.stringify(appState.assignments)) : {};
-  wBuildings = JSON.parse(JSON.stringify(appState.buildings || [{ name:'', address:'' }]));
-  wFloors    = JSON.parse(JSON.stringify(appState.floors    || []));
-  wClasses   = JSON.parse(JSON.stringify(appState.classes   || []));
-  wTeachers  = JSON.parse(JSON.stringify(appState.teachers  || []));
-  wSubjects  = JSON.parse(JSON.stringify(appState.subjects  || []));
-  wTimeslots = JSON.parse(JSON.stringify(
+  wAssignments = appState.assignments ? structuredClone(appState.assignments) : {};
+  wBuildings = structuredClone(appState.buildings || [{ name:'', address:'' }]);
+  wFloors    = structuredClone(appState.floors    || []);
+  wClasses   = structuredClone(appState.classes   || []);
+  wTeachers  = structuredClone(appState.teachers  || []);
+  wSubjects  = structuredClone(appState.subjects  || []);
+  wTimeslots = structuredClone(
     appState.timeslots?.length
       ? appState.timeslots
       : buildTimeslotsFromHours(appState.hours || [], [])
-  ));
+  );
 
   document.getElementById('wSchoolName').value  = appState.school?.name  || '';
   document.getElementById('wSchoolShort').value = appState.school?.short || '';
@@ -656,13 +657,13 @@ function wizardCollectDraft() {
     },
     year:      (document.getElementById('wYear')?.value  || '').trim(),
     hours:     (document.getElementById('wHours')?.value || '').trim(),
-    buildings: JSON.parse(JSON.stringify(wBuildings  || [])),
-    floors:    JSON.parse(JSON.stringify(wFloors     || [])),
-    classes:   JSON.parse(JSON.stringify(wClasses    || [])),
-    teachers:  JSON.parse(JSON.stringify(wTeachers   || [])),
-    assignments: JSON.parse(JSON.stringify(wAssignments || {})),
-    subjects:  JSON.parse(JSON.stringify(wSubjects   || [])),
-    timeslots: JSON.parse(JSON.stringify(wTimeslots  || [])),
+    buildings: structuredClone(wBuildings  || []),
+    floors:    structuredClone(wFloors     || []),
+    classes:   structuredClone(wClasses    || []),
+    teachers:  structuredClone(wTeachers   || []),
+    assignments: structuredClone(wAssignments || {}),
+    subjects:  structuredClone(wSubjects   || []),
+    timeslots: structuredClone(wTimeslots  || []),
   };
 }
 
@@ -868,10 +869,45 @@ function autoClassAbbr(className, groupName) {
 //  EKSPORT / IMPORT / SCALANIE (współpraca)
 // ================================================================
 
+// ================================================================
+//  MIGRACJA WERSJI PLIKU IMPORTU
+// ================================================================
+const FILE_VERSION = 2;
+
+// Tabela migracji: v_source → funkcja migrująca do v_source+1
+const _FILE_MIGRATIONS = {
+  // v1 → v2: wprowadzono pole homerooms w appState
+  1: function(data) {
+    if (data.appState && !data.appState.homerooms) {
+      data.appState.homerooms = {};
+    }
+    data._version = 2;
+    return data;
+  },
+};
+
+// Przeprowadź migracje szeregowo aż do FILE_VERSION
+function migrateImportData(data) {
+  let v = data._version || 1;
+  if (v > FILE_VERSION) {
+    // Plik nowszy niż aplikacja — ostrzeż, ale nie blokuj
+    console.warn('[PlanLekcji] Plik pochodzi z nowszej wersji aplikacji (' + v + ' > ' + FILE_VERSION + '). Niektóre dane mogą być zignorowane.');
+    return data;
+  }
+  while (v < FILE_VERSION) {
+    const fn = _FILE_MIGRATIONS[v];
+    if (!fn) { v++; continue; }
+    console.log('[PlanLekcji] Migracja pliku v' + v + ' → v' + (v + 1));
+    data = fn(data);
+    v++;
+  }
+  return data;
+}
+
 // ── Eksport do pliku JSON ──
 function exportJSON() {
   const data = {
-    _version: 2,
+    _version: FILE_VERSION,
     _exported: new Date().toISOString(),
     appState,
     schedData,
@@ -1115,8 +1151,9 @@ function handleImportFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const data = JSON.parse(e.target.result);
+      let data = JSON.parse(e.target.result);
       if (!data.schedData && !data.appState) { notify('⚠ Nieprawidłowy format pliku', true); return; } // BUG-11 fix: spójne z welcomeHandleFile
+      data = migrateImportData(data);
       openImportModal(data);
     } catch(ex) {
       notify('⚠ Błąd odczytu pliku: ' + ex.message, true);
@@ -1441,21 +1478,21 @@ function saveData() {
 function openWizardNewYear() { // BUG-09 fix: usunięto nieużywany parametr preload
   wStep = 0;
   wAssignments = {};
-  wSubjects = JSON.parse(JSON.stringify(appState?.subjects || []));
-  wTimeslots = JSON.parse(JSON.stringify(
+  wSubjects = structuredClone(appState?.subjects || []);
+  wTimeslots = structuredClone(
     appState?.timeslots?.length
       ? appState.timeslots
       : buildTimeslotsFromHours(appState?.hours || [], [])
-  ));
+  );
 
   if (appState) {
     // Nowy rok — przepisz dane z bieżącego roku (budynki, klasy, nauczyciele)
-    wBuildings = JSON.parse(JSON.stringify(appState.buildings || [{ name: '', address: '' }]));
-    wFloors = JSON.parse(JSON.stringify(appState.floors || []));
-    wClasses = JSON.parse(JSON.stringify(appState.classes || []));
-    wTeachers = JSON.parse(JSON.stringify(appState.teachers || []));
-    wSubjects = JSON.parse(JSON.stringify(appState.subjects || []));
-    wTimeslots = JSON.parse(JSON.stringify(appState.timeslots || []));
+    wBuildings = structuredClone(appState.buildings || [{ name: '', address: '' }]);
+    wFloors = structuredClone(appState.floors || []);
+    wClasses = structuredClone(appState.classes || []);
+    wTeachers = structuredClone(appState.teachers || []);
+    wSubjects = structuredClone(appState.subjects || []);
+    wTimeslots = structuredClone(appState.timeslots || []);
     document.getElementById('wSchoolName').value = appState.school?.name || '';
     document.getElementById('wSchoolShort').value = appState.school?.short || '';
     document.getElementById('wSchoolPhone').value = appState.school?.phone || '';
@@ -1656,13 +1693,13 @@ function finishWizard() {
     // Nowy rok — archiwizuj poprzedni tylko jeśli to nie edycja
     const existing = archive.find(a => a.yearKey === appState.yearKey);
     if (!existing && appState.yearKey !== yearKey) {
-      archive.push({ yearKey: appState.yearKey, label: appState.yearLabel, savedAt: new Date().toISOString(), config: JSON.parse(JSON.stringify(appState)) });
+      archive.push({ yearKey: appState.yearKey, label: appState.yearLabel, savedAt: new Date().toISOString(), config: structuredClone(appState) });
     }
   }
 
   const prevHomerooms = appState?.homerooms || {};
   // Zapisz stare piętra PRZED nadpisaniem appState — potrzebne do migracji kluczy
-  const prevFloors = _wizardEditMode ? JSON.parse(JSON.stringify(appState?.floors || [])) : [];
+  const prevFloors = _wizardEditMode ? structuredClone(appState?.floors || []) : [];
   const subjects = wSubjects.filter(s => s.name && s.name.trim());
   const timeslots = wTimeslots.filter(t => t.label).map(t => ({label:t.label,start:t.start||'',end:t.end||''}));
   appState = { yearKey, yearLabel, hours, floors: wFloors, buildings: wBuildings, classes, teachers, assignments, subjects, timeslots, days: DAYS_DEFAULT, school, homerooms: prevHomerooms };
@@ -2537,7 +2574,7 @@ function dndDrop(e, day, hour, key) {
     undoPush(`DnD → ${key}, godz. ${hour}, ${appState.days[day]}`); // BUG-04 fix
     if (!schedData[yk][day]) schedData[yk][day] = {};
     if (!schedData[yk][day][hour]) schedData[yk][day][hour] = {};
-    schedData[yk][day][hour][key] = JSON.parse(JSON.stringify(srcEntry));
+    schedData[yk][day][hour][key] = structuredClone(srcEntry);
     persistAll();
     renderSchedule();
     sbSet('✓ Skopiowano zajęcia');
@@ -3174,7 +3211,7 @@ function removeSubject(i) {
 
 function loadSubjectPreset() {
   function _doLoad() {
-    wSubjects = JSON.parse(JSON.stringify(SUBJECTS_PRESET));
+    wSubjects = structuredClone(SUBJECTS_PRESET);
     renderSubjectList();
     wizardSaveDraft();
   }
@@ -4706,7 +4743,7 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.5.1';
+const APP_VERSION = '2.5.2';
 const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {

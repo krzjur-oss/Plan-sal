@@ -928,7 +928,7 @@ if ('serviceWorker' in navigator) {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.5.1</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.5.2</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
@@ -1070,6 +1070,14 @@ if ('serviceWorker' in navigator) {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.5.2 <span class="changelog-date">25 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Naprawiono wykrywanie kolizji klas</b> — wpisy z tablicą <code>classes[]</code> bez pola <code>className</code> były pomijane w detekcji kolizji (<code>detectCollisions</code>, linia 42)</li>
+            <li><b>Dodano system migracji wersji pliku importu</b> — aplikacja automatycznie aktualizuje strukturę plików JSON ze starszych wersji; plik nowszy niż aplikacja generuje ostrzeżenie zamiast cichego błędu</li>
+            <li><b>Optymalizacja wydajności</b> — zastąpiono wszystkie wywołania <code>JSON.parse(JSON.stringify(…))</code> (29 miejsc) natywnymi <code>structuredClone()</code> — szybszy deep clone, obsługa dat i Map</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.1 <span class="changelog-date">24 kwietnia 2026</span></div>
           <ul>
