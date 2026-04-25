@@ -58,7 +58,7 @@ function detectCollisions(dayData, hours, cols) {
         const cellId = h + '|' + e.key;
         if (!result[cellId]) result[cellId] = [];
         const others = byTeacher[abbr].filter(x => x.key !== e.key)
-          .map(x => x.col.room.num || x.key).join(', ');
+          .map(x => _roomLabel(x.col.floorIdx, x.col.segIdx, x.col.room.num || x.key)).join(', ');
         result[cellId].push('Nauczyciel ' + abbr + ' jednocześnie w: ' + others);
       });
     });
@@ -79,7 +79,7 @@ function detectCollisions(dayData, hours, cols) {
         const cellId = h + '|' + e.key;
         if (!result[cellId]) result[cellId] = [];
         const others = byClass[cls].filter(x => x.key !== e.key)
-          .map(x => x.col.room.num || x.key).join(', ');
+          .map(x => _roomLabel(x.col.floorIdx, x.col.segIdx, x.col.room.num || x.key)).join(', ');
         result[cellId].push('Klasa ' + cls + ' jednocześnie w: ' + others);
       });
     });
@@ -2792,7 +2792,7 @@ function renderViewTable(mode, filter) {
       } else {
         tbody += `<td style="padding:2px;vertical-align:top">`;
         entries.forEach(({ col, key, entry }) => {
-          const roomLabel = col.room.num ? `Sala ${esc(col.room.num)}` : esc(col.room.sub||'?');
+          const roomLabel = _roomLabel(col.floorIdx, col.segIdx, col.room.num || col.room.sub || '?');
           const clsList   = (entry.classes||[]).length ? entry.classes : (entry.className ? [entry.className] : []);
           tbody += `<div class="cell-inner filled view-cell"
               onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
@@ -4762,7 +4762,7 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.5.5';
+const APP_VERSION = '2.5.6';
 const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {

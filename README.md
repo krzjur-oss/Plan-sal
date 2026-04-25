@@ -10,7 +10,7 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.5.5 |
+| **Aktualna wersja** | v2.5.6 |
 | **Ostatnia aktualizacja** | 25 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
@@ -268,6 +268,15 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.5.6 — 25 kwietnia 2026
+
+Widok nauczyciela i klasy — skróty sal:
+
+- **Skrót sali zamiast „Sala N" w widoku Nauczyciela i Klasy** — komórki w tabeli wyświetlają teraz pełny skrót sali (np. `0A2` = piętro 0, segment A, sala 2) zamiast samego numeru, co pozwala od razu zlokalizować salę w budynku
+- **Tooltopy kolizji (⚠) pokazują skrót sali** — komunikaty o kolizji nauczyciela/klasy używają teraz skrótu zamiast samego numeru sali
+
+---
 
 ### v2.5.5 — 25 kwietnia 2026
 
