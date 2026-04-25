@@ -269,23 +269,9 @@ function loadAll() {
   try { archive = JSON.parse(localStorage.getItem('sp_archive') || '[]'); } catch(e) { archive = []; }
   try { appState = JSON.parse(localStorage.getItem('sp_active') || 'null'); } catch(e) { appState = null; }
   // ensure optional fields exist
-  if (appState && !appState.homerooms)   appState.homerooms   = {};
-  if (appState && !appState.teachers)    appState.teachers    = [];
-  if (appState && !appState.classes)     appState.classes     = [];
-  if (appState && !appState.buildings)   appState.buildings   = [];
-  if (appState && !appState.assignments) appState.assignments = {};
-  if (appState && !appState.days)        appState.days        = DAYS_DEFAULT;
-  if (appState && !appState.school)      appState.school      = {};
-  if (appState && !appState.hours)       appState.hours       = ['0','1','2','3','4','5','6','7','8'];
+  normalizeAppState(appState);
   // Migracja nazw klas
   if (appState) migrateClassNames(appState);
-  // Normalizacja: hours muszą być stringami i posortowane numerycznie
-  if (appState && appState.hours) {
-    appState.hours = appState.hours
-      .map(h => String(h).trim())
-      .filter(h => h !== '')
-      .sort((a, b) => Number(a) - Number(b));
-  }
 
 }
 
@@ -393,7 +379,8 @@ function wlImportConfirm(mode) {
     schedData      = data.schedData      || {};
     validFromDates = data.validFromDates  || {};
     archive        = data.archive         || [];
-    if (appState && !appState.homerooms) appState.homerooms = {};
+    normalizeAppState(appState);
+    migrateClassNames(appState);
     persistAll();
     hideWelcomeScreen();
     if (appState) {
@@ -886,6 +873,35 @@ const _FILE_MIGRATIONS = {
   },
 };
 
+// Normalizuje opcjonalne pola appState — stosowana zarówno przy starcie
+// jak i po każdym imporcie, żeby stare pliki (bez buildings, subjects itp.)
+// nie crashowały aplikacji.
+function normalizeAppState(state) {
+  if (!state) return state;
+  if (!state.homerooms)   state.homerooms   = {};
+  if (!state.teachers)    state.teachers    = [];
+  if (!state.classes)     state.classes     = [];
+  if (!state.buildings)   state.buildings   = [];
+  if (!state.assignments) state.assignments = {};
+  if (!state.days)        state.days        = DAYS_DEFAULT;
+  if (!state.school)      state.school      = {};
+  if (!state.subjects)    state.subjects    = [];
+  if (!state.timeslots)   state.timeslots   = [];
+  if (!state.hours)       state.hours       = ['0','1','2','3','4','5','6','7','8'];
+  // Normalizacja: hours muszą być stringami i posortowane numerycznie
+  state.hours = state.hours
+    .map(h => String(h).trim())
+    .filter(Boolean)
+    .sort((a, b) => Number(a) - Number(b));
+  // Normalizacja: każde piętro musi mieć buildingIdx
+  if (state.floors) {
+    state.floors.forEach(f => {
+      if (f.buildingIdx === undefined || f.buildingIdx === null) f.buildingIdx = 0;
+    });
+  }
+  return state;
+}
+
 // Przeprowadź migracje szeregowo aż do FILE_VERSION
 function migrateImportData(data) {
   let v = data._version || 1;
@@ -1245,8 +1261,8 @@ function confirmImport() {
     // Przywróć konfigurację i archiwum jeśli lokalnie brak
     if (!appState && _importData.appState) {
       appState = _importData.appState;
-      if (!appState.homerooms) appState.homerooms = {};
     }
+    normalizeAppState(appState);
     if (_importData.validFromDates) {
       Object.assign(validFromDates, _importData.validFromDates);
     }
@@ -1266,8 +1282,8 @@ function confirmImport() {
     if (_importData.validFromDates) validFromDates = _importData.validFromDates;
     if (_importData.appState) {
       appState = _importData.appState;
-      if (!appState.homerooms) appState.homerooms = {};
     }
+    normalizeAppState(appState);
     if (_importData.archive) archive = _importData.archive;
     migrateClassNames(appState);
     persistAll();
@@ -1589,7 +1605,8 @@ function wizardNext() {
   if (wStep === 6) { finishWizard(); return; }
   wStep++;
   if (wStep === 2) initTimeslotEditor(); // inicjuj timesloty gdy wchodzisz na krok budynków (po godzinach)
-  if (wStep === 4) renderSubjectList(); // wyrenderuj listę przy wejściu na krok przedmiotów
+  if (wStep === 4) renderSubjectList();  // wyrenderuj listę przy wejściu na krok przedmiotów
+  if (wStep === 5) renderTeacherList();  // BUG-A fix: wyrenderuj listę przy wejściu na krok nauczycieli
   if (wStep === 6) renderAssignmentsStep();
   updateWizardStep();
   wpUpdate(wStep);
@@ -1677,7 +1694,7 @@ function finishWizard() {
   syncBuildingsFromDOM();
   syncTeachersFromDOM();
   const yearLabel = document.getElementById('wYear').value.trim();
-  const hours = document.getElementById('wHours').value.split(',').map(h=>h.trim()).filter(Boolean);
+  const hours = document.getElementById('wHours').value.split(',').map(h=>h.trim()).filter(Boolean).sort((a,b)=>Number(a)-Number(b)); // BUG-B fix: sort numerically
   const classes = getClassesFromDOM(); // already filtered by getClassesFromDOM
   const yearKey = 'y_' + yearLabel.replace(/\//g,'_');
   const school = {
@@ -3008,7 +3025,7 @@ function updateStatusBar() {
   flattenColumns(appState.floors).forEach(col => {
     appState.hours.forEach(h => {
       const e = dayData[h]?.[colKey(col)];
-      if (e&&(e.teacherAbbr||e.subject||e.className)) count++;
+      if (e&&(e.teacherAbbr||e.subject||e.className||(e.classes&&e.classes.length))) count++; // BUG-F fix: uwzględnij classes[]
     });
   });
   document.getElementById('sbCount').textContent = `${count} wpisów w tym dniu`;
@@ -3074,7 +3091,7 @@ function buildTimeslotsFromHours(hours, prevTimeslots) {
 
 function initTimeslotEditor() {
   const hoursVal = document.getElementById('wHours')?.value || '';
-  const hours = hoursVal.split(',').map(h=>h.trim()).filter(Boolean);
+  const hours = hoursVal.split(',').map(h=>h.trim()).filter(Boolean).sort((a,b)=>Number(a)-Number(b)); // BUG-B fix
   // Zachowaj istniejące wpisy, uzupełnij nowymi
   wTimeslots = hours.map(h => {
     const ex = wTimeslots.find(t => t.label === h);
@@ -3107,7 +3124,7 @@ function renderTimeslotEditor() {
 
 function fillTimeslotsDefault() {
   const hoursVal = document.getElementById('wHours')?.value || '';
-  const hours = hoursVal.split(',').map(h=>h.trim()).filter(Boolean);
+  const hours = hoursVal.split(',').map(h=>h.trim()).filter(Boolean).sort((a,b)=>Number(a)-Number(b)); // BUG-B fix
   wTimeslots = hours.map(h => {
     const def = TIMESLOTS_DEFAULT_45.find(t => t.label === h);
     return def ? {...def} : { label: h, start: '', end: '' };
@@ -3588,7 +3605,7 @@ function restoreYear(yearKey) {
     onConfirm: () => {
       if (appState) {
         const ex = archive.find(a=>a.yearKey===appState.yearKey);
-        if (!ex) archive.push({yearKey:appState.yearKey,label:appState.yearLabel,savedAt:new Date().toISOString(),config:appState});
+        if (!ex) archive.push({yearKey:appState.yearKey,label:appState.yearLabel,savedAt:new Date().toISOString(),config:structuredClone(appState)}); // BUG-E fix: deep copy
       }
       appState={homerooms: item.config?.homerooms || {}, ...item.config}; archive=archive.filter(a=>a.yearKey!==yearKey);
       persistAll(); closeArchive(); currentDay=0; mountApp();
@@ -4185,10 +4202,12 @@ window.addEventListener('appinstalled', () => {
 function pwaInstall() {
   if (!_pwaPrompt) return;
   _pwaPrompt.prompt();
-  _pwaPrompt.userChoice.then(result => {
-    if (result.outcome === 'accepted') notify('✓ SalePlan zainstalowany!');
-    _pwaPrompt = null;
-  });
+  _pwaPrompt.userChoice
+    .then(result => {
+      if (result.outcome === 'accepted') notify('✓ SalePlan zainstalowany!');
+      _pwaPrompt = null;
+    })
+    .catch(() => { _pwaPrompt = null; }); // BUG-C fix: obsłuż odrzucenie promise
 }
 
 function pwaDismiss() {
@@ -4743,7 +4762,7 @@ document.addEventListener('keydown', e => {
 // ================================================================
 //  O PROGRAMIE
 // ================================================================
-const APP_VERSION = '2.5.2';
+const APP_VERSION = '2.5.5';
 const APP_LAST_UPDATE = '2026-04-23';
 
 function showAboutModal() {

@@ -10,7 +10,7 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.5.2 |
+| **Aktualna wersja** | v2.5.5 |
 | **Ostatnia aktualizacja** | 25 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
@@ -268,6 +268,36 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.5.5 — 25 kwietnia 2026
+
+Naprawki archiwum i statusbaru:
+
+- **Naprawiono uszkodzenie archiwum przy przywracaniu roku** — zapis bieżącego `appState` do archiwum używał referencji zamiast `structuredClone()`; kolejna linia kodu nadpisywała `appState`, niszcząc jednocześnie właśnie zarchiwizowany config
+- **Naprawiono licznik wpisów w statusbarze** — wpisy z tablicą `classes[]` bez pola `className` nie były wliczane do licznika „N wpisów w tym dniu" (ten sam wzorzec co BUG-4 w `detectCollisions`)
+
+---
+
+### v2.5.4 — 25 kwietnia 2026
+
+Naprawki kreatora i PWA:
+
+- **Naprawiono brak listy nauczycieli na kroku 5 kreatora** — `renderTeacherList()` nie była wywoływana przy wejściu na krok Nauczyciele; lista była pusta mimo istniejących danych w drafcie lub edycji roku
+- **Naprawiono sortowanie godzin lekcyjnych** — godziny wpisane w dowolnej kolejności (np. `1,0,3,2`) były zapisywane dosłownie; poprawiono w `finishWizard`, `initTimeslotEditor` i `fillTimeslotsDefault`
+- **Naprawiono unhandled rejection w instalacji PWA** — dodano `.catch()` do `_pwaPrompt.userChoice`
+- Poprawiono formatowanie `.catch()` w `sw.js`
+
+---
+
+### v2.5.3 — 25 kwietnia 2026
+
+Naprawki kreatora i importu:
+
+- **Naprawiono kolejność kroków kreatora** — krok 6 (Nauczyciele) i 7 (Przypisania klas do sal) miały zamienione ID paneli HTML (`wStep5`/`wStep6`); użytkownik widział złą treść na złym kroku
+- **Naprawiono import JSON ze starszych plików** — wczytanie pliku bez pola `buildings`, `subjects`, `timeslots` lub brakującego `buildingIdx` na piętrach mogło crashować aplikację po imporcie; dodano funkcję `normalizeAppState()` stosowaną we wszystkich ścieżkach importu (fresh load, merge, overwrite)
+- Uproszczono logikę normalizacji — jedna spójna funkcja zamiast rozproszonych warunków `if (!appState.X)`
+
+---
 
 ### v2.5.2 — 25 kwietnia 2026
 

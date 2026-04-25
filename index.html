@@ -389,7 +389,7 @@ if ('serviceWorker' in navigator) {
   </div>
 
   <!-- STEP 5: Teachers -->
-  <div class="wizard-step" id="wStep6">
+  <div class="wizard-step" id="wStep5">
     <div class="wcard">
       <div class="wcard-title">👨‍🏫 Lista nauczycieli</div>
       <div class="wcard-desc">Wpisz nauczycieli ręcznie lub zaimportuj z pliku <strong style="color:var(--accent)">.txt</strong> (format: Imię Nazwisko, każdy w nowej linii). Skrót generowany automatycznie.</div>
@@ -418,7 +418,7 @@ if ('serviceWorker' in navigator) {
     </div>
   </div>
 
-  <!-- STEP 5: Subjects dictionary -->
+  <!-- STEP 4: Subjects dictionary -->
   <div class="wizard-step" id="wStep4">
     <div class="wcard">
       <div class="wcard-title">📚 Słownik przedmiotów</div>
@@ -438,7 +438,7 @@ if ('serviceWorker' in navigator) {
   </div>
 
   <!-- STEP 6: Assignments -->
-  <div class="wizard-step" id="wStep5">
+  <div class="wizard-step" id="wStep6">
     <div class="wcard">
       <div class="wcard-title">📌 Przypisanie klas do sal</div>
       <div class="wcard-desc">Dla każdego dnia tygodnia i każdej sali wybierz domyślnie przypisaną klasę (opcjonalnie).</div>
@@ -928,7 +928,7 @@ if ('serviceWorker' in navigator) {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.5.2</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.5.5</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
@@ -1070,6 +1070,30 @@ if ('serviceWorker' in navigator) {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.5.5 <span class="changelog-date">25 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Naprawiono uszkodzenie archiwum przy przywracaniu roku</b> — zapis bieżącego roku do archiwum używał referencji zamiast głębokiej kopii; natychmiastowe nadpisanie <code>appState</code> niszczyło właśnie zarchiwizowane dane</li>
+            <li><b>Naprawiono licznik wpisów w statusbarze</b> — wpisy zapisane z tablicą <code>classes[]</code> bez pola <code>className</code> nie były wliczane do licznika „N wpisów w tym dniu"</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.5.4 <span class="changelog-date">25 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Naprawiono brak listy nauczycieli przy wejściu na krok 5 kreatora</b> — <code>renderTeacherList()</code> nie była wywoływana po przejściu na krok Nauczyciele; lista była pusta mimo istniejących danych (np. po wczytaniu draftu)</li>
+            <li><b>Naprawiono sortowanie godzin lekcyjnych</b> — godziny wpisane w dowolnej kolejności (np. <code>1,0,3,2</code>) były zapisywane dosłownie zamiast sortowane numerycznie; poprawiono w <code>finishWizard</code>, <code>initTimeslotEditor</code> i <code>fillTimeslotsDefault</code></li>
+            <li><b>Naprawiono unhandled rejection w instalacji PWA</b> — brak <code>.catch()</code> na <code>userChoice</code> mógł powodować niezłapany wyjątek gdy przeglądarka odrzuciła prompt</li>
+            <li>Poprawiono formatowanie <code>.catch()</code> w <code>sw.js</code> (podwójna spacja)</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.5.3 <span class="changelog-date">25 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Naprawiono kolejność kroków kreatora</b> — krok 6 (Nauczyciele) i 7 (Przypisania) miały zamienione ID paneli; teraz właściwa treść wyświetla się na właściwym kroku</li>
+            <li><b>Naprawiono import JSON ze starszych plików</b> — po wczytaniu pliku bez pola <code>buildings</code>, <code>subjects</code>, <code>timeslots</code> lub <code>buildingIdx</code> aplikacja mogła crashować; wszystkie pola są teraz normalizowane we wszystkich ścieżkach importu</li>
+            <li>Dodano funkcję <code>normalizeAppState()</code> — jedna spójna logika uzupełniania brakujących pól zamiast rozproszonych warunków</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.2 <span class="changelog-date">25 kwietnia 2026</span></div>
           <ul>

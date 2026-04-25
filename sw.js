@@ -1,5 +1,5 @@
 // SalePlan Service Worker
-const CACHE = 'sp-v101'; // v2.5.2 bugfixes // v2.5.1 colKey validation // v2.5.0 building UX // v2.4.1 room uniqueness // v2.4.0 building migration // v2.3.1 sort fix // v2.3.0 settings panel // v2.2.0 baseClass feature // v2.1.0 bugfix release
+const CACHE = 'sp-v104'; // v2.5.5 archive+statusbar fix // v2.5.4 wizard+hours fixes // v2.5.3 wizard step fix + import normalization // v2.5.2 bugfixes // v2.5.1 colKey validation // v2.5.0 building UX // v2.4.1 room uniqueness // v2.4.0 building migration // v2.3.1 sort fix // v2.3.0 settings panel // v2.2.0 baseClass feature // v2.1.0 bugfix release
 const ASSETS = [
   './',
   './index.html',
@@ -69,7 +69,7 @@ self.addEventListener('fetch', e => {
           if (r && r.status === 200)
             caches.open(CACHE).then(c => c.put(e.request, r.clone()));
           return r;
-        })        .catch(() => caches.match('./index.html'));
+        }).catch(() => caches.match('./index.html'));
       })
     );
     return;
