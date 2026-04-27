@@ -12,6 +12,12 @@
 <html lang="pl">
 <head>
 <script>
+// Polyfill: structuredClone (Safari < 15.4, starsze przeglądarki)
+if (typeof structuredClone === 'undefined') {
+  window.structuredClone = function(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  };
+}
 // v2.5.7: wymuś usunięcie starego SW i wyczyszczenie cache przed przejściem na ES modules
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {

@@ -8,9 +8,9 @@ import {
   initCookieBanner, acceptCookies, showCookieDetail, closeCookieDetail,
   toggleAppHelp, closeAppHelp,
   undoAction, redoAction,
-} from './js/utils.js';
+} from './utils.js';
 
-import { scrollToFirstCollision } from './js/collisions.js';
+import { scrollToFirstCollision } from './collisions.js';
 
 import {
   exportJSON, handleImportFile,
@@ -18,7 +18,7 @@ import {
   saveData,
   openCSVModal, closeCSVModal,
   exportCSVDay, exportCSVWeekBySala, exportCSVFlat,
-} from './js/import-export.js';
+} from './import-export.js';
 
 import {
   loadAll,
@@ -28,7 +28,7 @@ import {
   welcomeDemo, exitDemo,
   openEditWizard,
   draftResume, draftDiscard,
-} from './js/storage.js';
+} from './storage.js';
 
 import {
   addBuilding, addClass, addTeacher,
@@ -36,14 +36,14 @@ import {
   handleClassImportDrop, handleClassImportFile,
   handleImportDrop,
   readTxtFile,
-} from './js/wizard-data.js';
+} from './wizard-data.js';
 
 import {
   openWizardNewYear,
   wizardNext, wizardBack,
   finishWizard,
   renderAssignmentsStep, switchAssignDay, renderAssignTable, setAssign,
-} from './js/wizard.js';
+} from './wizard.js';
 
 import {
   mountApp, switchDay,
@@ -57,7 +57,7 @@ import {
   scheduleSubjectAbbrUpdate,
   pickSubject, initSubjectAutocomplete,
   mcAddClass, mcRemoveClass,
-} from './js/schedule.js';
+} from './schedule.js';
 
 import {
   showArchive, hideArchive, closeArchive,
@@ -74,7 +74,7 @@ import {
   initTermsBanner, acceptTerms,
   showTermsModal, closeTermsModal, showTermsModalFromBanner,
   showAboutModal, closeAboutModal,
-} from './js/ui.js';
+} from './ui.js';
 
 import {
   openSettingsPanel, closeSettingsPanel, switchSettingsTab,
@@ -82,7 +82,7 @@ import {
   spTeacherAdd, spTeacherSet, spTeacherSetAbbr, spTeacherDelete,
   spSubjectAdd, spSubjectSet, spSubjectDelete,
   spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete,
-} from './js/settings.js';
+} from './settings.js';
 
 // ================================================================
 //  EKSPONOWANIE NA window (dla inline onclick= w index.html)
