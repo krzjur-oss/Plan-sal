@@ -1421,7 +1421,31 @@ if ('serviceWorker' in navigator) {
     <!-- Treść zakładki -->
     <div class="settings-body" id="settingsBody"></div>
   </aside>
+<script>
+// Przechwytuj WSZYSTKIE błędy zanim VConsole się załaduje
+window.__errors = [];
+window.addEventListener('error', function(e) {
+  window.__errors.push('ERROR: ' + e.message + ' | ' + e.filename + ':' + e.lineno);
+  console.error('GLOBAL ERROR:', e.message, e.filename, e.lineno);
+});
+window.addEventListener('unhandledrejection', function(e) {
+  window.__errors.push('PROMISE: ' + (e.reason?.message || e.reason || String(e.reason)));
+  console.error('UNHANDLED PROMISE:', e.reason);
+});
+</script>
 <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
-<script>new VConsole();</script>
+<script>
+new VConsole();
+setTimeout(function() {
+  if (window.__errors.length) {
+    window.__errors.forEach(function(e) { console.error(e); });
+  } else {
+    console.log('Brak błędów globalnych');
+    console.log('appState:', typeof appState !== "undefined" ? JSON.stringify(appState).slice(0,100) : 'undefined');
+    console.log('window.mountApp:', typeof window.mountApp);
+    console.log('window.loadAll:', typeof window.loadAll);
+  }
+}, 2000);
+</script>
 </body>
 </html>
