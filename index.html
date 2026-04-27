@@ -12,12 +12,13 @@
 <html lang="pl">
 <head>
 <script>
-// BUG-02 fix: usunięto handler SW_UPDATED z auto-reload — obsługa przeniesiona do app.js
-// (tam pokazuje baner z wyborem użytkownika zamiast wymuszać przeładowanie)
-// Wymuszenie sprawdzenia aktualizacji SW przy każdym załadowaniu strony
+// v2.5.7: wymuś usunięcie starego SW i wyczyszczenie cache przed przejściem na ES modules
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(r => r.update());
+    regs.forEach(r => r.unregister());
+  });
+  caches.keys().then(keys => {
+    keys.filter(k => k !== 'sp-v107').forEach(k => caches.delete(k));
   });
 }
 </script>

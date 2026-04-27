@@ -8,6 +8,17 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './js/state.js',
+  './js/utils.js',
+  './js/helpers.js',
+  './js/collisions.js',
+  './js/import-export.js',
+  './js/storage.js',
+  './js/wizard-data.js',
+  './js/wizard.js',
+  './js/schedule.js',
+  './js/ui.js',
+  './js/settings.js',
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap',
 ];
 
