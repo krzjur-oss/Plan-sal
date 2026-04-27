@@ -26,28 +26,38 @@ import {
   wStep,      setWStep,
 } from './state.js';
 
-// ── Zewnętrzne funkcje (globalne — zastąpione importami w Etapie 10) ──
-function _normalizeAppState(s) { if (typeof normalizeAppState === 'function') return normalizeAppState(s); }
-function _migrateClassNames(s) { if (typeof migrateClassNames  === 'function') migrateClassNames(s); }
-function _migrateImportData(d) { if (typeof migrateImportData  === 'function') return migrateImportData(d); return d; }
-function _mountApp()           { if (typeof mountApp           === 'function') mountApp(); }
-function _openWizardNewYear()  { if (typeof openWizardNewYear  === 'function') openWizardNewYear(); }
-function _openImportModal(d)   { if (typeof openImportModal    === 'function') openImportModal(d); }
-function _confirmImport()      { if (typeof confirmImport      === 'function') confirmImport(); }
-function _persistAll()         { if (typeof persistAll         === 'function') persistAll(); }
-function _notify(msg, err)     { if (typeof notify             === 'function') notify(msg, err); }
-function _esc(s)               { if (typeof esc                === 'function') return esc(s); return String(s||''); }
-function _closeSettingsPanel() { if (typeof closeSettingsPanel === 'function') closeSettingsPanel(); }
-function _loadDemoData()       { if (typeof loadDemoData       === 'function') loadDemoData(); }
-function _renderBuildingList() { if (typeof renderBuildingList === 'function') renderBuildingList(); }
-function _renderFloorList()    { if (typeof renderFloorList    === 'function') renderFloorList(); }
-function _renderClassGrid()    { if (typeof renderClassGrid    === 'function') renderClassGrid(); }
-function _renderTeacherList()  { if (typeof renderTeacherList  === 'function') renderTeacherList(); }
-function _renderSubjectList()  { if (typeof renderSubjectList  === 'function') renderSubjectList(); }
-function _renderAssignmentsStep(){ if (typeof renderAssignmentsStep === 'function') renderAssignmentsStep(); }
-function _updateWizardStep()   { if (typeof updateWizardStep   === 'function') updateWizardStep(); }
-function _wpUpdate(s)          { if (typeof wpUpdate           === 'function') wpUpdate(s); }
-function _initTimeslotEditor() { if (typeof initTimeslotEditor === 'function') initTimeslotEditor(); }
+import {
+  normalizeAppState, migrateClassNames, migrateImportData,
+  persistAll, openImportModal, confirmImport, loadDemoData,
+} from './import-export.js';
+
+import { esc, notify, sbSet } from './helpers.js';
+
+// ── Wrappery dla funkcji z modułów wyżej w łańcuchu (unikamy cykli) ──
+// mountApp, openWizardNewYear, renderX itp. są w schedule/wizard/ui
+// które importują storage.js — nie możemy ich tu importować (cykl)
+// Używamy window.* bo app.js eksponuje je na window
+function _mountApp()             { window.mountApp?.(); }
+function _openWizardNewYear()    { window.openWizardNewYear?.(); }
+function _openImportModal(d)     { window.openImportModal?.(d); }
+function _confirmImport()        { window.confirmImport?.(); }
+function _closeSettingsPanel()   { window.closeSettingsPanel?.(); }
+function _renderBuildingList()   { window.renderBuildingList?.(); }
+function _renderFloorList()      { window.renderFloorList?.(); }
+function _renderClassGrid()      { window.renderClassGrid?.(); }
+function _renderTeacherList()    { window.renderTeacherList?.(); }
+function _renderSubjectList()    { window.renderSubjectList?.(); }
+function _renderAssignmentsStep(){ window.renderAssignmentsStep?.(); }
+function _updateWizardStep()     { window.updateWizardStep?.(); }
+function _wpUpdate(s)            { window.wpUpdate?.(s); }
+function _initTimeslotEditor()   { window.initTimeslotEditor?.(); }
+function _notify(msg, err)       { notify(msg, err); }
+function _esc(s)                 { return esc(s); }
+function _normalizeAppState(s)   { return normalizeAppState(s); }
+function _migrateClassNames(s)   { migrateClassNames(s); }
+function _migrateImportData(d)   { return migrateImportData(d); }
+function _persistAll()           { persistAll(); }
+function _loadDemoData()         { loadDemoData(); }
 function _buildTimeslotsFromHours(h,t){ if (typeof buildTimeslotsFromHours === 'function') return buildTimeslotsFromHours(h,t); return []; }
 function _syncBuildingsFromDOM(){ if (typeof syncBuildingsFromDOM === 'function') syncBuildingsFromDOM(); }
 function _syncTeachersFromDOM() { if (typeof syncTeachersFromDOM  === 'function') syncTeachersFromDOM(); }

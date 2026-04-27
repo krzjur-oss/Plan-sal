@@ -200,7 +200,7 @@ export function dndStart(e, day, hour, key) {
   _dndSrcDay  = day;
   _dndSrcHour = hour;
   _dndSrcKey  = key;
-  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', day + '|' + hour + '|' + key);
 
   const entry    = schedData[appState.yearKey]?.[day]?.[hour]?.[key] || {};
@@ -232,7 +232,7 @@ export function dndEnd(e) {
 
 export function dndOver(e) {
   e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
+  e.dataTransfer.dropEffect = 'move';
   const el = e.currentTarget;
   const isFilled = el.classList.contains('filled');
   el.classList.toggle('dnd-over', !isFilled);
@@ -260,10 +260,15 @@ export function dndDrop(e, day, hour, key) {
     undoPush(`DnD → ${key}, godz. ${hour}, ${appState.days[day]}`);
     if (!schedData[yk][day])        schedData[yk][day] = {};
     if (!schedData[yk][day][hour])  schedData[yk][day][hour] = {};
+    // Skopiuj do celu
     schedData[yk][day][hour][key] = structuredClone(srcEntry);
+    // Wyczyść źródło (przeniesienie, nie kopiowanie)
+    if (schedData[yk][_dndSrcDay]?.[_dndSrcHour]) {
+      schedData[yk][_dndSrcDay][_dndSrcHour][_dndSrcKey] = {};
+    }
     persistAll();
     renderSchedule();
-    sbSet('✓ Skopiowano zajęcia');
+    sbSet('✓ Przeniesiono zajęcia');
   }
 
   if (dstFilled) {

@@ -1428,6 +1428,102 @@ if ('serviceWorker' in navigator) {
     <div class="settings-body" id="settingsBody"></div>
   </aside>
 <script>
+// Touch DnD polyfill — dla tabletów gdzie HTML5 drag&drop nie działa
+(function() {
+  if (typeof document === 'undefined') return;
+  var _drag = null; // { el, srcDay, srcHour, srcKey, ghost }
+
+  function _cellFromPoint(x, y) {
+    var el = document.elementFromPoint(x, y);
+    while (el && el !== document.body) {
+      if (el.classList && el.classList.contains('cell-inner')) return el;
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function _attrFromEl(el, attr) {
+    // szukaj atrybutu ondrop na cell-inner lub jego rodzicu td
+    var node = el;
+    while (node && node !== document.body) {
+      var v = node.getAttribute(attr);
+      if (v) return v;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
+  function _parseDropArgs(ondrop) {
+    // ondrop="dndDrop(event,0,'1','f0s0r0')"
+    var m = ondrop.match(/dndDrop\(event\s*,\s*(\d+)\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*\)/);
+    return m ? {day: parseInt(m[1]), hour: m[2], key: m[3]} : null;
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    var cell = _cellFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+    if (!cell || !cell.classList.contains('filled')) return;
+    var ondragstart = _attrFromEl(cell, 'ondragstart');
+    if (!ondragstart) return;
+    var m = ondragstart.match(/dndStart\(event\s*,\s*(\d+)\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*\)/);
+    if (!m) return;
+
+    var ghost = cell.cloneNode(true);
+    ghost.style.cssText = 'position:fixed;z-index:9999;opacity:0.75;pointer-events:none;' +
+      'width:' + cell.offsetWidth + 'px;border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,0.4)';
+    ghost.style.left = (e.touches[0].clientX - cell.offsetWidth/2) + 'px';
+    ghost.style.top  = (e.touches[0].clientY - cell.offsetHeight/2) + 'px';
+    document.body.appendChild(ghost);
+    cell.style.opacity = '0.4';
+
+    _drag = { el: cell, ghost: ghost, day: parseInt(m[1]), hour: m[2], key: m[3] };
+    e.preventDefault();
+  }, {passive: false});
+
+  document.addEventListener('touchmove', function(e) {
+    if (!_drag) return;
+    var t = e.touches[0];
+    _drag.ghost.style.left = (t.clientX - _drag.ghost.offsetWidth/2)  + 'px';
+    _drag.ghost.style.top  = (t.clientY - _drag.ghost.offsetHeight/2) + 'px';
+    // Podświetl cel
+    document.querySelectorAll('.dnd-over,.dnd-over-filled').forEach(function(el) {
+      el.classList.remove('dnd-over','dnd-over-filled');
+    });
+    var target = _cellFromPoint(t.clientX, t.clientY);
+    if (target && target !== _drag.el) {
+      target.classList.add(target.classList.contains('filled') ? 'dnd-over-filled' : 'dnd-over');
+    }
+    e.preventDefault();
+  }, {passive: false});
+
+  document.addEventListener('touchend', function(e) {
+    if (!_drag) return;
+    var t = e.changedTouches[0];
+    _drag.ghost.remove();
+    _drag.el.style.opacity = '';
+    document.querySelectorAll('.dnd-over,.dnd-over-filled').forEach(function(el) {
+      el.classList.remove('dnd-over','dnd-over-filled');
+    });
+
+    var target = _cellFromPoint(t.clientX, t.clientY);
+    if (target && target !== _drag.el) {
+      var ondrop = _attrFromEl(target, 'ondrop');
+      if (ondrop) {
+        var args = _parseDropArgs(ondrop);
+        if (args && window.dndStart && window.dndDrop) {
+          // Symuluj DnD przez bezpośrednie wywołanie
+          var fakeEvt = { preventDefault: function(){}, currentTarget: target,
+                          dataTransfer: { effectAllowed:'move', dropEffect:'move',
+                                          setData: function(){}, getData: function(){return '';} } };
+          window.dndStart(fakeEvt, _drag.day, _drag.hour, _drag.key);
+          window.dndDrop(fakeEvt, args.day, args.hour, args.key);
+        }
+      }
+    }
+    _drag = null;
+  });
+})();
+</script>
+<script>
 // Debug: przechwytuj błędy od samego początku
 window.__errors = [];
 window.__logs   = [];
@@ -1463,6 +1559,16 @@ console.log   = function() { window.__logs.push(Array.from(arguments).join(' '))
           console.log('appState:', typeof appState !== 'undefined' ? (appState ? appState.yearLabel : 'null') : 'undefined');
           console.log('window.mountApp:', typeof window.mountApp);
           console.log('window.loadAll:', typeof window.loadAll);
+          var ws = document.getElementById('welcomeScreen');
+          var ao = document.getElementById('appOverlay');
+          console.log('welcomeScreen.show:', ws ? ws.classList.contains('show') : 'brak elementu');
+          console.log('appOverlay.show:', ao ? ao.classList.contains('show') : 'brak elementu');
+          // Jeśli appState null ale appOverlay widoczny - wymuś ekran powitalny
+          if (!window.appState && ao && ao.classList.contains('show')) {
+            console.log('NAPRAWA: chowam appOverlay, pokazuję welcomeScreen');
+            ao.classList.remove('show');
+            if (ws) ws.classList.add('show');
+          }
         }
       }
     }

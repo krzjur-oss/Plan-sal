@@ -750,6 +750,9 @@ document.addEventListener('DOMContentLoaded', function () {
   applyTheme(localStorage.getItem('sp_theme') || 'dark');
 
   if (!appState) {
+    // Upewnij się że appOverlay jest schowany (mógł być pokazany przez stary cache)
+    const _ao = document.getElementById('appOverlay');
+    if (_ao) _ao.classList.remove('show');
     showWelcomeScreen();
   } else {
     const yk = appState.yearKey;

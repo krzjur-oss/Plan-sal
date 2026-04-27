@@ -21,13 +21,13 @@ import {
 } from './state.js';
 
 import { DRAFT_KEY } from './storage.js';
-import { flattenColumns, colKey } from './helpers.js';
+import { flattenColumns, colKey, notify, esc, sbSet } from './helpers.js';
 
-// ── Zewnętrzne (globalne — zastąpione importami w Etapie 10) ───
-function _notify(msg, err) { if (typeof notify    === 'function') notify(msg, err); }
-function _mountApp()       { if (typeof mountApp   === 'function') mountApp(); }
-function _sbSet(msg)       { if (typeof sbSet      === 'function') sbSet(msg); }
-function _isDemoMode()     { return typeof isDemoMode === 'function' ? isDemoMode() : false; }
+// mountApp i isDemoMode są w modułach wyżej w łańcuchu — używamy window
+function _notify(msg, err) { notify(msg, err); }
+function _mountApp()       { window.mountApp?.(); }
+function _sbSet(msg)       { sbSet(msg); }
+function _isDemoMode()     { return window.isDemoMode?.() || false; }
 
 
 // ================================================================
