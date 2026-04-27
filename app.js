@@ -10,7 +10,7 @@ import {
   undoAction, redoAction,
 } from './js/utils.js';
 
-import { scrollToFirstCollision } from './js/helpers.js';
+import { scrollToFirstCollision } from './js/collisions.js';
 
 import {
   exportJSON, handleImportFile,
