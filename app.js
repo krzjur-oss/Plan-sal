@@ -7,6 +7,7 @@
 import {
   initCookieBanner, acceptCookies, showCookieDetail, closeCookieDetail,
   toggleAppHelp, closeAppHelp,
+  wpUpdate,
   undoAction, redoAction,
 } from './utils.js';
 
@@ -36,6 +37,16 @@ import {
   handleClassImportDrop, handleClassImportFile,
   handleImportDrop,
   readTxtFile,
+  renderBuildingList, removeBuilding,
+  addFloor, addFloorForBuilding, removeFloor,
+  addSegment, removeSeg, addRoom, removeRoom,
+  renderClassGrid, wClassAutoAbbr, removeClassAt,
+  renderTeacherList, removeTeacher, autoAbbr,
+  renderBuildingList, removeBuilding,
+  addFloor, addFloorForBuilding, removeFloor,
+  addSegment, removeSeg, addRoom, removeRoom,
+  renderClassGrid, wClassAutoAbbr, removeClassAt,
+  renderTeacherList, removeTeacher, autoAbbr,
 } from './wizard-data.js';
 
 import {
@@ -91,6 +102,7 @@ import {
 Object.assign(window, {
   initCookieBanner, acceptCookies, showCookieDetail, closeCookieDetail,
   toggleAppHelp, closeAppHelp,
+  wpUpdate,
   undoAction, redoAction,
 
   scrollToFirstCollision,
