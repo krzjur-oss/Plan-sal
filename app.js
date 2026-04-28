@@ -8,9 +8,9 @@ import {
   initCookieBanner, acceptCookies, showCookieDetail, closeCookieDetail,
   toggleAppHelp, closeAppHelp,
   undoAction, redoAction,
-} from './utils.js';
+} from './utils.js?v=20250428_2231';
 
-import { scrollToFirstCollision } from './collisions.js';
+import { scrollToFirstCollision } from './collisions.js?v=20250428_2231';
 
 import {
   exportJSON, handleImportFile,
@@ -18,7 +18,7 @@ import {
   saveData,
   openCSVModal, closeCSVModal,
   exportCSVDay, exportCSVWeekBySala, exportCSVFlat,
-} from './import-export.js';
+} from './import-export.js?v=20250428_2231';
 
 import {
   loadAll,
@@ -28,7 +28,7 @@ import {
   welcomeDemo, exitDemo,
   openEditWizard,
   draftResume, draftDiscard,
-} from './storage.js';
+} from './storage.js?v=20250428_2231';
 
 import {
   addBuilding, addClass, addTeacher,
@@ -36,14 +36,14 @@ import {
   handleClassImportDrop, handleClassImportFile,
   handleImportDrop,
   readTxtFile,
-} from './wizard-data.js';
+} from './wizard-data.js?v=20250428_2231';
 
 import {
   openWizardNewYear,
   wizardNext, wizardBack,
   finishWizard,
   renderAssignmentsStep, switchAssignDay, renderAssignTable, setAssign,
-} from './wizard.js';
+} from './wizard.js?v=20250428_2231';
 
 import {
   mountApp, switchDay,
@@ -57,7 +57,7 @@ import {
   scheduleSubjectAbbrUpdate,
   pickSubject, initSubjectAutocomplete,
   mcAddClass, mcRemoveClass,
-} from './schedule.js';
+} from './schedule.js?v=20250428_2231';
 
 import {
   showArchive, hideArchive, closeArchive,
@@ -74,7 +74,7 @@ import {
   initTermsBanner, acceptTerms,
   showTermsModal, closeTermsModal, showTermsModalFromBanner,
   showAboutModal, closeAboutModal,
-} from './ui.js';
+} from './ui.js?v=20250428_2231';
 
 import {
   openSettingsPanel, closeSettingsPanel, switchSettingsTab,
@@ -82,7 +82,7 @@ import {
   spTeacherAdd, spTeacherSet, spTeacherSetAbbr, spTeacherDelete,
   spSubjectAdd, spSubjectSet, spSubjectDelete,
   spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete,
-} from './settings.js';
+} from './settings.js?v=20250428_2231';
 
 // ================================================================
 //  EKSPONOWANIE NA window (dla inline onclick= w index.html)
