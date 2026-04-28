@@ -1556,16 +1556,20 @@ console.log   = function() { window.__logs.push(Array.from(arguments).join(' '))
             : ['Brak błędów globalnych']
           ).forEach(function(m) { console.error('[debug] ' + m); });
           window.__logs.forEach(function(m) { console.log('[debug] ' + m); });
-          console.log('appState:', typeof appState !== 'undefined' ? (appState ? appState.yearLabel : 'null') : 'undefined');
+          // Uwaga: appState to zmienna modułu ES — niedostępna przez window.*
+          // Używamy DOM jako proxy stanu aplikacji
           console.log('window.mountApp:', typeof window.mountApp);
           console.log('window.loadAll:', typeof window.loadAll);
           var ws = document.getElementById('welcomeScreen');
           var ao = document.getElementById('appOverlay');
+          var yearLabel = document.getElementById('currentYearLabel');
           console.log('welcomeScreen.show:', ws ? ws.classList.contains('show') : 'brak elementu');
           console.log('appOverlay.show:', ao ? ao.classList.contains('show') : 'brak elementu');
-          // Jeśli appState null ale appOverlay widoczny - wymuś ekran powitalny
-          if (!window.appState && ao && ao.classList.contains('show')) {
-            console.log('NAPRAWA: chowam appOverlay, pokazuję welcomeScreen');
+          console.log('yearLabel:', yearLabel ? (yearLabel.textContent || '(pusty)') : 'brak elementu');
+          // Naprawa tylko gdy appOverlay widoczny ALE rok nie jest załadowany
+          // (yearLabel pusty = mountApp nie zadziałał prawidłowo)
+          if (ao && ao.classList.contains('show') && (!yearLabel || !yearLabel.textContent.trim())) {
+            console.log('NAPRAWA: appOverlay bez danych — chowam, pokazuję welcomeScreen');
             ao.classList.remove('show');
             if (ws) ws.classList.add('show');
           }
