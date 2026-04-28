@@ -238,11 +238,11 @@ export function dndStart(e, day, hour, key) {
     e.dataTransfer.setDragImage(ghost, 60, 20);
   }
 
-  setTimeout(() => e.target.classList.add('dnd-dragging'), 0);
+  setTimeout(() => e.target?.classList.add('dnd-dragging'), 0);
 }
 
 export function dndEnd(e) {
-  e.target.classList.remove('dnd-dragging');
+  e.target?.classList.remove('dnd-dragging');
   const ghost = document.getElementById('_dndGhost');
   if (ghost) ghost.remove();
   document.querySelectorAll('.dnd-over, .dnd-over-filled').forEach(el => {
