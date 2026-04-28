@@ -209,6 +209,7 @@ let _touchOverEl   = null;
 let _touchStartTime = 0;
 let _touchStartX    = 0;
 let _touchStartY    = 0;
+let _touchScrolled  = false;
 const SCROLL_THRESHOLD = 8;  // px — powyżej tej wartości traktuj ruch jako scroll
 const LONG_PRESS_MS = 500;
 const MIN_TAP_MS    = 120;  // krótsze dotknięcie = przypadkowe muśnięcie, ignoruj
@@ -480,40 +481,41 @@ export function renderViewTable(mode, filter) {
 export function touchStart(e, day, hour, key) {
   if (e.touches.length !== 1) return;
   _touchStartTime = Date.now();
-  _touchStartX = e.touches[0].clientX;
-  _touchStartY = e.touches[0].clientY;
+  _touchStartX    = e.touches[0].clientX;
+  _touchStartY    = e.touches[0].clientY;
+  _touchScrolled  = false;
   const el = e.currentTarget;
   _touchTimer = setTimeout(() => {
+    if (_touchScrolled) return;  // scroll już trwa — nie aktywuj drag
     _touchDragging = true;
     _touchSrcEl   = el;
     _touchSrcDay  = day;
     _touchSrcHour = hour;
     _touchSrcKey  = key;
     el.classList.add('dnd-dragging');
-    // Haptyczny feedback jeśli dostępny
     if (navigator.vibrate) navigator.vibrate(40);
   }, LONG_PRESS_MS);
 }
 
 export function touchMove(e) {
   if (!_touchDragging) {
-    if (_touchTimer) {
-      // Sprawdź czy palec się poruszył — jeśli tak, to scroll, anuluj long-press
+    if (!_touchScrolled) {
       const dx = Math.abs(e.touches[0].clientX - _touchStartX);
       const dy = Math.abs(e.touches[0].clientY - _touchStartY);
       if (dx > SCROLL_THRESHOLD || dy > SCROLL_THRESHOLD) {
-        clearTimeout(_touchTimer);
-        _touchTimer = null;
+        // To jest scroll — anuluj timer i oznacz
+        if (_touchTimer) { clearTimeout(_touchTimer); _touchTimer = null; }
+        _touchScrolled = true;
       }
     }
-    // Nie blokuj — pozwól przeglądarce scrollować
+    // Nie blokuj scrollowania
     return;
   }
+  // Tryb drag aktywny — blokuj scroll i podświetlaj cel
   e.preventDefault();
   const touch = e.touches[0];
   const el = document.elementFromPoint(touch.clientX, touch.clientY);
   const cell = el ? el.closest('.cell-inner') : null;
-  // Podświetl cel
   if (_touchOverEl && _touchOverEl !== cell) {
     _touchOverEl.classList.remove('dnd-over', 'dnd-over-filled');
   }
@@ -530,7 +532,13 @@ export function touchMove(e) {
 export function touchEnd(e, day, hour, key) {
   if (_touchTimer) { clearTimeout(_touchTimer); _touchTimer = null; }
 
-  // Zapobiegnij wywołaniu onclick po touchend
+  // Jeśli był scroll — nic nie rób
+  if (_touchScrolled) {
+    _touchScrolled = false;
+    return;
+  }
+
+  // Zapobiegnij onclick po touchend
   e.preventDefault();
 
   if (!_touchDragging) {
