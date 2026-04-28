@@ -125,7 +125,9 @@ export function formatTimeCell(hourKey) {
 export function mountApp() {
   if (!appState) return;
   invalidateColumnCache();
-  document.getElementById('appOverlay').classList.add('show');
+  const _ao = document.getElementById('appOverlay');
+  _ao.style.display = '';
+  _ao.classList.add('show');
   document.getElementById('currentYearLabel').textContent = appState.yearLabel;
   document.getElementById('sbYear').textContent = appState.yearLabel;
   const schoolName = appState.school?.name || appState.school?.short || '';
