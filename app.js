@@ -48,6 +48,7 @@ import {
 import {
   mountApp, switchDay,
   dndStart, dndEnd, dndOver, dndLeave, dndDrop,
+  touchStart, touchMove, touchEnd,
   setViewMode, onViewFilterChange,
   renderSchedule,
   openEditModal, closeEditModal,
@@ -122,6 +123,7 @@ Object.assign(window, {
 
   mountApp, switchDay,
   dndStart, dndEnd, dndOver, dndLeave, dndDrop,
+  touchStart, touchMove, touchEnd,
   setViewMode, onViewFilterChange,
   renderSchedule,
   openEditModal, closeEditModal,
