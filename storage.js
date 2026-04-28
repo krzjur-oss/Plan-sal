@@ -209,12 +209,28 @@ export function wlImportConfirm(mode) {
     _notify('✓ Plan wczytany z pliku');
 
   } else if (mode === 'replace' && appState) {
-    // Zastąp — użyj confirmImport z trybem overwrite
+    // Zastąp — wczytaj bezpośrednio, identycznie jak tryb 'fresh'
+    // (nie można ustawić modułowej zmiennej _importData w import-export.js przez window)
+    setAppState(data.appState || null);
+    setSchedData(data.schedData || {});
+    setValidFromDates(data.validFromDates || {});
+    setArchive(data.archive || []);
+    _normalizeAppState(appState);
+    _migrateClassNames(appState);
+    _persistAll();
     hideWelcomeScreen();
-    if (typeof _importData !== 'undefined') window._importData = data;
-    document.getElementById('importModeOverwrite').checked = true;
-    document.getElementById('importModeMerge').checked     = false;
-    _confirmImport();
+
+    if (appState) {
+      const yk = appState.yearKey;
+      if (!schedData[yk]) schedData[yk] = {};
+      (appState.days || DAYS_DEFAULT).forEach((_, i) => {
+        if (!schedData[yk][i]) schedData[yk][i] = {};
+        (appState.hours || []).forEach(h => { if (!schedData[yk][i][h]) schedData[yk][i][h] = {}; });
+      });
+      _mountApp();
+    } else {
+      showWelcomeScreen();
+    }
 
   } else if (mode === 'merge' && appState) {
     // Scal — otwórz modal podglądu diff
