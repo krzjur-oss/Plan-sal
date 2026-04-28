@@ -218,7 +218,9 @@ export function dndStart(e, day, hour, key) {
   ghost.style.left = '-999px';
   ghost.style.top  = '-999px';
   document.body.appendChild(ghost);
-  e.dataTransfer.setDragImage(ghost, 60, 20);
+  if (typeof e.dataTransfer.setDragImage === 'function') {
+    e.dataTransfer.setDragImage(ghost, 60, 20);
+  }
 
   setTimeout(() => e.target.classList.add('dnd-dragging'), 0);
 }
