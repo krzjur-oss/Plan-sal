@@ -42,11 +42,6 @@ import {
   addSegment, removeSeg, addRoom, removeRoom,
   renderClassGrid, wClassAutoAbbr, removeClassAt,
   renderTeacherList, removeTeacher, autoAbbr,
-  renderBuildingList, removeBuilding,
-  addFloor, addFloorForBuilding, removeFloor,
-  addSegment, removeSeg, addRoom, removeRoom,
-  renderClassGrid, wClassAutoAbbr, removeClassAt,
-  renderTeacherList, removeTeacher, autoAbbr,
 } from './wizard-data.js';
 
 import {
