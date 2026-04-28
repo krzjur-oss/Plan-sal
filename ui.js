@@ -747,7 +747,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  applyTheme(localStorage.getItem('sp_theme') || 'dark');
+  applyTheme(localStorage.getItem('sp_theme') || 'light');
 
   if (!appState) {
     // Upewnij się że appOverlay jest schowany (mógł być pokazany przez stary cache)
