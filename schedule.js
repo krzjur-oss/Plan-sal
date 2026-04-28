@@ -689,9 +689,6 @@ export function renderSchedule() {
       tbody += `<td><div class="cell-inner ${filled ? 'filled' : ''} ${hasErr ? 'collision' : ''}"
             data-day="${currentDay}" data-hour="${esc(h)}" data-key="${esc(key)}"
             onclick="openEditModal(${currentDay},'${esc(h)}','${esc(key)}')"
-            ontouchstart="touchStart(event,${currentDay},'${esc(h)}','${esc(key)}')"
-            ontouchmove="touchMove(event)"
-            ontouchend="touchEnd(event,${currentDay},'${esc(h)}','${esc(key)}')"
             ${filled
               ? `draggable="true"
             ondragstart="dndStart(event,${currentDay},'${esc(h)}','${esc(key)}')"
@@ -739,6 +736,16 @@ export function renderSchedule() {
 
   document.getElementById('scheduleWrap').innerHTML =
     `<table class="schedule-table">${thead}${tbody}</table>`;
+
+  // Podepnij touch eventy przez addEventListener (bezpieczne w ES modules)
+  document.getElementById('scheduleWrap').querySelectorAll('.cell-inner').forEach(el => {
+    const day  = parseInt(el.dataset.day);
+    const hour = el.dataset.hour;
+    const key  = el.dataset.key;
+    el.addEventListener('touchstart', e => touchStart(e, day, hour, key), { passive: true });
+    el.addEventListener('touchmove',  e => touchMove(e),                  { passive: false });
+    el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),   { passive: false });
+  });
 
   updateStatusBar();
 }
