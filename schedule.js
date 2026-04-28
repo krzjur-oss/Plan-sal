@@ -205,8 +205,13 @@ let _touchSrcDay  = null;
 let _touchSrcHour = null;
 let _touchSrcKey  = null;
 let _touchDragging = false;
-let _touchOverEl  = null;
+let _touchOverEl   = null;
+let _touchStartTime = 0;
+let _touchStartX    = 0;
+let _touchStartY    = 0;
+const SCROLL_THRESHOLD = 8;  // px — powyżej tej wartości traktuj ruch jako scroll
 const LONG_PRESS_MS = 500;
+const MIN_TAP_MS    = 120;  // krótsze dotknięcie = przypadkowe muśnięcie, ignoruj
 
 export function dndStart(e, day, hour, key) {
   _dndSrcDay  = day;
@@ -474,6 +479,9 @@ export function renderViewTable(mode, filter) {
 // ── TOUCH LONG-PRESS DRAG ──────────────────────────────────────────────────
 export function touchStart(e, day, hour, key) {
   if (e.touches.length !== 1) return;
+  _touchStartTime = Date.now();
+  _touchStartX = e.touches[0].clientX;
+  _touchStartY = e.touches[0].clientY;
   const el = e.currentTarget;
   _touchTimer = setTimeout(() => {
     _touchDragging = true;
@@ -489,8 +497,16 @@ export function touchStart(e, day, hour, key) {
 
 export function touchMove(e) {
   if (!_touchDragging) {
-    // Jeszcze nie w trybie drag — anuluj timer jeśli poruszył palcem
-    if (_touchTimer) { clearTimeout(_touchTimer); _touchTimer = null; }
+    if (_touchTimer) {
+      // Sprawdź czy palec się poruszył — jeśli tak, to scroll, anuluj long-press
+      const dx = Math.abs(e.touches[0].clientX - _touchStartX);
+      const dy = Math.abs(e.touches[0].clientY - _touchStartY);
+      if (dx > SCROLL_THRESHOLD || dy > SCROLL_THRESHOLD) {
+        clearTimeout(_touchTimer);
+        _touchTimer = null;
+      }
+    }
+    // Nie blokuj — pozwól przeglądarce scrollować
     return;
   }
   e.preventDefault();
@@ -518,7 +534,9 @@ export function touchEnd(e, day, hour, key) {
   e.preventDefault();
 
   if (!_touchDragging) {
-    // Krótkie dotknięcie = edycja
+    // Zbyt krótkie = przypadkowe muśnięcie, ignoruj
+    if (Date.now() - _touchStartTime < MIN_TAP_MS) return;
+    // Świadome dotknięcie = edycja
     openEditModal(day, hour, key);
     return;
   }
