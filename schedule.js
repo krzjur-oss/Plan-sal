@@ -198,6 +198,16 @@ export function switchDay(idx) {
 
 let _dndSrcDay, _dndSrcHour, _dndSrcKey;
 
+// Touch long-press drag support
+let _touchTimer   = null;
+let _touchSrcEl   = null;
+let _touchSrcDay  = null;
+let _touchSrcHour = null;
+let _touchSrcKey  = null;
+let _touchDragging = false;
+let _touchOverEl  = null;
+const LONG_PRESS_MS = 500;
+
 export function dndStart(e, day, hour, key) {
   _dndSrcDay  = day;
   _dndSrcHour = hour;
@@ -247,26 +257,22 @@ export function dndLeave(e) {
   e.currentTarget.classList.remove('dnd-over', 'dnd-over-filled');
 }
 
-export function dndDrop(e, day, hour, key) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('dnd-over', 'dnd-over-filled');
-
-  if (_dndSrcDay === day && _dndSrcHour === hour && _dndSrcKey === key) return;
+// Wspólna logika przenoszenia (używana przez DnD myszy i touch long-press)
+function _doDndMove(dstDay, dstHour, dstKey) {
+  if (_dndSrcDay === dstDay && _dndSrcHour === dstHour && _dndSrcKey === dstKey) return;
 
   const yk       = appState.yearKey;
   const srcEntry = schedData[yk]?.[_dndSrcDay]?.[_dndSrcHour]?.[_dndSrcKey];
   if (!srcEntry || (!srcEntry.teacherAbbr && !(srcEntry.classes || []).length && !srcEntry.className)) return;
 
-  const dstEntry  = schedData[yk]?.[day]?.[hour]?.[key];
+  const dstEntry  = schedData[yk]?.[dstDay]?.[dstHour]?.[dstKey];
   const dstFilled = dstEntry && (dstEntry.teacherAbbr || (dstEntry.classes || []).length || dstEntry.className);
 
   function _doDrop() {
-    undoPush(`DnD → ${key}, godz. ${hour}, ${appState.days[day]}`);
-    if (!schedData[yk][day])        schedData[yk][day] = {};
-    if (!schedData[yk][day][hour])  schedData[yk][day][hour] = {};
-    // Skopiuj do celu
-    schedData[yk][day][hour][key] = structuredClone(srcEntry);
-    // Wyczyść źródło (przeniesienie, nie kopiowanie)
+    undoPush(`DnD → ${dstKey}, godz. ${dstHour}, ${appState.days[dstDay]}`);
+    if (!schedData[yk][dstDay])             schedData[yk][dstDay] = {};
+    if (!schedData[yk][dstDay][dstHour])    schedData[yk][dstDay][dstHour] = {};
+    schedData[yk][dstDay][dstHour][dstKey] = structuredClone(srcEntry);
     if (schedData[yk][_dndSrcDay]?.[_dndSrcHour]) {
       schedData[yk][_dndSrcDay][_dndSrcHour][_dndSrcKey] = {};
     }
@@ -285,6 +291,12 @@ export function dndDrop(e, day, hour, key) {
   } else {
     _doDrop();
   }
+}
+
+export function dndDrop(e, day, hour, key) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('dnd-over', 'dnd-over-filled');
+  _doDndMove(day, hour, key);
 }
 
 // ================================================================
@@ -459,6 +471,88 @@ export function renderViewTable(mode, filter) {
 //  RENDER SCHEDULE
 // ================================================================
 
+// ── TOUCH LONG-PRESS DRAG ──────────────────────────────────────────────────
+export function touchStart(e, day, hour, key) {
+  if (e.touches.length !== 1) return;
+  const el = e.currentTarget;
+  _touchTimer = setTimeout(() => {
+    _touchDragging = true;
+    _touchSrcEl   = el;
+    _touchSrcDay  = day;
+    _touchSrcHour = hour;
+    _touchSrcKey  = key;
+    el.classList.add('dnd-dragging');
+    // Haptyczny feedback jeśli dostępny
+    if (navigator.vibrate) navigator.vibrate(40);
+  }, LONG_PRESS_MS);
+}
+
+export function touchMove(e) {
+  if (!_touchDragging) {
+    // Jeszcze nie w trybie drag — anuluj timer jeśli poruszył palcem
+    if (_touchTimer) { clearTimeout(_touchTimer); _touchTimer = null; }
+    return;
+  }
+  e.preventDefault();
+  const touch = e.touches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const cell = el ? el.closest('.cell-inner') : null;
+  // Podświetl cel
+  if (_touchOverEl && _touchOverEl !== cell) {
+    _touchOverEl.classList.remove('dnd-over', 'dnd-over-filled');
+  }
+  if (cell && cell !== _touchSrcEl) {
+    const isFilled = cell.classList.contains('filled');
+    cell.classList.toggle('dnd-over', !isFilled);
+    cell.classList.toggle('dnd-over-filled', isFilled);
+    _touchOverEl = cell;
+  } else {
+    _touchOverEl = null;
+  }
+}
+
+export function touchEnd(e, day, hour, key) {
+  if (_touchTimer) { clearTimeout(_touchTimer); _touchTimer = null; }
+
+  // Zapobiegnij wywołaniu onclick po touchend
+  e.preventDefault();
+
+  if (!_touchDragging) {
+    // Krótkie dotknięcie = edycja
+    openEditModal(day, hour, key);
+    return;
+  }
+
+  // Zakończenie przeciągania
+  if (_touchSrcEl) _touchSrcEl.classList.remove('dnd-dragging');
+  if (_touchOverEl) _touchOverEl.classList.remove('dnd-over', 'dnd-over-filled');
+
+  const touch = e.changedTouches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const cell = el ? el.closest('.cell-inner') : null;
+
+  if (cell && cell !== _touchSrcEl) {
+    // Wyciągnij day/hour/key z atrybutów data
+    const dstDay  = parseInt(cell.dataset.day);
+    const dstHour = cell.dataset.hour;
+    const dstKey  = cell.dataset.key;
+    if (!isNaN(dstDay) && dstHour && dstKey) {
+      // Wykonaj drop przez istniejącą logikę
+      _dndSrcDay  = _touchSrcDay;
+      _dndSrcHour = _touchSrcHour;
+      _dndSrcKey  = _touchSrcKey;
+      _doDndMove(dstDay, dstHour, dstKey);
+    }
+  }
+
+  _touchDragging = false;
+  _touchSrcEl    = null;
+  _touchSrcDay   = null;
+  _touchSrcHour  = null;
+  _touchSrcKey   = null;
+  _touchOverEl   = null;
+}
+
 export function renderSchedule() {
   if (!appState) return;
 
@@ -593,7 +687,11 @@ export function renderSchedule() {
       const hasErr   = cellErrs.length > 0;
       const errTip   = cellErrs.join('\n');
       tbody += `<td><div class="cell-inner ${filled ? 'filled' : ''} ${hasErr ? 'collision' : ''}"
+            data-day="${currentDay}" data-hour="${esc(h)}" data-key="${esc(key)}"
             onclick="openEditModal(${currentDay},'${esc(h)}','${esc(key)}')"
+            ontouchstart="touchStart(event,${currentDay},'${esc(h)}','${esc(key)}')"
+            ontouchmove="touchMove(event)"
+            ontouchend="touchEnd(event,${currentDay},'${esc(h)}','${esc(key)}')"
             ${filled
               ? `draggable="true"
             ondragstart="dndStart(event,${currentDay},'${esc(h)}','${esc(key)}')"
