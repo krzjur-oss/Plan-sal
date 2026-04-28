@@ -1,5 +1,5 @@
 // SalePlan Service Worker
-const CACHE = 'sp-v117'; // v2.5.7 ES modules refactor // v2.5.6 room abbr in view // v2.5.5 archive+statusbar fix // v2.5.4 wizard+hours fixes // v2.5.3 wizard step fix + import normalization // v2.5.2 bugfixes // v2.5.1 colKey validation // v2.5.0 building UX // v2.4.1 room uniqueness // v2.4.0 building migration // v2.3.1 sort fix // v2.3.0 settings panel // v2.2.0 baseClass feature // v2.1.0 bugfix release
+const CACHE = 'sp-v118'; // v2.5.7 ES modules refactor // v2.5.6 room abbr in view // v2.5.5 archive+statusbar fix // v2.5.4 wizard+hours fixes // v2.5.3 wizard step fix + import normalization // v2.5.2 bugfixes // v2.5.1 colKey validation // v2.5.0 building UX // v2.4.1 room uniqueness // v2.4.0 building migration // v2.3.1 sort fix // v2.3.0 settings panel // v2.2.0 baseClass feature // v2.1.0 bugfix release
 const ASSETS = [
   './',
   './index.html',
@@ -74,7 +74,7 @@ self.addEventListener('fetch', e => {
   // Pozostałe zasoby origin — cache-first
   if (url.origin === location.origin) {
     e.respondWith(
-      caches.match(e.request).then(cached => {
+      caches.match(e.request, { ignoreSearch: true }).then(cached => {
         if (cached) return cached;
         return fetch(e.request).then(r => {
           if (r && r.status === 200)

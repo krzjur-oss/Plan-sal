@@ -8,9 +8,9 @@ import {
   initCookieBanner, acceptCookies, showCookieDetail, closeCookieDetail,
   toggleAppHelp, closeAppHelp,
   undoAction, redoAction,
-} from './utils.js?v=20250428_2231';
+} from './utils.js';
 
-import { scrollToFirstCollision } from './collisions.js?v=20250428_2231';
+import { scrollToFirstCollision } from './collisions.js';
 
 import {
   exportJSON, handleImportFile,
@@ -18,7 +18,7 @@ import {
   saveData,
   openCSVModal, closeCSVModal,
   exportCSVDay, exportCSVWeekBySala, exportCSVFlat,
-} from './import-export.js?v=20250428_2231';
+} from './import-export.js';
 
 import {
   loadAll,
@@ -28,7 +28,7 @@ import {
   welcomeDemo, exitDemo,
   openEditWizard,
   draftResume, draftDiscard,
-} from './storage.js?v=20250428_2231';
+} from './storage.js';
 
 import {
   addBuilding, addClass, addTeacher,
@@ -36,14 +36,14 @@ import {
   handleClassImportDrop, handleClassImportFile,
   handleImportDrop,
   readTxtFile,
-} from './wizard-data.js?v=20250428_2231';
+} from './wizard-data.js';
 
 import {
   openWizardNewYear,
   wizardNext, wizardBack,
   finishWizard,
   renderAssignmentsStep, switchAssignDay, renderAssignTable, setAssign,
-} from './wizard.js?v=20250428_2231';
+} from './wizard.js';
 
 import {
   mountApp, switchDay,
@@ -57,7 +57,7 @@ import {
   scheduleSubjectAbbrUpdate,
   pickSubject, initSubjectAutocomplete,
   mcAddClass, mcRemoveClass,
-} from './schedule.js?v=20250428_2231';
+} from './schedule.js';
 
 import {
   showArchive, hideArchive, closeArchive,
@@ -74,7 +74,7 @@ import {
   initTermsBanner, acceptTerms,
   showTermsModal, closeTermsModal, showTermsModalFromBanner,
   showAboutModal, closeAboutModal,
-} from './ui.js?v=20250428_2231';
+} from './ui.js';
 
 import {
   openSettingsPanel, closeSettingsPanel, switchSettingsTab,
@@ -82,7 +82,7 @@ import {
   spTeacherAdd, spTeacherSet, spTeacherSetAbbr, spTeacherDelete,
   spSubjectAdd, spSubjectSet, spSubjectDelete,
   spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete,
-} from './settings.js?v=20250428_2231';
+} from './settings.js';
 
 // ================================================================
 //  EKSPONOWANIE NA window (dla inline onclick= w index.html)
