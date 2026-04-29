@@ -18,15 +18,9 @@ if (typeof structuredClone === 'undefined') {
     return JSON.parse(JSON.stringify(obj));
   };
 }
-// v2.5.7: wymuś usunięcie starego SW i wyczyszczenie cache przed przejściem na ES modules
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    regs.forEach(r => r.unregister());
-  });
-  caches.keys().then(keys => {
-    keys.filter(k => k !== 'sp-v107').forEach(k => caches.delete(k));
-  });
-}
+// Blok migracyjny v2.5.7 (wyrejestrowanie starego SW) usunięty —
+// był jednorazowy i powodował reinstalację SW przy każdym ładowaniu strony,
+// co wyzwalało baner "odśwież aplikację" podczas normalnej pracy.
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
