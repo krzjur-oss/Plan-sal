@@ -95,6 +95,92 @@ export function normalizeAppState(state) {
   return state;
 }
 
+/**
+ * Głębokie scalenie validFromDates: { yearKey: { dayIdx: isoDate } }.
+ * Object.assign jest płytki — nadpisuje cały obiekt roku zamiast
+ * scalać poszczególne dni. Ta funkcja scala poziom dni osobno.
+ */
+function _mergeValidFromDates(target, source) {
+  if (!source || typeof source !== 'object') return;
+  Object.keys(source).forEach(yk => {
+    if (!target[yk] || typeof target[yk] !== 'object') {
+      target[yk] = { ...source[yk] };
+    } else {
+      Object.keys(source[yk]).forEach(di => {
+        // Nadpisujemy tylko jeśli źródło ma wartość a cel jej nie ma
+        if (source[yk][di] && !target[yk][di]) {
+          target[yk][di] = source[yk][di];
+        }
+      });
+    }
+  });
+}
+
+/**
+ * Scala dwa archiwum lat szkolnych (tablice obiektów z yearKey).
+ * Zwraca nową tablicę bez duplikatów — local ma pierwszeństwo.
+ */
+function _mergeArchives(local, imported) {
+  if (!imported?.length) return local || [];
+  if (!local?.length)    return imported;
+  const seen = new Set((local).map(a => a.yearKey).filter(Boolean));
+  const merged = [...local];
+  imported.forEach(entry => {
+    if (entry?.yearKey && !seen.has(entry.yearKey)) {
+      seen.add(entry.yearKey);
+      merged.push(entry);
+    }
+  });
+  return merged;
+}
+
+/**
+ * Scala pola appState (konfigurację szkoły) z importowanego pliku
+ * do istniejącego lokalnego stanu. Nie nadpisuje pól już istniejących
+ * — dodaje tylko to czego brakuje (nowi nauczyciele, klasy, itp.).
+ */
+function _mergeAppState(local, imported) {
+  if (!imported) return;
+  if (!local)    { setAppState(imported); return; }
+
+  // Pola skalarne — uzupełniaj tylko jeśli brakuje
+  if (!local.school?.name && imported.school?.name) {
+    local.school = { ...local.school, ...imported.school };
+  }
+  if (!local.yearLabel && imported.yearLabel) local.yearLabel = imported.yearLabel;
+
+  // Listy — dodaj brakujące wpisy wg unikalnego klucza
+  local.teachers    = _mergeByKey(local.teachers    || [], imported.teachers    || [], t => t.abbr);
+  local.classes     = _mergeByKey(local.classes     || [], imported.classes     || [], c => c.abbr);
+  local.subjects    = _mergeByKey(local.subjects    || [], imported.subjects    || [], s => s.name || s.abbr);
+  local.buildings   = _mergeByKey(local.buildings   || [], imported.buildings   || [], b => b.name);
+
+  // homerooms — scalaj per klucz sali (local ma pierwszeństwo)
+  if (imported.homerooms) {
+    Object.keys(imported.homerooms).forEach(k => {
+      if (!local.homerooms?.[k]) {
+        if (!local.homerooms) local.homerooms = {};
+        local.homerooms[k] = imported.homerooms[k];
+      }
+    });
+  }
+
+  // timeslots — scalaj wg label
+  if (imported.timeslots?.length) {
+    local.timeslots = _mergeByKey(local.timeslots || [], imported.timeslots, t => t.label);
+  }
+}
+
+/** Scala dwie tablice deduplikując wg klucza — local ma pierwszeństwo. */
+function _mergeByKey(local, imported, keyFn) {
+  const seen = new Set(local.map(keyFn).filter(Boolean));
+  const extras = imported.filter(item => {
+    const k = keyFn(item);
+    return k && !seen.has(k);
+  });
+  return extras.length ? [...local, ...extras] : local;
+}
+
 
 // ================================================================
 //  MIGRACJA NAZW KLAS
@@ -198,12 +284,38 @@ export function openImportModal(data) {
 
   const hasConfig  = !!(data.appState);
   const hasArchive = !!(data.archive && data.archive.length);
+
+  // Ostrzeżenie o potencjalnej desynchronizacji kluczy sal (colKey).
+  // Klucze mają postać "f{fi}_s{si}_{num}" — zależą od kolejności pięter
+  // i segmentów w appState.floors. Jeśli struktura sal w pliku różni się
+  // od lokalnej, wpisy planu mogą trafić do złych sal.
+  const impFloors = data.appState?.floors;
+  const locFloors = appState?.floors;
+  let structWarning = '';
+  if (impFloors && locFloors) {
+    const impSig = JSON.stringify(impFloors.map(f => ({
+      n: f.name, bi: f.buildingIdx,
+      segs: (f.segments||[]).map(s => ({ n: s.name, rc: (s.rooms||[]).length })),
+    })));
+    const locSig = JSON.stringify(locFloors.map(f => ({
+      n: f.name, bi: f.buildingIdx,
+      segs: (f.segments||[]).map(s => ({ n: s.name, rc: (s.rooms||[]).length })),
+    })));
+    if (impSig !== locSig) {
+      structWarning = `<div class="import-stat conflict" style="margin-top:6px">` +
+        `⚠ Struktura sal w pliku różni się od lokalnej — ` +
+        `wpisy mogą trafić do innych sal. Zalecane: tryb <strong>Zastąp</strong>.` +
+        `</div>`;
+    }
+  }
+
   document.getElementById('importInfo').innerHTML =
     `<div class="import-stat added">＋ ${added} nowych wpisów (zostaną dodane)</div>` +
     `<div class="import-stat conflict">${conflicts > 0 ? '⚠' : '✓'} ${conflicts} konfliktów</div>` +
     `<div class="import-stat same">= ${same} identycznych wpisów</div>` +
     `<div class="import-stat same">${hasConfig  ? '✓ Zawiera konfigurację szkoły'  : '⚠ Brak konfiguracji'}</div>` +
-    `<div class="import-stat same">${hasArchive ? '✓ Archiwum (' + data.archive.length + ' lat)' : '— Brak archiwum'}</div>`;
+    `<div class="import-stat same">${hasArchive ? '✓ Archiwum (' + data.archive.length + ' lat)' : '— Brak archiwum'}</div>` +
+    structWarning;
 
   document.getElementById('importModeOverwrite').checked = false;
   document.getElementById('importModeMerge').checked     = true;
@@ -221,6 +333,7 @@ export function confirmImport() {
   const impSched = _importData.schedData || {};
 
   if (merge) {
+    // ── 1. Scal wpisy planu (tylko puste komórki) ──────────────
     Object.keys(impSched).forEach(yk2 => {
       if (!schedData[yk2]) schedData[yk2] = {};
       Object.keys(impSched[yk2]).forEach(di => {
@@ -237,16 +350,34 @@ export function confirmImport() {
         });
       });
     });
-    if (!appState && _importData.appState) setAppState(_importData.appState);
+
+    // ── 2. Scal konfigurację szkoły (appState) ─────────────────
+    // NAPRAWA: poprzednio scalano tylko gdy !appState — cały importowany
+    // obiekt był ignorowany gdy lokalny już istniał. Teraz dołączamy
+    // brakujące wpisy (nauczyciele, klasy, sale itd.) do istniejącego.
+    _mergeAppState(appState, _importData.appState);
     normalizeAppState(appState);
-    if (_importData.validFromDates) Object.assign(validFromDates, _importData.validFromDates);
-    if (_importData.archive?.length && !archive?.length) setArchive(_importData.archive);
     migrateClassNames(appState);
+
+    // ── 3. Scal daty ważności (validFromDates) ─────────────────
+    // NAPRAWA: Object.assign był płytki — nadpisywał cały obiekt roku
+    // zamiast scalać poszczególne dni. _mergeValidFromDates scala głęboko.
+    if (_importData.validFromDates) {
+      _mergeValidFromDates(validFromDates, _importData.validFromDates);
+    }
+
+    // ── 4. Scal archiwum lat szkolnych ─────────────────────────
+    // NAPRAWA: poprzednio importowano tylko gdy lokalne było puste (length===0).
+    // Teraz scala obie listy wg yearKey — lokalne wpisy mają pierwszeństwo.
+    setArchive(_mergeArchives(archive, _importData.archive));
+
     persistAll();
     closeImportModal();
     if (appState) _mountApp();
-    _notify('✓ Scalono — dodano brakujące wpisy');
+    _notify('✓ Scalono — dodano brakujące wpisy i konfigurację');
+
   } else {
+    // Tryb nadpisania — bez zmian w logice
     setSchedData(impSched);
     if (_importData.validFromDates) setValidFromDates(_importData.validFromDates);
     if (_importData.appState)       setAppState(_importData.appState);
