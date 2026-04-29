@@ -12,6 +12,21 @@
 <html lang="pl">
 <head>
 <script>
+// Debug: przechwytuj błędy od samego początku (na początku <head> aby złapać wszystko)
+window.__errors = [];
+window.__logs   = [];
+window.addEventListener('error', function(e) {
+  window.__errors.push('ERROR: ' + e.message + ' | ' + (e.filename||'').split('/').pop() + ':' + e.lineno);
+});
+window.addEventListener('unhandledrejection', function(e) {
+  window.__errors.push('PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+});
+var _ce = console.error.bind(console);
+console.error = function() { window.__errors.push(Array.from(arguments).join(' ')); _ce.apply(console, arguments); };
+var _cl = console.log.bind(console);
+console.log   = function() { window.__errors.push(Array.from(arguments).join(' ')); _cl.apply(console, arguments); };
+</script>
+<script>
 // Polyfill: structuredClone (Safari < 15.4, starsze przeglądarki)
 if (typeof structuredClone === 'undefined') {
   window.structuredClone = function(obj) {
@@ -24,6 +39,7 @@ if (typeof structuredClone === 'undefined') {
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="touch-action" content="manipulation">
 <title>SalePlan — Plan Sal Zajęciowych</title>
 
 <!-- PWA -->
@@ -522,6 +538,7 @@ if (typeof structuredClone === 'undefined') {
     <button class="hmenu-item" onclick="openSettingsPanel();toggleMobileMenu()">⚙️ Ustawienia szkoły</button>
     <button class="hmenu-item hmenu-item-red" onclick="clearDay();toggleMobileMenu()">🗑 Wyczyść dzień</button>
     <div class="hmenu-sep"></div>
+    <button class="hmenu-item" id="hmenuDebugBtn" onclick="toggleDebugPanel();toggleMobileMenu()">🔧 Panel debugowania</button>
     <button class="hmenu-item" onclick="toggleAppHelp();toggleMobileMenu()">❓ Pomoc</button>
     <button class="hmenu-item" onclick="showAboutModal();toggleMobileMenu()">ℹ️ O programie</button>
     <button class="hmenu-item" onclick="showTermsModal();toggleMobileMenu()">📄 Regulamin</button>
@@ -1456,6 +1473,8 @@ if (typeof structuredClone === 'undefined') {
   document.addEventListener('touchstart', function(e) {
     var cell = _cellFromPoint(e.touches[0].clientX, e.touches[0].clientY);
     if (!cell || !cell.classList.contains('filled')) return;
+    // Jeśli element ma draggable="true", pozwól natywnej obsłudze drag
+    if (cell.getAttribute('draggable') === 'true') return;
     var ondragstart = _attrFromEl(cell, 'ondragstart');
     if (!ondragstart) return;
     var m = ondragstart.match(/dndStart\(event\s*,\s*(\d+)\s*,\s*'([^']*)'\s*,\s*'([^']*)'\s*\)/);
@@ -1517,58 +1536,43 @@ if (typeof structuredClone === 'undefined') {
   });
 })();
 </script>
-<script>
-// Debug: przechwytuj błędy od samego początku
-window.__errors = [];
-window.__logs   = [];
-window.addEventListener('error', function(e) {
-  window.__errors.push('ERROR: ' + e.message + ' | ' + (e.filename||'').split('/').pop() + ':' + e.lineno);
-});
-window.addEventListener('unhandledrejection', function(e) {
-  window.__errors.push('PROMISE: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
-});
-var _ce = console.error.bind(console);
-console.error = function() { window.__errors.push(Array.from(arguments).join(' ')); _ce.apply(console, arguments); };
-var _cl = console.log.bind(console);
-console.log   = function() { window.__logs.push(Array.from(arguments).join(' ')); _cl.apply(console, arguments); };
-</script>
 <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
 <script>
 // VConsole ukryty — 5x tapnij lewy górny róg (50x50px) aby aktywować
+window.__vConsole = null; // singleton
+window.toggleDebugPanel = function() {
+  if (!window.__vConsole) {
+    window.__vConsole = new VConsole();
+    (window.__errors && window.__errors.length
+      ? window.__errors
+      : ['Brak błędów globalnych']
+    ).forEach(function(m) { console.error('[debug] ' + m); });
+    (window.__logs || []).forEach(function(m) { console.log('[debug] ' + m); });
+    var ws = document.getElementById('welcomeScreen');
+    var ao = document.getElementById('appOverlay');
+    var yearLabel = document.getElementById('currentYearLabel');
+    console.log('window.mountApp:', typeof window.mountApp);
+    console.log('window.loadAll:', typeof window.loadAll);
+    console.log('welcomeScreen.show:', ws ? ws.classList.contains('show') : 'brak elementu');
+    console.log('appOverlay.show:', ao ? ao.classList.contains('show') : 'brak elementu');
+    console.log('yearLabel:', yearLabel ? (yearLabel.textContent || '(pusty)') : 'brak elementu');
+    if (ao && ao.classList.contains('show') && (!yearLabel || !yearLabel.textContent.trim())) {
+      console.log('NAPRAWA: appOverlay bez danych — chowam, pokazuję welcomeScreen');
+      ao.classList.remove('show');
+      if (ws) ws.classList.add('show');
+    }
+  } else {
+    // Przełącz VConsole panel
+    window.__vConsole.$dom.style.display = window.__vConsole.$dom.style.display === 'none' ? '' : 'none';
+  }
+};
 (function() {
-  var _vc = null, _n = 0, _t = null;
+  var _n = 0, _t = null;
   document.addEventListener('click', function(e) {
     if (e.clientX < 50 && e.clientY < 50) {
       _n++; clearTimeout(_t);
       _t = setTimeout(function() { _n = 0; }, 2000);
-      if (_n >= 5) {
-        _n = 0;
-        if (!_vc) {
-          _vc = new VConsole();
-          (window.__errors.length
-            ? window.__errors
-            : ['Brak błędów globalnych']
-          ).forEach(function(m) { console.error('[debug] ' + m); });
-          window.__logs.forEach(function(m) { console.log('[debug] ' + m); });
-          // Uwaga: appState to zmienna modułu ES — niedostępna przez window.*
-          // Używamy DOM jako proxy stanu aplikacji
-          console.log('window.mountApp:', typeof window.mountApp);
-          console.log('window.loadAll:', typeof window.loadAll);
-          var ws = document.getElementById('welcomeScreen');
-          var ao = document.getElementById('appOverlay');
-          var yearLabel = document.getElementById('currentYearLabel');
-          console.log('welcomeScreen.show:', ws ? ws.classList.contains('show') : 'brak elementu');
-          console.log('appOverlay.show:', ao ? ao.classList.contains('show') : 'brak elementu');
-          console.log('yearLabel:', yearLabel ? (yearLabel.textContent || '(pusty)') : 'brak elementu');
-          // Naprawa tylko gdy appOverlay widoczny ALE rok nie jest załadowany
-          // (yearLabel pusty = mountApp nie zadziałał prawidłowo)
-          if (ao && ao.classList.contains('show') && (!yearLabel || !yearLabel.textContent.trim())) {
-            console.log('NAPRAWA: appOverlay bez danych — chowam, pokazuję welcomeScreen');
-            ao.classList.remove('show');
-            if (ws) ws.classList.add('show');
-          }
-        }
-      }
+      if (_n >= 5) { _n = 0; window.toggleDebugPanel(); }
     }
   });
 })();

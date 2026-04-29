@@ -1,5 +1,6 @@
 // SalePlan Service Worker
-const CACHE = 'sp-v122'; // v2.5.7 ES modules refactor // v2.5.6 room abbr in view // v2.5.5 archive+statusbar fix // v2.5.4 wizard+hours fixes // v2.5.3 wizard step fix + import normalization // v2.5.2 bugfixes // v2.5.1 colKey validation // v2.5.0 building UX // v2.4.1 room uniqueness // v2.4.0 building migration // v2.3.1 sort fix // v2.3.0 settings panel // v2.2.0 baseClass feature // v2.1.0 bugfix release
+const APP_VERSION = '2.5.7';
+const CACHE = 'sp-v' + APP_VERSION; // v2.5.7 ES modules refactor // v2.5.6 room abbr in view // v2.5.5 archive+statusbar fix // v2.5.4 wizard+hours fixes // v2.5.3 wizard step fix + import normalization // v2.5.2 bugfixes // v2.5.1 colKey validation // v2.5.0 building UX // v2.4.1 room uniqueness // v2.4.0 building migration // v2.3.1 sort fix // v2.3.0 settings panel // v2.2.0 baseClass feature // v2.1.0 bugfix release
 const ASSETS = [
   './',
   './index.html',
@@ -60,6 +61,7 @@ self.addEventListener('fetch', e => {
   if (url.origin === location.origin && (
     url.pathname.endsWith('.html') ||
     url.pathname.endsWith('/') ||
+    url.pathname === '/Plan-sal/' ||
     url.pathname === '/salaplan'
   )) {
     e.respondWith(

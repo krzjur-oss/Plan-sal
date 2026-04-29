@@ -347,7 +347,7 @@ function _initWizardFields() {
       s.setWTimeslots(structuredClone(
         appState.timeslots?.length ? appState.timeslots : buildTimeslotsFromHours(appState.hours || [], [])
       ));
-    });
+    }).catch(e => { console.warn('Nie udało się załadować state.js:', e); });
     document.getElementById('wSchoolName').value  = appState.school?.name  || '';
     document.getElementById('wSchoolShort').value = appState.school?.short || '';
     document.getElementById('wSchoolPhone').value = appState.school?.phone || '';
@@ -358,7 +358,7 @@ function _initWizardFields() {
       s.setWFloors([]);
       s.setWClasses([]);
       s.setWTeachers([]);
-    });
+    }).catch(e => { console.warn('Nie udało się załadować state.js:', e); });
   }
 
   const now = new Date();
