@@ -34,9 +34,9 @@ import { persistAll }                                          from './import-ex
 
 import {
   migrateScheduleKeys,
-  _roomLabel, _highlightDuplicateRooms,
+  _roomLabel, _validateRoomNums, _highlightDuplicateRooms,
   renderBuildingList, renderFloorList,
-  syncBuildingsFromDOM, updateFloorBuildingSelects,
+  syncBuildingsFromDOM, syncFloorsFromDOM, updateFloorBuildingSelects,
   getClassesFromDOM, renderClassGrid,
   syncTeachersFromDOM, renderTeacherList,
 } from './wizard-data.js';
@@ -96,22 +96,15 @@ export function wizardNext() {
 
   if (wStep === 2) {
     if (wFloors.length === 0) { notify('⚠ Dodaj przynajmniej jedno piętro', true); return; }
-    const seenKeys = new Map();
-    let dupKeys = [], emptyFound = false;
+    syncFloorsFromDOM();
+    let emptyFound = false;
     wFloors.forEach((fl, fi) => fl.segments.forEach((sg, si) => sg.rooms.forEach(r => {
       const n = (r.num || '').trim();
-      if (!n) { emptyFound = true; return; }
-      const key      = `f${fi}_s${si}_${n}`;
-      const label    = _roomLabel(fi, si, n);
-      const location = `${fl.name || ('Piętro ' + fi)} › ${sg.name || ('Segment ' + si)} › Sala ${n} (skrót: ${label})`;
-      if (seenKeys.has(key)) dupKeys.push({ key, loc1: seenKeys.get(key), loc2: location });
-      else seenKeys.set(key, location);
+      if (!n) { emptyFound = true; }
     })));
     if (emptyFound) { notify('⚠ Każda sala musi mieć numer', true); return; }
-    if (dupKeys.length) {
-      const first = dupKeys[0];
-      notify(`⚠ Skrót sali powtarza się:\n  • ${first.loc1}\n  • ${first.loc2}\nW tym samym segmencie numer sali musi być unikalny.`, true);
-      _highlightDuplicateRooms(dupKeys.map(d => d.key));
+    if (!_validateRoomNums()) {
+      notify('⚠ Niektóre numery sal się powtarzają w tym samym segmencie — popraw je przed zakończeniem', true);
       return;
     }
   }
@@ -181,6 +174,7 @@ export function updateWizardStep() {
 // ================================================================
 export function finishWizard() {
   syncBuildingsFromDOM();
+  syncFloorsFromDOM();
   syncTeachersFromDOM();
 
   const yearLabel = document.getElementById('wYear').value.trim();

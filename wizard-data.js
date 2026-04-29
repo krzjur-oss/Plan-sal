@@ -31,30 +31,39 @@ function _normalizeCls(name) {
 //  MIGRACJA KLUCZY schedData po zmianie struktury pięter
 // ================================================================
 export function migrateScheduleKeys(oldFloors, newFloors, yearKey, schedData) {
-  const newKeyByRoomNum = {};
-  newFloors.forEach((floor, fi) =>
+  if (!schedData[yearKey]) return 0;
+
+  // Map: oldRoomNum → newKey dla sal na tej samej pozycji (fi, si, ri)
+  const oldRoomNumByPos = new Map();
+  oldFloors.forEach((floor, fi) =>
     floor.segments.forEach((seg, si) =>
       seg.rooms.forEach((room, ri) => {
         const n = (room.num || '').trim();
-        if (n) newKeyByRoomNum[n] = `f${fi}_s${si}_${n}`;
+        if (n) oldRoomNumByPos.set(`${fi}_${si}_${ri}`, n);
       })
     )
   );
 
   const keyMap = {};
   let remapped = 0;
-  oldFloors.forEach((floor, fi) =>
+  newFloors.forEach((floor, fi) =>
     floor.segments.forEach((seg, si) =>
       seg.rooms.forEach((room, ri) => {
-        const n      = (room.num || '').trim();
-        const oldKey = n ? `f${fi}_s${si}_${n}` : `f${fi}_s${si}_r${ri}`;
-        const newKey = newKeyByRoomNum[n] || oldKey;
-        if (oldKey !== newKey) { keyMap[oldKey] = newKey; remapped++; }
+        const newNum  = (room.num || '').trim();
+        if (!newNum) return;
+        const newKey  = `f${fi}_s${si}_${newNum}`;
+        const posKey  = `${fi}_${si}_${ri}`;
+        const oldNum  = oldRoomNumByPos.get(posKey);
+        if (oldNum && oldNum !== newNum) {
+          const oldKey = `f${fi}_s${si}_${oldNum}`;
+          keyMap[oldKey] = newKey;
+          remapped++;
+        }
       })
     )
   );
 
-  if (!remapped || !schedData[yearKey]) return 0;
+  if (!remapped) return 0;
 
   let updated = 0;
   Object.keys(schedData[yearKey]).forEach(di => {
@@ -132,6 +141,30 @@ export function syncBuildingsFromDOM() {
   });
   document.querySelectorAll('.building-addr-inp').forEach(el => {
     const bi = +el.dataset.bi; if (wBuildings[bi]) wBuildings[bi].address = el.value;
+  });
+}
+
+export function syncFloorsFromDOM() {
+  document.querySelectorAll('.floor-name-input').forEach(el => {
+    const fi = +el.dataset.fi; if (wFloors[fi]) wFloors[fi].name = el.value;
+  });
+  document.querySelectorAll('.seg-name-input').forEach(el => {
+    const m = el.dataset.fi !== undefined && el.dataset.si !== undefined;
+    if (!m) return;
+    const fi = +el.dataset.fi, si = +el.dataset.si;
+    if (wFloors[fi]?.segments[si]) wFloors[fi].segments[si].name = el.value;
+  });
+  document.querySelectorAll('.room-chip-name').forEach(inp => {
+    const fi = +inp.dataset.fi, si = +inp.dataset.si, ri = +inp.dataset.ri;
+    if (wFloors[fi]?.segments[si]?.rooms[ri]) {
+      wFloors[fi].segments[si].rooms[ri].num = inp.value;
+    }
+  });
+  document.querySelectorAll('.room-chip-sub').forEach(inp => {
+    const fi = +inp.dataset.fi, si = +inp.dataset.si, ri = +inp.dataset.ri;
+    if (wFloors[fi]?.segments[si]?.rooms[ri]) {
+      wFloors[fi].segments[si].rooms[ri].sub = inp.value;
+    }
   });
 }
 

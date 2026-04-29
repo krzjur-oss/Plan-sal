@@ -1052,6 +1052,8 @@ function _hideSubjectDropdown() {
 
 export function openEditModal(day, hour, key) {
   setMDay(day); setMHour(hour); setMKey(key);
+  document.getElementById('inpTeacher')?.classList.remove('input-error');
+  document.getElementById('inpSubject')?.classList.remove('input-error');
   const cols  = flattenColumns(appState.floors);
   const col   = cols.find(c => colKey(c) === key);
   const entry = schedData[appState.yearKey]?.[day]?.[hour]?.[key] || {};
@@ -1164,17 +1166,39 @@ export function mcRemoveClass(idx) {
 // ================================================================
 
 export function saveCellData() {
+  const teacherInp = document.getElementById('inpTeacher');
+  const subjectInp = document.getElementById('inpSubject');
+  const teacherVal = teacherInp.value.trim();
+  const subjectVal = subjectInp.value.trim();
+
+  if (!teacherVal) {
+    teacherInp.classList.add('input-error');
+    notify('⚠ Wybierz nauczyciela', true);
+    teacherInp.focus();
+    return;
+  }
+  teacherInp.classList.remove('input-error');
+
+  if (!subjectVal) {
+    subjectInp.classList.add('input-error');
+    notify('⚠ Wpisz nazwę przedmiotu', true);
+    subjectInp.focus();
+    return;
+  }
+  subjectInp.classList.remove('input-error');
+
+  const _clsList = (_selectedClasses || []).filter(Boolean);
+
   const yk = appState.yearKey;
   undoPush(`Zapis ${_mKey}, godz. ${_mHour}, ${appState.days[_mDay]}`);
   if (!schedData[yk])           schedData[yk] = {};
   if (!schedData[yk][_mDay])    schedData[yk][_mDay] = {};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour] = {};
-  const _clsList = (_selectedClasses || []).filter(Boolean);
   schedData[yk][_mDay][_mHour][_mKey] = {
-    teacherAbbr: document.getElementById('inpTeacher').value,
+    teacherAbbr: teacherVal,
     classes:     _clsList,
     className:   _clsList[0] || '',
-    subject:     document.getElementById('inpSubject').value.trim(),
+    subject:     subjectVal,
     note:        document.getElementById('inpNote').value.trim(),
   };
   persistAll();

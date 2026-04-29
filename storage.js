@@ -42,14 +42,15 @@ function _openWizardNewYear()    { window.openWizardNewYear?.(); }
 function _openImportModal(d)     { window.openImportModal?.(d); }
 function _confirmImport()        { window.confirmImport?.(); }
 function _closeSettingsPanel()   { window.closeSettingsPanel?.(); }
-function _renderBuildingList()   { window.renderBuildingList?.(); }
+function _renderBuildingList()    { window.renderBuildingList?.(); }
 function _renderFloorList()      { window.renderFloorList?.(); }
-function _renderClassGrid()      { window.renderClassGrid?.(); }
+function _renderClassGrid()       { window.renderClassGrid?.(); }
 function _renderTeacherList()    { window.renderTeacherList?.(); }
 function _renderSubjectList()    { window.renderSubjectList?.(); }
 function _renderAssignmentsStep(){ window.renderAssignmentsStep?.(); }
 function _updateWizardStep()     { window.updateWizardStep?.(); }
 function _wpUpdate(s)            { window.wpUpdate?.(s); }
+function _syncFloorsFromDOM()    { window.syncFloorsFromDOM?.(); }
 function _initTimeslotEditor()   { window.initTimeslotEditor?.(); }
 function _notify(msg, err)       { notify(msg, err); }
 function _esc(s)                 { return esc(s); }
@@ -376,6 +377,7 @@ let _autosaveInterval = null;
 
 export function wizardCollectDraft() {
   try { _syncBuildingsFromDOM(); } catch(e) {}
+  try { _syncFloorsFromDOM();    } catch(e) {}
   try { _syncTeachersFromDOM();  } catch(e) {}
   try { setWClasses(_getClassesFromDOM()); } catch(e) {}
 

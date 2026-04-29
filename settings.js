@@ -183,7 +183,7 @@ export function spClassSetAbbr(i, newAbbr) {
   newAbbr = newAbbr.trim().toUpperCase();
   if (!newAbbr || newAbbr === oldAbbr) return;
   if (appState.classes.some((c, j) => j !== i && (c.abbr || c.name) === newAbbr)) {
-    notify('⚠ Skrót „' + newAbbr + '\" jest już używany przez inną klasę', true);
+    notify('⚠ Skrót „' + newAbbr + '\" jest już używany przez inną klasę — zmiana zablokowana', true);
     _renderSettingsTab('classes');
     return;
   }
@@ -307,7 +307,7 @@ export function spTeacherSetAbbr(i, newAbbr) {
   newAbbr = newAbbr.trim().toUpperCase();
   if (!newAbbr || newAbbr === oldAbbr) return;
   if (appState.teachers.some((x, j) => j !== i && x.abbr === newAbbr)) {
-    notify('⚠ Skrót „' + newAbbr + '\" jest już używany przez innego nauczyciela', true);
+    notify('⚠ Skrót „' + newAbbr + '\" jest już używany przez innego nauczyciela — zmiana zablokowana', true);
     _renderSettingsTab('teachers');
     return;
   }
