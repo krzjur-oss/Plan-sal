@@ -22,16 +22,20 @@ const ASSETS = [
   'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap',
 ];
 
-// Instalacja — zakeszuj assety i od razu przejmij kontrolę
+// Instalacja — zakeszuj assety. BEZ skipWaiting() — nowy SW czeka w stanie
+// 'waiting' aż użytkownik świadomie kliknie "Odśwież teraz" w banerze.
+// Automatyczny skipWaiting() powodował, że baner pojawiał się losowo podczas
+// pracy (np. w trakcie importu), bo SW przejmował kontrolę bez zgody użytkownika.
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(ASSETS))
-      .then(() => self.skipWaiting())  // nie czekaj na zamknięcie starych klientów
+    caches.open(CACHE).then(c => c.addAll(ASSETS))
   );
 });
 
-// Aktywacja — usuń stare cache, przejmij wszystkich klientów, wymuś reload
+// Aktywacja — usuń stare cache i przejmij klientów.
+// BEZ postMessage SW_UPDATED — zdarzenie updatefound+statechange w ui.js
+// wystarczy do wykrycia aktualizacji; postMessage z activate było duplikatem
+// i mogło odpalić baner zanim użytkownik cokolwiek zrobił.
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
@@ -39,13 +43,13 @@ self.addEventListener('activate', e => {
         keys.filter(k => k !== CACHE).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
-      .then(() => {
-        // Powiadom wszystkich otwartych klientów o nowej wersji → przeładuj
-        return self.clients.matchAll({ type: 'window' }).then(clients => {
-          clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
-        });
-      })
   );
+});
+
+// Sygnał od ui.js (swUpdateReload) — dopiero teraz wykonaj skipWaiting.
+// Użytkownik kliknął "Odśwież teraz", więc przejęcie kontroli jest oczekiwane.
+self.addEventListener('message', e => {
+  if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // Fetch — network-first dla HTML (zawsze świeży), cache-first dla pozostałych

@@ -581,31 +581,30 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => {
+        // Sprawdzaj aktualizacje co minutę (np. po długim czasie otwarcia karty)
         setInterval(() => reg.update(), 60000);
 
+        // Jedyna ścieżka wykrywania aktualizacji: nowy SW przeszedł przez install
+        // i czeka w stanie 'waiting'. Baner pojawia się tylko wtedy — nie wcześniej.
+        // BEZ SW_UPDATED z postMessage (usunięty z sw.js activate) i bez
+        // controllerchange (ten odpalał się też przy clients.claim() pierwszej instalacji).
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
           if (!nw) return;
           nw.addEventListener('statechange', () => {
             if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              // Zapisz referencję do czekającego SW — potrzebna w swUpdateReload()
+              _pendingSwReg = reg;
               _showSwUpdateBanner();
             }
           });
         });
       })
       .catch(err => console.warn('SW registration failed:', err));
-
-    navigator.serviceWorker.addEventListener('message', event => {
-      if (event.data?.type === 'SW_UPDATED') _showSwUpdateBanner();
-    });
-
-    let _firstController = navigator.serviceWorker.controller;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!_firstController) { _firstController = navigator.serviceWorker.controller; return; }
-      _showSwUpdateBanner();
-    });
   });
 }
+
+let _pendingSwReg = null;
 
 function _showSwUpdateBanner() {
   if (_swUpdateBannerShown) return;
@@ -619,7 +618,15 @@ function _showSwUpdateBanner() {
 }
 
 export function swUpdateReload() {
-  window.location.reload();
+  // Wyślij sygnał do czekającego SW — dopiero teraz wykona skipWaiting().
+  // Kolejność: SKIP_WAITING → SW przejmuje kontrolę → reload ładuje nowe pliki.
+  if (_pendingSwReg?.waiting) {
+    _pendingSwReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    // Krótkie opóźnienie — daj SW czas na skipWaiting() przed reload
+    setTimeout(() => window.location.reload(), 150);
+  } else {
+    window.location.reload();
+  }
 }
 
 export function swUpdateDismiss() {
