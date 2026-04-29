@@ -13,12 +13,15 @@ import {
 
 import { scrollToFirstCollision } from './collisions.js';
 
+import { setAppState } from './state.js';
+
 import {
   exportJSON, handleImportFile,
   openImportModal, closeImportModal, confirmImport,
   saveData,
   openCSVModal, closeCSVModal,
   exportCSVDay, exportCSVWeekBySala, exportCSVFlat,
+  persistAll,
 } from './import-export.js';
 
 import {
@@ -29,6 +32,9 @@ import {
   welcomeDemo, exitDemo,
   openEditWizard,
   draftResume, draftDiscard,
+  wizardSaveDraft, wizardClearDraft, wizardCheckDraft,
+  startWizardAutosave, stopWizardAutosave,
+  isWizardEditMode, setWizardEditMode,
 } from './storage.js';
 
 import {
@@ -42,6 +48,8 @@ import {
   addSegment, removeSeg, addRoom, removeRoom,
   renderClassGrid, wClassAutoAbbr, removeClassAt,
   renderTeacherList, removeTeacher, autoAbbr,
+  syncBuildingsFromDOM, syncTeachersFromDOM,
+  getClassesFromDOM, migrateScheduleKeys, renderFloorList,
 } from './wizard-data.js';
 
 import {
@@ -63,6 +71,7 @@ import {
   scheduleSubjectAbbrUpdate,
   pickSubject, initSubjectAutocomplete,
   mcAddClass, mcRemoveClass,
+  renderSubjectList, buildTimeslotsFromHours,
 } from './schedule.js';
 
 import {
@@ -101,12 +110,14 @@ Object.assign(window, {
   undoAction, redoAction,
 
   scrollToFirstCollision,
+  setAppState,
 
   exportJSON, handleImportFile,
   openImportModal, closeImportModal, confirmImport,
   saveData,
   openCSVModal, closeCSVModal,
   exportCSVDay, exportCSVWeekBySala, exportCSVFlat,
+  persistAll,
 
   loadAll,
   showWelcomeScreen, hideWelcomeScreen,
@@ -115,12 +126,22 @@ Object.assign(window, {
   welcomeDemo, exitDemo,
   openEditWizard,
   draftResume, draftDiscard,
+  wizardSaveDraft, wizardClearDraft, wizardCheckDraft,
+  startWizardAutosave, stopWizardAutosave,
+  isWizardEditMode, setWizardEditMode,
 
   addBuilding, addClass, addTeacher,
   clearAllClasses, clearAllTeachers,
   handleClassImportDrop, handleClassImportFile,
   handleImportDrop,
   readTxtFile,
+  renderBuildingList, removeBuilding,
+  addFloor, addFloorForBuilding, removeFloor,
+  addSegment, removeSeg, addRoom, removeRoom,
+  renderClassGrid, wClassAutoAbbr, removeClassAt,
+  renderTeacherList, removeTeacher, autoAbbr,
+  syncBuildingsFromDOM, syncTeachersFromDOM,
+  getClassesFromDOM, migrateScheduleKeys, renderFloorList,
 
   openWizardNewYear,
   wizardNext, wizardBack,
@@ -138,6 +159,7 @@ Object.assign(window, {
   scheduleSubjectAbbrUpdate,
   pickSubject, initSubjectAutocomplete,
   mcAddClass, mcRemoveClass,
+  renderSubjectList, buildTimeslotsFromHours,
 
   showArchive, hideArchive, closeArchive,
   restoreYear, deleteArchive,
