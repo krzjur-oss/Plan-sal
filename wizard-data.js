@@ -287,8 +287,11 @@ export function removeSeg(fi, si) { wFloors[fi].segments.splice(si, 1); renderFl
 export function addRoom(fi, si) {
   const existing = wFloors[fi].segments[si].rooms;
   const nums = existing.map(r => parseInt(r.num)).filter(n => n > 0);
-  const nextNum = nums.length ? Math.max(...nums) + 1 : 1;
-  wFloors[fi].segments[si].rooms.push({ num: String(nextNum), sub: '' });
+  // Jeśli w segmencie są sale numeryczne — zaproponuj kolejny numer.
+  // Jeśli wszystkie nazwy są literowe (lub segment pusty) — zostaw puste,
+  // użytkownik sam wpisze nazwę.
+  const nextNum = nums.length ? String(Math.max(...nums) + 1) : '';
+  wFloors[fi].segments[si].rooms.push({ num: nextNum, sub: '' });
   renderFloorList();
 }
 export function removeRoom(fi, si, ri) { wFloors[fi].segments[si].rooms.splice(ri, 1); renderFloorList(); }
