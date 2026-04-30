@@ -10,8 +10,8 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.5.7 |
-| **Ostatnia aktualizacja** | 25 kwietnia 2026 |
+| **Aktualna wersja** | v2.5.8 |
+| **Ostatnia aktualizacja** | 30 kwietnia 2026 |
 | **Status** | Aktywny, rozwijany |
 
 ---
@@ -47,6 +47,7 @@ Przy pierwszym uruchomieniu wyświetla się strona powitalna z czterema opcjami:
 | 🗑 Wyczyść dzień | Usuwa wszystkie wpisy bieżącego dnia |
 | ❓ Pomoc | Panel z podpowiedziami |
 | 🌙 Zmień motyw | Przełącz jasny / ciemny motyw |
+| ⚙️ Ustawienia szkoły | Szybki dostęp przez przycisk ⚙️ w topbarze |
 | 🏠 Strona główna | Wróć do ekranu startowego |
 
 ---
@@ -153,6 +154,7 @@ Dowolna liczba budynków z nazwą i adresem. Każde piętro przypisane do budynk
 ### ⚠ Wykrywanie kolizji
 
 - Czerwona ramka + ⚠ gdy ten sam nauczyciel lub klasa w dwóch salach jednocześnie
+- Najedź myszą (lub tapnij) na ⚠ aby zobaczyć szczegóły — np. `Nauczyciel MRAZ jednocześnie w: 0B3`
 - Licznik kolizji w dolnym pasku — kliknij aby przejść do pierwszej
 
 ---
@@ -161,6 +163,21 @@ Dowolna liczba budynków z nazwą i adresem. Każde piętro przypisane do budynk
 
 - Kliknij wiersz **Gospod.** w nagłówku sali
 - Przypisz klasę i wychowawcę (opcjonalnie dwóch dla sal dzielonych)
+
+---
+
+### ⚙️ Panel ustawień szkoły
+
+Przycisk ⚙️ w prawym górnym rogu topbara (lub ☰ menu → **Ustawienia szkoły**):
+
+| Zakładka | Opis |
+|----------|------|
+| Klasy | Dodaj / edytuj / usuń klasy — nazwa, skrót, grupy, klasa bazowa |
+| Nauczyciele | Dodaj / edytuj / usuń nauczycieli — imię, nazwisko, skrót |
+| Przedmioty | Dodaj / edytuj / usuń pozycje słownika przedmiotów |
+| Godziny | Edytuj etykiety i przedziały czasowe godzin lekcyjnych |
+
+Zmiany zapisywane są natychmiast do pamięci przeglądarki.
 
 ---
 
@@ -248,15 +265,27 @@ Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych zewnętrzn
 
 ```
 Plan-sal/
-├── index.html      # Struktura HTML aplikacji
-├── app.js          # Cała logika aplikacji (~3900 linii)
-├── styles.css      # Style CSS (~2800 linii)
-├── manifest.json   # PWA manifest
-├── sw.js           # Service Worker (cache + powiadomienia o aktualizacji)
-├── icon-*.png      # Ikony PWA (72–512 px)
-├── LICENSE         # Licencja
-├── REGULAMIN.md    # Regulamin użytkowania
-└── README.md       # Dokumentacja
+├── index.html          # Struktura HTML aplikacji
+├── app.js              # Cienka warstwa inicjalizacyjna — importuje moduły, eksponuje funkcje na window (~184 linii)
+├── styles.css          # Style CSS (~3200 linii)
+├── manifest.json       # PWA manifest
+├── sw.js               # Service Worker (cache + powiadomienia o aktualizacji)
+├── icon-*.png          # Ikony PWA (72–512 px)
+├── LICENSE             # Licencja
+├── REGULAMIN.md        # Regulamin użytkowania
+├── README.md           # Dokumentacja
+│
+├── state.js            # Centralny stan aplikacji (appState, schedData, currentDay)
+├── utils.js            # Narzędzia ogólne (undo/redo, cookie banner, pomoc)
+├── helpers.js          # Funkcje pomocnicze (colKey, flattenColumns, roomLabelShort, skróty przedmiotów)
+├── collisions.js       # Wykrywanie kolizji nauczycieli i klas
+├── import-export.js    # Eksport/import JSON i CSV, zapis do localStorage
+├── storage.js          # Ładowanie danych, ekran powitalny, kreator (zapis/przywracanie draftu)
+├── wizard-data.js      # Dane kreatora: budynki, piętra, sale, klasy, nauczyciele
+├── wizard.js           # Logika kroków kreatora (nawigacja, przypisania, finalizacja)
+├── schedule.js         # Renderowanie planu, drag-and-drop, modal edycji, słownik przedmiotów (~1270 linii)
+├── ui.js               # UI ogólne: archiwum, PDF, motywy, wychowawcy, szybkie dodawanie (~775 linii)
+└── settings.js         # Panel ustawień (klasy, nauczyciele, przedmioty, godziny) (~600 linii)
 ```
 
 ---
@@ -268,6 +297,16 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.5.8 — 30 kwietnia 2026
+
+Naprawa wykrywania i wyświetlania kolizji:
+
+- **Naprawiono brak wykrywania kolizji** — `collisions.js` nie importował funkcji `colKey` z `helpers.js`; w środowisku ES module globalny `colKey` nie istnieje, więc `_colKey()` zawsze zwracało pusty string i żadna kolizja nigdy nie była wykrywana
+- **Skróty sal w tooltipach kolizji** — komunikat ostrzeżenia (⚠) pokazuje teraz pełny skrót sali (np. `0B4`) zamiast samego numeru; funkcja `roomLabelShort` przeniesiona do `helpers.js` jako wspólna zależność
+- **Tooltip kolizji na urządzeniach dotykowych** — pierwsze tapnięcie w komórkę z kolizją pokazuje opis kolizji, drugie tapnięcie otwiera modal edycji (wcześniej tooltip wymagał `:hover`, niedostępnego na ekranach dotykowych)
+
+---
 
 ### v2.5.7 — 25 kwietnia 2026
 

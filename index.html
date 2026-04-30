@@ -947,7 +947,7 @@ if (typeof structuredClone === 'undefined') {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.5.7</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.5.8</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
     </div>
     <div class="about-body">
@@ -1089,6 +1089,14 @@ if (typeof structuredClone === 'undefined') {
 
       <h3>🆕 Co nowego</h3>
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.5.8 <span class="changelog-date">30 kwietnia 2026</span></div>
+          <ul>
+            <li><b>Naprawiono brak wykrywania kolizji</b> — <code>collisions.js</code> nie importował <code>colKey</code> z <code>helpers.js</code>; w ES module globalny <code>colKey</code> nie istnieje, więc żadna kolizja nigdy nie była wykrywana</li>
+            <li><b>Skróty sal w tooltipach kolizji</b> — komunikat ⚠ pokazuje teraz pełny skrót sali (np. <code>0B4</code>) zamiast samego numeru; <code>roomLabelShort</code> przeniesiona do <code>helpers.js</code></li>
+            <li><b>Tooltip kolizji na ekranach dotykowych</b> — pierwsze tapnięcie pokazuje opis kolizji, drugie otwiera modal edycji (wcześniej wymagało <code>:hover</code>)</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.7 <span class="changelog-date">25 kwietnia 2026</span></div>
           <ul>
