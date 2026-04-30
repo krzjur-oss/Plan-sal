@@ -750,11 +750,13 @@ export function renderSchedule() {
     return;
   }
 
-  const cols       = flattenColumns(appState.floors);
+  const buildings  = appState.buildings || [];
+  // Widok Sale pomija budynki sportowe/wieloosobowe — mają własny widok WF
+  const cols       = flattenColumns(appState.floors)
+    .filter(col => !buildings[col.floor?.buildingIdx ?? 0]?.multi);
   const hours      = appState.hours;
   const dayData    = schedData[appState.yearKey]?.[currentDay] || {};
   const assignments = appState.assignments[currentDay] || {};
-  const buildings  = appState.buildings || [];
   const homerooms  = appState.homerooms || {};
 
   const uniqueBuildings = [...new Set((appState.floors || []).map(f => f.buildingIdx || 0))];
