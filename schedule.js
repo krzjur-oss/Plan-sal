@@ -835,11 +835,11 @@ export function renderTimeslotEditor() {
     <div class="timeslot-row">
       <span class="timeslot-lnum">Godz. ${esc(ts.label)}</span>
       <input class="timeslot-inp" type="time" value="${esc(ts.start || '')}"
-        oninput="wTimeslots[${i}].start=this.value" placeholder="--:--"
+        oninput="spSetTimeslotStart(${i},this.value)" placeholder="--:--"
         title="Początek lekcji">
       <span class="timeslot-sep">–</span>
       <input class="timeslot-inp" type="time" value="${esc(ts.end || '')}"
-        oninput="wTimeslots[${i}].end=this.value" placeholder="--:--"
+        oninput="spSetTimeslotEnd(${i},this.value)" placeholder="--:--"
         title="Koniec lekcji">
     </div>`).join('');
 }
@@ -848,7 +848,10 @@ export function fillTimeslotsDefault() {
   const hoursVal = document.getElementById('wHours')?.value || '';
   const hours = hoursVal.split(',').map(h => h.trim()).filter(Boolean)
     .sort((a, b) => Number(a) - Number(b));
+  const existing = wTimeslots;
   setWTimeslots(hours.map(h => {
+    const ex  = existing.find(t => t.label === h);
+    if (ex) return {...ex};
     const def = TIMESLOTS_DEFAULT_45.find(t => t.label === h);
     return def ? {...def} : {label: h, start: '', end: ''};
   }));
@@ -1240,3 +1243,17 @@ document.addEventListener('keydown', e => {
     if (e.ctrlKey && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) { e.preventDefault(); redoAction(); }
   }
 });
+
+// ================================================================
+//  POŚREDNICY DLA TIMESLOTÓW (naprawiają referencje po setWTimeslots)
+// ================================================================
+window.spSetTimeslotStart = function(i, val) {
+  if (wTimeslots[i]) {
+    wTimeslots[i].start = val;
+  }
+};
+window.spSetTimeslotEnd = function(i, val) {
+  if (wTimeslots[i]) {
+    wTimeslots[i].end = val;
+  }
+};
