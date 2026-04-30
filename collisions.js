@@ -5,11 +5,12 @@
 // ================================================================
 
 import { appState, schedData, currentDay } from './state.js';
-import { colKey } from './helpers.js';
+import { colKey, roomLabelShort } from './helpers.js';
+
 
 // Wrapper lokalny (dla spójności z resztą kodu)
 function _colKey(col)        { return colKey(col); }
-function _roomLabel(fi,si,n) { return String(n); }
+function _roomLabel(fi,si,n) { return roomLabelShort(fi, si, n); }
 
 
 // ================================================================

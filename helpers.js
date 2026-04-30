@@ -282,3 +282,11 @@ export function mergeClassNames(classes) {
 
   return [...merged, ...unparsed];
 }
+
+// ================================================================
+//  SKRÓT SALI — format "0B4" (piętro + segment + numer)
+// ================================================================
+export function roomLabelShort(fi, si, num) {
+  const segLetter = String.fromCharCode(65 + si); // A, B, C…
+  return `${fi}${segLetter}${num}`;
+}
