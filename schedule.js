@@ -759,11 +759,20 @@ export function renderSchedule() {
   const assignments = appState.assignments[currentDay] || {};
   const homerooms  = appState.homerooms || {};
 
-  const uniqueBuildings = [...new Set((appState.floors || []).map(f => f.buildingIdx || 0))];
+  // Brak sal po odfiltraniu sportowych — wszystko jest w WF
+  if (cols.length === 0) {
+    document.getElementById('scheduleWrap').innerHTML =
+      '<div class="view-mode-banner">Wszystkie sale należą do obiektów sportowych. Użyj widoku 🏃 WF.</div>';
+    updateStatusBar();
+    return;
+  }
+
+  // Nagłówki bazują tylko na przefiltrowanych cols (bez budynków sportowych)
+  const uniqueBuildings = [...new Set(cols.map(c => c.floor.buildingIdx || 0))];
   const showBuilding = uniqueBuildings.length > 1;
-  const showFloor    = (appState.floors || []).some(f => (f.name || '').trim() !== '');
-  const showSeg      = (appState.floors || []).some(f =>
-    (f.segments || []).some(s => (s.name || '').trim() !== '')
+  const showFloor    = cols.some(c => (c.floor.name || '').trim() !== '');
+  const showSeg      = cols.some(c =>
+    (c.floor.segments || []).some(s => (s.name || '').trim() !== '')
   );
 
   function buildMergedRow(keyFn, labelFn, stylesFn, extraClass = '', timeCell = '', topPx = 57) {
