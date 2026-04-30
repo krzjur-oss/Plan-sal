@@ -5,10 +5,11 @@
 // ================================================================
 
 import { appState, schedData, currentDay } from './state.js';
+import { colKey } from './helpers.js';
 
-// Zewnętrzne funkcje (podłączone przez app.js po załadowaniu)
-function _colKey(col)         { if (typeof colKey      === 'function') return colKey(col);      return ''; }
-function _roomLabel(fi,si,n)  { if (typeof _roomLabel_ === 'function') return _roomLabel_(fi,si,n); return String(n); }
+// Wrapper lokalny (dla spójności z resztą kodu)
+function _colKey(col)        { return colKey(col); }
+function _roomLabel(fi,si,n) { return String(n); }
 
 
 // ================================================================

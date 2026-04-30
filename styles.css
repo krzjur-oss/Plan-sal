@@ -1722,7 +1722,8 @@ body.light #tutBox { background: #fff; }
   border: 1px solid #ef4444;
   box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
-.cell-inner.collision:hover::after { display: block; }
+.cell-inner.collision:hover::after,
+.cell-inner.collision.tip-open::after { display: block; }
 /* Licznik kolizji w statusbarze */
 #collisionCount {
   color: #ef4444;

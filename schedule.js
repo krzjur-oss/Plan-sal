@@ -544,6 +544,18 @@ export function touchEnd(e, day, hour, key) {
   if (!_touchDragging) {
     // Zbyt krótkie = przypadkowe muśnięcie, ignoruj
     if (Date.now() - _touchStartTime < MIN_TAP_MS) return;
+    // Jeśli komórka ma kolizję — najpierw pokaż tooltip, drugie tapnięcie otwiera modal
+    const tEl = e.currentTarget || document.querySelector(`.cell-inner[data-day="${day}"][data-hour="${hour}"][data-key="${key}"]`);
+    if (tEl && tEl.dataset.collisionTip) {
+      if (!tEl.classList.contains('tip-open')) {
+        // Zamknij inne otwarte tooltipy
+        document.querySelectorAll('.cell-inner.tip-open').forEach(el => el.classList.remove('tip-open'));
+        tEl.classList.add('tip-open');
+        return; // nie otwieraj modala przy pierwszym tapnięciu
+      } else {
+        tEl.classList.remove('tip-open');
+      }
+    }
     // Świadome dotknięcie = edycja
     openEditModal(day, hour, key);
     return;
