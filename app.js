@@ -182,4 +182,5 @@ Object.assign(window, {
   spTeacherAdd, spTeacherSet, spTeacherSetAbbr, spTeacherDelete,
   spSubjectAdd, spSubjectSet, spSubjectDelete,
   spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete, spHoursSave,
+  spSetBuildingMulti,
 });
