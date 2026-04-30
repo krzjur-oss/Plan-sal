@@ -96,7 +96,7 @@ import {
   spClassAdd, spClassSetName, spClassSetAbbr, spClassSetGroup, spClassSetBase, spClassDelete,
   spTeacherAdd, spTeacherSet, spTeacherSetAbbr, spTeacherDelete,
   spSubjectAdd, spSubjectSet, spSubjectDelete,
-  spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete,
+  spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete, spHoursSave,
 } from './settings.js';
 
 // ================================================================
@@ -180,5 +180,5 @@ Object.assign(window, {
   spClassAdd, spClassSetName, spClassSetAbbr, spClassSetGroup, spClassSetBase, spClassDelete,
   spTeacherAdd, spTeacherSet, spTeacherSetAbbr, spTeacherDelete,
   spSubjectAdd, spSubjectSet, spSubjectDelete,
-  spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete,
+  spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete, spHoursSave,
 });

@@ -39,6 +39,10 @@ export function closeSettingsPanel() {
 }
 
 export function switchSettingsTab(tab) {
+  // Reset dirty flag when switching tabs
+  _spHoursDirty = false;
+  const btn = document.getElementById('spHoursSaveBtn');
+  if (btn) btn.style.display = 'none';
   _settingsTab = tab;
   document.querySelectorAll('.settings-tab').forEach(b =>
     b.classList.toggle('active', b.dataset.tab === tab)
@@ -440,12 +444,12 @@ function _spBuildHours() {
     return `<div class="sp-hour-row">
       <span class="sp-hour-num">${esc(String(h))}</span>
       <input class="sp-time-inp" type="time" value="${esc(ts.start || '')}" title="Godzina rozpoczęcia"
-        onchange="spHourSetTime(${i},'start',this.value)">
+        data-hour-idx="${i}" data-hour-field="start" onchange="spHourMarkDirty(this)">
       <input class="sp-time-inp" type="time" value="${esc(ts.end || '')}" title="Godzina zakończenia"
-        onchange="spHourSetTime(${i},'end',this.value)">
+        data-hour-idx="${i}" data-hour-field="end" onchange="spHourMarkDirty(this)">
       <input class="sp-time-inp" value="${esc(ts.label !== h ? String(ts.label) : '')}"
         placeholder="etykieta (opcja)" title="Opcjonalna etykieta zastępująca numer"
-        style="font-size:0.72rem" onchange="spHourSetLabel(${i},this.value)">
+        style="font-size:0.72rem" data-hour-idx="${i}" data-hour-field="label" onchange="spHourMarkDirty(this)">
       <button class="icon-btn danger" onclick="spHourDelete(${i})"
         title="${usedInPlan ? 'Uwaga: ma zajęcia!' : 'Usuń godzinę'}"
         style="${usedInPlan ? 'opacity:0.5' : ''}">✕</button>
@@ -462,7 +466,44 @@ function _spBuildHours() {
 
   return `<div class="sp-section-title">Godziny lekcyjne</div>
     ${header}${rows || '<div class="sp-info-box">Brak godzin.</div>'}
-    <button class="btn btn-sm sp-add-btn" onclick="spHourAdd()">＋ Dodaj godzinę</button>`;
+    <button class="btn btn-sm sp-add-btn" onclick="spHourAdd()">＋ Dodaj godzinę</button>
+    <button class="btn btn-sm" id="spHoursSaveBtn" onclick="spHoursSave()" style="margin-left:8px;display:none">💾 Zapisz</button>`;
+}
+
+// Flaga wskazująca czy są nie zapisane zmiany
+let _spHoursDirty = false;
+
+window.spHourMarkDirty = function(el) {
+  _spHoursDirty = true;
+  const btn = document.getElementById('spHoursSaveBtn');
+  if (btn) btn.style.display = 'inline-block';
+};
+
+export function spHoursSave() {
+  if (!_spHoursDirty) return;
+  const hours = appState.hours || [];
+  if (!appState.timeslots) appState.timeslots = [];
+
+  document.querySelectorAll('[data-hour-idx]').forEach(inp => {
+    const i = parseInt(inp.dataset.hourIdx, 10);
+    const field = inp.dataset.hourField;
+    const h = hours[i];
+    if (h === undefined) return;
+    let ts = appState.timeslots.find(t => String(t.label) === String(h));
+    if (!ts) { ts = {label: h, start: '', end: ''}; appState.timeslots.push(ts); }
+    if (field === 'label') {
+      ts.label = inp.value.trim() || h;
+    } else {
+      ts[field] = inp.value;
+    }
+  });
+
+  _spHoursDirty = false;
+  const btn = document.getElementById('spHoursSaveBtn');
+  if (btn) btn.style.display = 'none';
+  persistAll();
+  renderSchedule();
+  notify('💾 Zapisano godziny');
 }
 
 export function spHourAdd() {
@@ -474,6 +515,7 @@ export function spHourAdd() {
   Object.keys(schedData[yk] || {}).forEach(di => {
     if (!schedData[yk][di][next]) schedData[yk][di][next] = {};
   });
+  _spHoursDirty = false;
   persistAll();
   renderSchedule();
   _renderSettingsTab('hours');
