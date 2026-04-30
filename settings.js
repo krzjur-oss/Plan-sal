@@ -620,4 +620,6 @@ export function spSetBuildingMulti(bi, val) {
   if (!appState.buildings) appState.buildings = [];
   if (appState.buildings[bi]) appState.buildings[bi].multi = val;
   persistAll();
+  renderSchedule();          // odśwież toolbar (pokaż/ukryj przycisk WF)
+  _renderSettingsTab('rooms'); // odśwież zakładkę (checkboxy)
 }
