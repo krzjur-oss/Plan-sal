@@ -320,6 +320,7 @@ export function openImportModal(data) {
   document.getElementById('importModeOverwrite').checked = false;
   document.getElementById('importModeMerge').checked     = true;
   modal.classList.add('show');
+  { const _fi = modal.querySelector('button:not([disabled]),input:not([disabled])'); if (_fi) setTimeout(() => _fi.focus({ preventScroll: true }), 50); }
 }
 
 export function closeImportModal() {
@@ -488,6 +489,7 @@ function _showStorageFullModal() {
   const usageEl = document.getElementById('storageUsageInfo');
   if (usageEl) usageEl.textContent = formatBytes(storageUsageBytes()) + ' / ~5 MB';
   modal.classList.add('show');
+  { const _fi = modal.querySelector('button:not([disabled]),input:not([disabled])'); if (_fi) setTimeout(() => _fi.focus({ preventScroll: true }), 50); }
 }
 
 function _handleQuotaExceeded(failedKey) {
@@ -799,6 +801,7 @@ export function openCSVModal() {
     modal.addEventListener('click', e => { if (e.target === modal) closeCSVModal(); });
   }
   modal.classList.add('show');
+  { const _fi = modal.querySelector('button:not([disabled]),input:not([disabled])'); if (_fi) setTimeout(() => _fi.focus({ preventScroll: true }), 50); }
 }
 
 export function closeCSVModal() {

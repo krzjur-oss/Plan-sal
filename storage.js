@@ -332,7 +332,7 @@ export function openEditWizard() {
       ? appState.timeslots
       : _buildTimeslotsFromHours(appState.hours || [], [])
   ));
-  setTimeout(() => { _initTimeslotEditor(); }, 0);
+  queueMicrotask(() => { _initTimeslotEditor(); });
 
   const fields = {
     wSchoolName:  appState.school?.name  || '',

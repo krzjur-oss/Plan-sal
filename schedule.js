@@ -238,7 +238,7 @@ export function dndStart(e, day, hour, key) {
     e.dataTransfer.setDragImage(ghost, 60, 20);
   }
 
-  setTimeout(() => e.target?.classList.add('dnd-dragging'), 0);
+  queueMicrotask(() => e.target?.classList.add('dnd-dragging'));
 }
 
 export function dndEnd(e) {
@@ -1248,6 +1248,7 @@ export function openEditModal(day, hour, key) {
   document.getElementById('inpNote').value    = entry.note    || '';
   renderMcSelect();
   document.getElementById('editModal').classList.add('show');
+  { const _m = document.getElementById('editModal'); if (_m) { const _fi = _m.querySelector('select,input,button'); if (_fi) setTimeout(() => _fi.focus({ preventScroll: true }), 50); } }
   initSubjectAutocomplete();
   selT.focus();
 }

@@ -18,6 +18,7 @@ import { persistAll, normalizeClassName } from './import-export.js';
 import { openEditWizard } from './storage.js';
 
 import { renderSchedule } from './schedule.js';
+import { focusFirstIn } from './ui.js';
 
 // ================================================================
 //  PANEL USTAWIEŃ — nawigacja
@@ -31,6 +32,7 @@ export function openSettingsPanel(tab) {
   document.getElementById('settingsPanelOverlay').classList.add('show');
   document.getElementById('settingsPanel').classList.add('open');
   _renderSettingsTab(_settingsTab);
+  focusFirstIn(document.getElementById('settingsPanel'));
 }
 
 export function closeSettingsPanel() {

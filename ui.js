@@ -29,6 +29,22 @@ import {
   loadAll, showWelcomeScreen, wizardSaveDraft,
   autoClassAbbr,
 } from './storage.js';
+// ================================================================
+//  FOCUS MANAGEMENT — dostępność klawiaturowa
+// ================================================================
+
+/**
+ * Przenosi fokus na pierwszy interaktywny element w kontenerze.
+ * Wywołuj po każdym otwarciu modalu/panelu.
+ */
+export function focusFirstIn(container) {
+  if (!container) return;
+  const sel = 'input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const el = container.querySelector(sel);
+  if (el) setTimeout(() => el.focus({ preventScroll: true }), 50);
+}
+
+
 
 import { renderFloorList } from './wizard-data.js';
 
@@ -581,8 +597,17 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then(reg => {
-        // Sprawdzaj aktualizacje co minutę (np. po długim czasie otwarcia karty)
-        setInterval(() => reg.update(), 60000);
+        // Sprawdzaj aktualizacje co minutę — tylko gdy karta aktywna
+        let _swUpdateInterval = setInterval(() => reg.update(), 60000);
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            clearInterval(_swUpdateInterval);
+            _swUpdateInterval = null;
+          } else if (!_swUpdateInterval) {
+            reg.update(); // natychmiastowe sprawdzenie po powrocie
+            _swUpdateInterval = setInterval(() => reg.update(), 60000);
+          }
+        });
 
         // Jedyna ścieżka wykrywania aktualizacji: nowy SW przeszedł przez install
         // i czeka w stanie 'waiting'. Baner pojawia się tylko wtedy — nie wcześniej.
@@ -727,7 +752,9 @@ export function showAboutModal() {
       dEl.textContent = APP_LAST_UPDATE;
     }
   }
-  document.getElementById('aboutModal').classList.add('show');
+  const aboutEl = document.getElementById('aboutModal');
+  aboutEl.classList.add('show');
+  focusFirstIn(aboutEl);
 }
 
 export function closeAboutModal() {

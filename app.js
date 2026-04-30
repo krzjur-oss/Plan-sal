@@ -89,6 +89,7 @@ import {
   initTermsBanner, acceptTerms,
   showTermsModal, closeTermsModal, showTermsModalFromBanner,
   showAboutModal, closeAboutModal, aboutSwitchTab, aboutToggleOlderChangelog,
+  focusFirstIn,
 } from './ui.js';
 
 import {
@@ -176,6 +177,7 @@ Object.assign(window, {
   initTermsBanner, acceptTerms,
   showTermsModal, closeTermsModal, showTermsModalFromBanner,
   showAboutModal, closeAboutModal, aboutSwitchTab, aboutToggleOlderChangelog,
+  focusFirstIn,
 
   openSettingsPanel, closeSettingsPanel, switchSettingsTab,
   spClassAdd, spClassSetName, spClassSetAbbr, spClassSetGroup, spClassSetBase, spClassDelete,
