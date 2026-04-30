@@ -3204,3 +3204,49 @@ body.light #tutBox { background: #fff; }
   color: var(--text-muted);
   font-size: 0.82rem;
 }
+
+/* ── About modal — zakładki ── */
+.about-tabs {
+  display: flex;
+  border-bottom: 2px solid #e5e7eb;
+  flex-shrink: 0;
+  background: #f8fafc;
+}
+.about-tab {
+  flex: 1;
+  padding: 10px 16px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.about-tab:hover { color: #1e3a8a; }
+.about-tab.active {
+  color: #1e3a8a;
+  border-bottom-color: #3b82f6;
+  background: #fff;
+}
+.about-body--hidden { display: none; }
+
+/* Przycisk rozwijania starszych wersji */
+.changelog-toggle-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: #f0f4fa;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: #1e3a8a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s;
+}
+.changelog-toggle-btn:hover { background: #dbeafe; }

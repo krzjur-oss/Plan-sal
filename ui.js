@@ -734,6 +734,37 @@ export function closeAboutModal() {
   document.getElementById('aboutModal').classList.remove('show');
 }
 
+export function aboutSwitchTab(tab) {
+  const paneInfo      = document.getElementById('aboutPaneInfo');
+  const paneChangelog = document.getElementById('aboutPaneChangelog');
+  const tabInfo       = document.getElementById('aboutTabInfo');
+  const tabChangelog  = document.getElementById('aboutTabChangelog');
+  if (!paneInfo || !paneChangelog) return;
+
+  if (tab === 'info') {
+    paneInfo.classList.remove('about-body--hidden');
+    paneChangelog.classList.add('about-body--hidden');
+    tabInfo.classList.add('active');
+    tabChangelog.classList.remove('active');
+  } else {
+    paneChangelog.classList.remove('about-body--hidden');
+    paneInfo.classList.add('about-body--hidden');
+    tabChangelog.classList.add('active');
+    tabInfo.classList.remove('active');
+  }
+}
+
+export function aboutToggleOlderChangelog() {
+  const older = document.getElementById('changelogOlder');
+  const btn   = document.getElementById('changelogToggleBtn');
+  if (!older || !btn) return;
+  const isHidden = older.style.display === 'none';
+  older.style.display = isHidden ? 'block' : 'none';
+  btn.textContent = isHidden
+    ? '▲ Ukryj starsze wersje'
+    : '▼ Pokaż starsze wersje (v1.0.0 – v2.5.3)';
+}
+
 // ================================================================
 //  INICJALIZACJA — DOMContentLoaded
 // ================================================================

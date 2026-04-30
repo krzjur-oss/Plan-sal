@@ -88,7 +88,7 @@ import {
   pwaInstall, pwaDismiss,
   initTermsBanner, acceptTerms,
   showTermsModal, closeTermsModal, showTermsModalFromBanner,
-  showAboutModal, closeAboutModal,
+  showAboutModal, closeAboutModal, aboutSwitchTab, aboutToggleOlderChangelog,
 } from './ui.js';
 
 import {
@@ -174,7 +174,7 @@ Object.assign(window, {
   pwaInstall, pwaDismiss,
   initTermsBanner, acceptTerms,
   showTermsModal, closeTermsModal, showTermsModalFromBanner,
-  showAboutModal, closeAboutModal,
+  showAboutModal, closeAboutModal, aboutSwitchTab, aboutToggleOlderChangelog,
 
   openSettingsPanel, closeSettingsPanel, switchSettingsTab,
   spClassAdd, spClassSetName, spClassSetAbbr, spClassSetGroup, spClassSetBase, spClassDelete,

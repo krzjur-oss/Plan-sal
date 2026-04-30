@@ -948,9 +948,18 @@ if (typeof structuredClone === 'undefined') {
     </div>
     <div class="about-version-bar">
       <span class="about-version">v<span id="aboutVersionText">2.5.8</span></span>
-      <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">22 kwietnia 2026</strong></span>
+      <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">30 kwietnia 2026</strong></span>
     </div>
-    <div class="about-body">
+
+    <!-- Zakładki -->
+    <div class="about-tabs">
+      <button class="about-tab active" id="aboutTabInfo" onclick="aboutSwitchTab('info')">ℹ️ O programie</button>
+      <button class="about-tab" id="aboutTabChangelog" onclick="aboutSwitchTab('changelog')">🆕 Historia zmian</button>
+    </div>
+
+    <!-- Zakładka: O programie -->
+    <div class="about-body" id="aboutPaneInfo">
+
       <h3>🚀 Strona powitalna</h3>
       <p>Przy pierwszym uruchomieniu wyświetla się strona powitalna z czterema opcjami:</p>
       <table>
@@ -962,12 +971,11 @@ if (typeof structuredClone === 'undefined') {
       </table>
 
       <h3>☰ Menu nawigacyjne</h3>
-      <p>Wszystkie opcje dostępne są przez przycisk <b>☰</b> w lewym górnym rogu:</p>
       <ul>
         <li><b>Obowiązuje od</b> — data obowiązywania planu (osobna dla każdego dnia)</li>
         <li><b>💾 Zapisz</b> — ręczny zapis do pamięci przeglądarki</li>
-        <li><b>↩ Cofnij / ↪ Przywróć</b> — cofaj i przywracaj zmiany w planie (Ctrl+Z / Ctrl+Y)</li>
-        <li><b>⬇ Eksportuj PDF</b> — plan gotowy do wydruku</li>
+        <li><b>↩ Cofnij / ↪ Przywróć</b> — cofaj i przywracaj zmiany (Ctrl+Z / Ctrl+Y)</li>
+        <li><b>⬇ Eksportuj PDF</b> — plan gotowy do wydruku (widoki: Sale, Nauczyciel, Klasa)</li>
         <li><b>⬆ Eksportuj JSON</b> — kopia zapasowa planu</li>
         <li><b>📊 Eksportuj CSV</b> — plan dzienny, tygodniowy lub zestawienie wpisów</li>
         <li><b>⬇ Importuj JSON</b> — wczytaj plan z pliku</li>
@@ -977,6 +985,16 @@ if (typeof structuredClone === 'undefined') {
         <li><b>🌙 Zmień motyw</b> — przełącz jasny / ciemny motyw</li>
         <li><b>🏠 Strona główna</b> — wróć do ekranu startowego</li>
       </ul>
+
+      <h3>⚙️ Panel ustawień szkoły</h3>
+      <p>Przycisk <b>⚙️</b> w prawym górnym rogu topbara (lub ☰ → <b>Ustawienia szkoły</b>):</p>
+      <table>
+        <tr><th>Zakładka</th><th>Opis</th></tr>
+        <tr><td>Klasy</td><td>Dodaj / edytuj / usuń klasy — nazwa, skrót, grupy, klasa bazowa</td></tr>
+        <tr><td>Nauczyciele</td><td>Dodaj / edytuj / usuń nauczycieli — imię, nazwisko, skrót</td></tr>
+        <tr><td>Przedmioty</td><td>Zarządzanie słownikiem przedmiotów i skrótów</td></tr>
+        <tr><td>Godziny</td><td>Edytuj etykiety i przedziały czasowe godzin lekcyjnych</td></tr>
+      </table>
 
       <h3>📋 Planowanie sal</h3>
       <ul>
@@ -988,11 +1006,26 @@ if (typeof structuredClone === 'undefined') {
         <li><b>Ctrl+Enter</b> — zapisz wpis &nbsp;·&nbsp; <b>Esc</b> — zamknij okno</li>
       </ul>
 
+      <h3>➕ Szybkie dodawanie</h3>
+      <ul>
+        <li>Przycisk <b>＋</b> w prawym górnym rogu topbara — dodaj nauczyciela lub klasę bez otwierania kreatora</li>
+        <li>W oknie edycji komórki: <b>+ Dodaj nowego nauczyciela</b> lub <b>+ Dodaj nową klasę/grupę</b></li>
+        <li>Nowe pozycje dostępne natychmiast w całym planie</li>
+      </ul>
+
       <h3>👤 Widok nauczyciela / klasy</h3>
       <ul>
         <li>Pasek <b>🏢 Sale / 👤 Nauczyciel / 🏫 Klasa</b> pod zakładkami dni</li>
         <li>Widok nauczyciela lub klasy pokazuje cały tydzień w jednej tabeli (godziny × dni)</li>
         <li>Wybierz osobę lub klasę z listy obok przycisków</li>
+        <li>Każda komórka klikalna — otwiera modal edycji we właściwym dniu</li>
+      </ul>
+
+      <h3>⚠️ Wykrywanie kolizji</h3>
+      <ul>
+        <li>Czerwona ramka + ⚠ gdy ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
+        <li>Najedź myszą (lub tapnij) na ⚠ aby zobaczyć szczegóły — np. <em>Nauczyciel MRAZ jednocześnie w: 0B3</em></li>
+        <li>Licznik kolizji w dolnym pasku — kliknij aby przejść do pierwszej</li>
       </ul>
 
       <h3>↩ Cofnij / Przywróć</h3>
@@ -1006,18 +1039,6 @@ if (typeof structuredClone === 'undefined') {
       <ul>
         <li>Kliknij wiersz <b>Gospod.</b> w nagłówku sali</li>
         <li>Przypisz klasę i wychowawcę (opcjonalnie dwóch dla sal dzielonych)</li>
-      </ul>
-
-      <h3>⚠️ Wykrywanie kolizji</h3>
-      <ul>
-        <li>Czerwona ramka + ⚠ gdy ten sam nauczyciel lub klasa w dwóch salach jednocześnie</li>
-        <li>Licznik kolizji w dolnym pasku — kliknij aby przejść do pierwszej</li>
-      </ul>
-
-      <h3>➕ Klasy i nauczyciele w locie</h3>
-      <ul>
-        <li>W oknie edycji komórki: <b>+ Dodaj nowego nauczyciela</b> lub <b>+ Dodaj nową klasę/grupę</b></li>
-        <li>Nowe pozycje dostępne natychmiast w całym planie</li>
       </ul>
 
       <h3>🖱️ Przeciąganie zajęć</h3>
@@ -1037,6 +1058,7 @@ if (typeof structuredClone === 'undefined') {
       <h3>📄 Eksport do PDF</h3>
       <ul>
         <li>Menu ☰ → <b>⬇ Eksportuj PDF</b> — orientacja pozioma, gotowy do wydruku</li>
+        <li>Obsługuje wszystkie trzy widoki: Sale, Nauczyciel, Klasa</li>
         <li>Nagłówek zawiera szkołę, rok, dzień i datę obowiązywania</li>
         <li>Godziny lekcyjne zawierają przedziały czasowe jeśli są zdefiniowane</li>
       </ul>
@@ -1087,7 +1109,14 @@ if (typeof structuredClone === 'undefined') {
       <p><strong>© 2025 Krzysztof Jureczek. Wszelkie prawa zastrzeżone.</strong></p>
       <p>Oprogramowanie SalePlan jest własnością autora i przeznaczone wyłącznie do niekomercyjnego użytku w placówkach oświatowych. Kopiowanie, modyfikowanie i dystrybucja kodu bez pisemnej zgody autora jest zabroniona.</p>
 
-      <h3>🆕 Co nowego</h3>
+      <div class="about-author">
+        <strong>Krzysztof Jureczek</strong>
+        Autor i twórca aplikacji SalePlan
+      </div>
+    </div><!-- /aboutPaneInfo -->
+
+    <!-- Zakładka: Historia zmian -->
+    <div class="about-body about-body--hidden" id="aboutPaneChangelog">
       <div class="changelog-list">
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.8 <span class="changelog-date">30 kwietnia 2026</span></div>
@@ -1103,192 +1132,130 @@ if (typeof structuredClone === 'undefined') {
             <li><b>Drukowanie widoku Nauczyciela i Klasy</b> — funkcja „Eksportuj PDF" obsługuje teraz wszystkie trzy widoki: Sale, Nauczyciel, Klasa</li>
             <li>Nagłówek wydruku zawiera imię i nazwisko nauczyciela (ze skrótem) lub nazwę klasy z liczbą podgrup zamiast dnia tygodnia</li>
             <li>Nazwa pliku PDF: <code>nauczyciel_KJUR_25-26</code> lub <code>klasa_1A_25-26</code></li>
-            <li>Nowe style druku (<code>@media print</code>) dla tabeli widoku tygodniowego — ukryte przyciski filtrowania, poprawne formatowanie komórek, skróty sal w druku</li>
+            <li>Nowe style druku (<code>@media print</code>) dla tabeli widoku tygodniowego</li>
           </ul>
         </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.6 <span class="changelog-date">25 kwietnia 2026</span></div>
           <ul>
-            <li><b>Widok Nauczyciela i Klasy: skrót sali zamiast „Sala N"</b> — w komórkach planu wyświetlany jest teraz pełny skrót sali (np. <code>0A2</code> = piętro 0, segment A, sala 2) zamiast samego numeru; dzięki temu od razu wiadomo w którym budynku/segmencie jest zajęcie</li>
-            <li><b>Tooltopy kolizji: skrót sali zamiast samego numeru</b> — komunikaty ostrzeżeń o kolizji nauczyciela/klasy (⚠) pokazują teraz pełny skrót sali zamiast samego numeru</li>
+            <li><b>Widok Nauczyciela i Klasy: skrót sali zamiast „Sala N"</b> — pełny skrót sali (np. <code>0A2</code>) zamiast samego numeru</li>
+            <li><b>Tooltopy kolizji: skrót sali zamiast samego numeru</b></li>
           </ul>
         </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.5 <span class="changelog-date">25 kwietnia 2026</span></div>
           <ul>
-            <li><b>Naprawiono uszkodzenie archiwum przy przywracaniu roku</b> — zapis bieżącego roku do archiwum używał referencji zamiast głębokiej kopii; natychmiastowe nadpisanie <code>appState</code> niszczyło właśnie zarchiwizowane dane</li>
-            <li><b>Naprawiono licznik wpisów w statusbarze</b> — wpisy zapisane z tablicą <code>classes[]</code> bez pola <code>className</code> nie były wliczane do licznika „N wpisów w tym dniu"</li>
+            <li><b>Naprawiono uszkodzenie archiwum przy przywracaniu roku</b> — referencja zamiast głębokiej kopii niszczyła właśnie zarchiwizowane dane</li>
+            <li><b>Naprawiono licznik wpisów w statusbarze</b> — wpisy z <code>classes[]</code> bez <code>className</code> nie były wliczane</li>
           </ul>
         </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.4 <span class="changelog-date">25 kwietnia 2026</span></div>
           <ul>
-            <li><b>Naprawiono brak listy nauczycieli przy wejściu na krok 5 kreatora</b> — <code>renderTeacherList()</code> nie była wywoływana po przejściu na krok Nauczyciele; lista była pusta mimo istniejących danych (np. po wczytaniu draftu)</li>
-            <li><b>Naprawiono sortowanie godzin lekcyjnych</b> — godziny wpisane w dowolnej kolejności (np. <code>1,0,3,2</code>) były zapisywane dosłownie zamiast sortowane numerycznie; poprawiono w <code>finishWizard</code>, <code>initTimeslotEditor</code> i <code>fillTimeslotsDefault</code></li>
-            <li><b>Naprawiono unhandled rejection w instalacji PWA</b> — brak <code>.catch()</code> na <code>userChoice</code> mógł powodować niezłapany wyjątek gdy przeglądarka odrzuciła prompt</li>
-            <li>Poprawiono formatowanie <code>.catch()</code> w <code>sw.js</code> (podwójna spacja)</li>
+            <li><b>Naprawiono brak listy nauczycieli przy wejściu na krok 5 kreatora</b></li>
+            <li><b>Naprawiono sortowanie godzin lekcyjnych</b> — godziny wpisane w dowolnej kolejności były zapisywane dosłownie</li>
+            <li><b>Naprawiono unhandled rejection w instalacji PWA</b></li>
           </ul>
         </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.5.3 <span class="changelog-date">25 kwietnia 2026</span></div>
-          <ul>
-            <li><b>Naprawiono kolejność kroków kreatora</b> — krok 6 (Nauczyciele) i 7 (Przypisania) miały zamienione ID paneli; teraz właściwa treść wyświetla się na właściwym kroku</li>
-            <li><b>Naprawiono import JSON ze starszych plików</b> — po wczytaniu pliku bez pola <code>buildings</code>, <code>subjects</code>, <code>timeslots</code> lub <code>buildingIdx</code> aplikacja mogła crashować; wszystkie pola są teraz normalizowane we wszystkich ścieżkach importu</li>
-            <li>Dodano funkcję <code>normalizeAppState()</code> — jedna spójna logika uzupełniania brakujących pól zamiast rozproszonych warunków</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.5.2 <span class="changelog-date">25 kwietnia 2026</span></div>
-          <ul>
-            <li><b>Naprawiono wykrywanie kolizji klas</b> — wpisy z tablicą <code>classes[]</code> bez pola <code>className</code> były pomijane w detekcji kolizji (<code>detectCollisions</code>, linia 42)</li>
-            <li><b>Dodano system migracji wersji pliku importu</b> — aplikacja automatycznie aktualizuje strukturę plików JSON ze starszych wersji; plik nowszy niż aplikacja generuje ostrzeżenie zamiast cichego błędu</li>
-            <li><b>Optymalizacja wydajności</b> — zastąpiono wszystkie wywołania <code>JSON.parse(JSON.stringify(…))</code> (29 miejsc) natywnymi <code>structuredClone()</code> — szybszy deep clone, obsługa dat i Map</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.5.1 <span class="changelog-date">24 kwietnia 2026</span></div>
-          <ul>
-            <li><b>Poprawiono walidację numerów sal</b> — duplikat wykrywany po pełnym skrócie (piętro+segment+nr), nie po samym numerze</li>
-            <li>Sala 1 w Segmencie A i Sala 1 w Segmencie B to dwie różne sale (skróty: 0A1, 0B1) — teraz dozwolone</li>
-            <li>Komunikat błędu wskazuje pełny skrót sali zamiast samego numeru</li>
-            <li>Przycisk „＋ sala" generuje kolejny numer w obrębie segmentu (nie globalnie)</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.5.0 <span class="changelog-date">24 kwietnia 2026</span></div>
-          <ul>
-            <li><b>Przeprojektowany krok „Budynek" w kreatorze</b> — piętra pogrupowane pod budynkami zamiast płaskiej listy z dropdownem</li>
-            <li>Każdy budynek ma własną sekcję z przyciskiem „＋ Dodaj piętro" i pustym stanem gdy brak pięter</li>
-            <li>Dodanie nowego budynku w trakcie roku tworzy od razu widoczną pustą kartę gotową do uzupełnienia</li>
-            <li>Nowe piętro automatycznie trafia do właściwego budynku i otrzymuje globalnie unikalny numer sali</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.4.1 <span class="changelog-date">23 kwietnia 2026</span></div>
-          <ul>
-            <li><b>Walidacja unikalności numerów sal — globalnie</b> (poprzednio sprawdzana tylko w obrębie segmentu)</li>
-            <li>Błąd wskazuje konkretne miejsca: <em>„Numer sali „1" powtarza się: Parter › Skrzydło A i I piętro › Skrzydło B"</em></li>
-            <li>Duplikaty podświetlane na czerwono w czasie rzeczywistym podczas wpisywania</li>
-            <li>Przycisk „＋ sala" generuje globalnie unikalny numer (nie tylko w obrębie segmentu)</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.4.0 <span class="changelog-date">23 kwietnia 2026</span></div>
-          <ul>
-            <li><b>Nowa funkcja: migracja kluczy sal po zmianie struktury budynków</b> — dodanie budynku sportowego lub zmiana układu pięter w połowie roku nie powoduje utraty istniejących danych w planie</li>
-            <li>Sala identyfikowana jest po numerze (np. <code>H1</code>), nie po pozycji w liście — nawet jeśli piętro trafia na inny indeks, wpisy są automatycznie przepisywane</li>
-            <li>Po zakończeniu kreatora wyświetlana jest informacja ile wpisów zostało zaktualizowanych</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.3.1 <span class="changelog-date">23 kwietnia 2026</span></div>
-          <ul>
-            <li>Zakładka <em>Klasy</em> — sortowanie alfabetyczne (po nazwie, potem grupie); przycisk „Dodaj klasę" przeniesiony na górę</li>
-            <li>Zakładka <em>Nauczyciele</em> — poprawiono focus przy dodawaniu (kursor ląduje w nowym wierszu na górze, nie na ostatnim istniejącym)</li>
-            <li>Zakładka <em>Przedmioty</em> — sortowanie alfabetyczne; przycisk „Dodaj przedmiot" przeniesiony na górę</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.3.0 <span class="changelog-date">23 kwietnia 2026</span></div>
-          <ul>
-            <li><b>Nowa funkcja: Panel Ustawień Szkoły</b> (⚙️ w topbarze i menu ☰)</li>
-            <li>Zakładka <em>Klasy</em> — dodawanie, edycja nazwy/skrótu/grupy/klasy bazowej, usuwanie z ostrzeżeniem</li>
-            <li>Zakładka <em>Nauczyciele</em> — pełna lista z edycją inline; zmiana skrótu kaskadowo aktualizuje plan</li>
-            <li>Zakładka <em>Przedmioty</em> — zarządzanie listą przedmiotów</li>
-            <li>Zakładka <em>Godziny</em> — dodaj/usuń godziny lekcyjne, edytuj czasy rozpoczęcia i zakończenia</li>
-            <li>Zakładka <em>Sale</em> — podgląd struktury sal z linkiem do kreatora</li>
-            <li>Wskaźnik „w planie" przy elementach używanych w aktywnym planie</li>
-            <li>Potwierdzenie przed usunięciem elementów używanych w planie</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.2.0 <span class="changelog-date">23 kwietnia 2026</span></div>
-          <ul>
-            <li><b>Nowa funkcja: klasa bazowa</b> — każda podgrupa (np. <em>1A religia</em>, <em>1A mniejszość niem.</em>) może mieć jawnie przypisaną klasę bazową (<em>1A</em>)</li>
-            <li>Widok „Klasa" agreguje wszystkie podgrupy — w jednej tabeli widać zajęcia całej klasy i równoległych podgrup</li>
-            <li>Kreator klas: nowa kolumna „Klasa bazowa" — dropdown widoczny tylko dla podgrup</li>
-            <li>Dropdown filtra widoku pokazuje klasy bazowe z licznikiem podgrup (np. <em>1A (+2 gr.)</em>)</li>
-            <li>Banner widoku wyświetla: <em>🏫 Klasa: 1A (+2 gr.)</em></li>
-            <li>Migracja danych: stare plany otrzymują <code>baseClass: ''</code> bez utraty danych</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.1.0 <span class="changelog-date">23 kwietnia 2026</span></div>
-          <ul>
-            <li><b>Naprawiono crash Undo cross-day</b> — <code>renderDayTabs()</code> nie istniało; zastąpione poprawnym <code>switchDay()</code></li>
-            <li><b>Naprawiono wymuszone przeładowanie strony</b> — duplikat handlera <code>SW_UPDATED</code> w <code>index.html</code> powodował auto-reload bez zgody użytkownika</li>
-            <li><b>Naprawiono edycję roku</b> — flaga <code>_wizardEditMode</code> była kasowana przed sprawdzeniem, resetując aktywny dzień do poniedziałku</li>
-            <li><b>Naprawiono etykiety Undo</b> — konkatenacja <code>_mHour + 1</code> zwracała string zamiast liczby (np. „godz. 31" zamiast „godz. 3")</li>
-            <li><b>Naprawiono widok nauczyciela/klasy</b> — kliknięcie pustej komórki otwierało zepsuty modal; teraz wyświetlany jest tooltip</li>
-            <li><b>Naprawiono wybór klasy w przypisaniach</b> — <code>String.replace()</code> mogło zaznaczać błędną opcję; zastąpione przez <code>buildClassOptions()</code></li>
-            <li><b>Naprawiono walidację importu</b> — <code>handleImportFile</code> odrzucał pliki bez <code>schedData</code>; ujednolicone z <code>welcomeHandleFile</code></li>
-            <li>Usunięto podwójne wywołanie <code>initTimeslotEditor()</code> przy przejściu krok 1→2 kreatora</li>
-            <li>Usunięto nieużywany parametr <code>preload</code> z <code>openWizardNewYear()</code></li>
-            <li>Optymalizacja: <code>flattenColumns()</code> memoizowana — wynik cache'owany do czasu zmiany struktury pięter</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v2.0.0 <span class="changelog-date">22 kwietnia 2026</span></div>
-          <ul>
-            <li>Obsługa przepełnienia localStorage — strategia ratunkowa, modal awaryjny, wskaźnik użycia <code>💾 XX KB (YY%)</code> w statusbarze</li>
-            <li>Undo / Redo — stos do 30 operacji; <b>Ctrl+Z</b> / <b>Ctrl+Y</b>; przyciski ↩ ↪ w topbarze i menu ☰</li>
-            <li>Widok nauczyciela / klasy — pasek 🏢/👤/🏫; tygodniowa tabela godziny × dni; filtr z listą wyboru</li>
-            <li>Słownik przedmiotów — krok 5 kreatora; 23 predefiniowane przedmioty; dropdown z autouzupełnianiem w modalu edycji</li>
-            <li>Modalne potwierdzenia — 7 wywołań <code>window.confirm()</code> zastąpione spójnym modalem (Enter/Escape)</li>
-            <li>Przedziały czasowe lekcji — edytor w kroku 2 kreatora; godziny start–end w siatce i na wydruku PDF</li>
-            <li>Listener wiadomości Service Workera — 3 ścieżki wykrywania aktualizacji; baner 🔄 z przyciskiem „Odśwież teraz"</li>
-            <li>Eksport CSV — 3 warianty: plan dzienny, plan tygodniowy (per sala), zestawienie płaskie; UTF-8 z BOM</li>
-            <li>Kreator rozszerzony z 6 do 7 kroków</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v1.2.0 <span class="changelog-date">7 kwietnia 2026</span></div>
-          <ul>
-            <li>Naprawiono błąd — przycisk zamknięcia banera PWA nie działał (nieistniejąca funkcja <code>dismissPWAInstall</code>)</li>
-            <li>Naprawiono zakładki przypisań sal — używały stałej <code>DAYS_DEFAULT</code> zamiast <code>appState.days</code>, co powodowało rozjazd przy niestandardowej liczbie dni</li>
-            <li>Dodano obsługę błędów <code>FileReader.onerror</code> do trzech funkcji wczytujących pliki (<code>welcomeHandleFile</code>, <code>handleImportFile</code>, <code>readFloorTxtFile</code>)</li>
-            <li>Naprawiono mylące łamanie linii przed operatorem <code>?</code> w <code>detectCollisions</code></li>
-            <li>Przekonwertowano znaczniki <code>&lt;a&gt;</code> bez <code>href</code> na <code>&lt;button&gt;</code> — lepsza dostępność z klawiatury i czytników ekranu</li>
-            <li>Usunięto zduplikowaną deklarację <code>display:none</code> w definicji CSS <code>#pwaInstallBanner</code></li>
-            <li>Usunięto pustą regułę CSS <code>.pdf-day</code></li>
-            <li>Dodano atrybut <code>defer</code> do ładowania <code>app.js</code> — lepsza kolejność inicjalizacji DOM</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v1.1.0 <span class="changelog-date">31 marca 2026</span></div>
-          <ul>
-            <li>Naprawiono crash kreatora przy przejściu do kroku 5 (przypisania sal)</li>
-            <li>Naprawiono import nauczycieli z pliku TXT w kreatorze</li>
-            <li>Dodano brakującą inicjalizację pól appState dla starszych planów</li>
-            <li>Naprawiono zapis daty „obowiązuje od" przy brakującym planie</li>
-            <li>Naprawiono czyszczenie starych danych w localStorage przy usuwaniu planu</li>
-            <li>Usunięto konfliktujące definicje CSS (duplikaty animacji notyfikacji)</li>
-            <li>Poprawiono bezpieczeństwo — dodano escapowanie apostrofów w szablonach HTML</li>
-            <li>Dodano numer wersji, datę aktualizacji i ten changelog</li>
-          </ul>
-        </div>
-        <div class="changelog-entry">
-          <div class="changelog-version">v1.0.0 <span class="changelog-date">styczeń 2025</span></div>
-          <ul>
-            <li>Pierwsze wydanie aplikacji SalePlan</li>
-            <li>Kreator konfiguracji szkoły (6 kroków)</li>
-            <li>Plan sal zajęciowych z obsługą budynków, pięter i segmentów</li>
-            <li>Wykrywanie kolizji nauczycieli i klas</li>
-            <li>Eksport/import JSON, eksport do PDF</li>
-            <li>Gospodarz sali z obsługą dwóch wychowawców</li>
-            <li>Tryb demo z przykładowymi danymi</li>
-            <li>PWA — instalacja na urządzeniu, praca offline</li>
-            <li>Motyw jasny i ciemny</li>
-          </ul>
-        </div>
-      </div>
 
-      <div class="about-author">
-        <strong>Krzysztof Jureczek</strong>
-        Autor i twórca aplikacji SalePlan
+        <!-- Starsze wersje — rozwijane -->
+        <div id="changelogOlder" style="display:none">
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.5.3 <span class="changelog-date">25 kwietnia 2026</span></div>
+            <ul>
+              <li><b>Naprawiono kolejność kroków kreatora</b> — krok 6 i 7 miały zamienione ID paneli</li>
+              <li><b>Naprawiono import JSON ze starszych plików</b> — dodano <code>normalizeAppState()</code></li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.5.2 <span class="changelog-date">25 kwietnia 2026</span></div>
+            <ul>
+              <li><b>Naprawiono wykrywanie kolizji klas</b> — wpisy z <code>classes[]</code> bez <code>className</code> były pomijane</li>
+              <li><b>System migracji wersji pliku importu</b></li>
+              <li><b>Optymalizacja</b> — 29 wywołań <code>JSON.parse/stringify</code> zastąpiono przez <code>structuredClone()</code></li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.5.1 <span class="changelog-date">24 kwietnia 2026</span></div>
+            <ul>
+              <li><b>Poprawiono walidację sal</b> — duplikat wykrywany po pełnym skrócie (piętro+segment+nr), nie po samym numerze</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.5.0 <span class="changelog-date">24 kwietnia 2026</span></div>
+            <ul>
+              <li><b>Przeprojektowany krok „Budynek" w kreatorze</b> — piętra pogrupowane pod budynkami</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.4.1 <span class="changelog-date">23 kwietnia 2026</span></div>
+            <ul>
+              <li><b>Walidacja unikalności numerów sal globalnie</b> — duplikaty podświetlane w czasie rzeczywistym</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.4.0 <span class="changelog-date">23 kwietnia 2026</span></div>
+            <ul>
+              <li><b>Migracja kluczy sal po zmianie struktury budynków</b> — zmiana układu pięter nie powoduje utraty danych</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.3.1 <span class="changelog-date">23 kwietnia 2026</span></div>
+            <ul>
+              <li>Sortowanie alfabetyczne i poprawki UX w panelu ustawień (Klasy, Nauczyciele, Przedmioty)</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.3.0 <span class="changelog-date">23 kwietnia 2026</span></div>
+            <ul>
+              <li><b>Nowa funkcja: Panel Ustawień Szkoły ⚙️</b> — klasy, nauczyciele, przedmioty, godziny</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.2.0 <span class="changelog-date">23 kwietnia 2026</span></div>
+            <ul>
+              <li><b>Nowa funkcja: klasa bazowa</b> — podgrupy powiązane z klasą nadrzędną; widok Klasa agreguje wszystkie podgrupy</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.1.0 <span class="changelog-date">23 kwietnia 2026</span></div>
+            <ul>
+              <li>Naprawiono crash Undo cross-day, wymuszone przeładowanie strony, edycję roku, widok nauczyciela/klasy</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v2.0.0 <span class="changelog-date">22 kwietnia 2026</span></div>
+            <ul>
+              <li>Undo/Redo, widok nauczyciela/klasy, słownik przedmiotów, eksport CSV, kreator rozszerzony do 7 kroków</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v1.2.0 <span class="changelog-date">7 kwietnia 2026</span></div>
+            <ul>
+              <li>Naprawki: baner PWA, zakładki przypisań sal, FileReader.onerror, dostępność, czystość CSS</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v1.1.0 <span class="changelog-date">31 marca 2026</span></div>
+            <ul>
+              <li>Naprawki kreatora, importu, localStorage, dat obowiązywania, CSS</li>
+            </ul>
+          </div>
+          <div class="changelog-entry">
+            <div class="changelog-version">v1.0.0 <span class="changelog-date">styczeń 2025</span></div>
+            <ul>
+              <li>Pierwsze wydanie — kreator (6 kroków), plan sal, kolizje, PDF, JSON, gospodarz sali, PWA, motywy</li>
+            </ul>
+          </div>
+        </div><!-- /changelogOlder -->
+
+        <button class="changelog-toggle-btn" id="changelogToggleBtn" onclick="aboutToggleOlderChangelog()">
+          ▼ Pokaż starsze wersje (v1.0.0 – v2.5.3)
+        </button>
       </div>
-    </div>
-  </div>
+    </div><!-- /aboutPaneChangelog -->
+
+  </div><!-- /about-box -->
 </div>
 <!-- ── Modal Regulaminu ── -->
 <div id="termsModal">
