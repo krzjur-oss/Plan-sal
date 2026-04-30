@@ -97,6 +97,7 @@ import {
   spTeacherAdd, spTeacherSet, spTeacherSetAbbr, spTeacherDelete,
   spSubjectAdd, spSubjectSet, spSubjectDelete,
   spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete, spHoursSave,
+  spSetBuildingMulti,
 } from './settings.js';
 
 // ================================================================

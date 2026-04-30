@@ -7,6 +7,13 @@
 import { appState, schedData, currentDay } from './state.js';
 import { colKey, roomLabelShort } from './helpers.js';
 
+// Zwraca true jeśli kolumna należy do budynku sportowego/wieloosobowego
+function _isMultiCol(col) {
+  const buildings = appState.buildings || [];
+  const bi = col.floor?.buildingIdx ?? 0;
+  return !!(buildings[bi]?.multi);
+}
+
 
 // Wrapper lokalny (dla spójności z resztą kodu)
 function _colKey(col)        { return colKey(col); }
@@ -32,8 +39,10 @@ export function detectCollisions(dayData, hours, cols) {
     const row = dayData[h] || {};
 
     // Zbierz wszystkie niepuste wpisy tej godziny
+    // Pomijamy kolumny z budynków wieloosobowych (WF) — wiele grup naraz = norma
     const entries = [];
     cols.forEach(function(col) {
+      if (_isMultiCol(col)) return;
       const key   = _colKey(col);
       const entry = row[key] || {};
       // BUG-4 fix: uwzględnij wpisy z classes[] bez className

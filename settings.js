@@ -576,6 +576,7 @@ export function spHourDelete(i) {
 
 function _spBuildRooms() {
   const floors = appState.floors || [];
+  const buildings = appState.buildings || [];
   let tree = '';
   floors.forEach((floor) => {
     tree += `<div class="sp-room-floor">📐 ${esc(floor.name)}</div>`;
@@ -587,11 +588,36 @@ function _spBuildRooms() {
     });
   });
   const totalRooms = flattenColumns(floors).length;
-  return `<div class="sp-section-title">Struktura sal</div>
+
+  // Budynki z flagą multi
+  let bldRows = '';
+  buildings.forEach((b, bi) => {
+    bldRows += `<div class="sp-building-row">
+      <label class="building-multi-label">
+        <input type="checkbox" ${b.multi ? 'checked' : ''} onchange="spSetBuildingMulti(${bi},this.checked)">
+        🏃 <strong>${esc(b.name || ('Budynek ' + (bi+1)))}</strong>
+        <span class="building-multi-hint"> — obiekt sportowy/wieloosobowy</span>
+      </label>
+    </div>`;
+  });
+
+  return `<div class="sp-section-title">Obiekty sportowe / wieloosobowe</div>
+    <div class="sp-info-box">
+      Zaznacz budynki, w których wiele grup może przebywać jednocześnie (hala, basen, boisko).<br>
+      Dla takich budynków kolizje nie są wykrywane i dostępny jest widok 🏃 WF.
+    </div>
+    <div style="margin-bottom:16px">${bldRows || '<div class="sp-info-box">Brak budynków.</div>'}</div>
+    <div class="sp-section-title">Struktura sal</div>
     <div class="sp-info-box">
       <strong>${totalRooms} sal</strong> w ${floors.length} piętrach/obszarach.<br>
       Aby zmienić strukturę pięter, segmentów i sal, użyj kreatora roku szkolnego.
     </div>
-    <div class="sp-info-box sp-room-tree" style="max-height:340px;overflow-y:auto">${tree || 'Brak danych.'}</div>
+    <div class="sp-info-box sp-room-tree" style="max-height:280px;overflow-y:auto">${tree || 'Brak danych.'}</div>
     <button class="btn btn-sm sp-add-btn" onclick="openEditWizard();closeSettingsPanel()">✏️ Edytuj w kreatorze</button>`;
+}
+
+export function spSetBuildingMulti(bi, val) {
+  if (!appState.buildings) appState.buildings = [];
+  if (appState.buildings[bi]) appState.buildings[bi].multi = val;
+  persistAll();
 }

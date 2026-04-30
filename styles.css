@@ -3250,3 +3250,127 @@ body.light #tutBox { background: #fff; }
   transition: background 0.15s;
 }
 .changelog-toggle-btn:hover { background: #dbeafe; }
+
+/* ================================================================
+   WIDOK WF — obiekty sportowe / wieloosobowe
+   ================================================================ */
+
+.wf-building-block {
+  margin-bottom: 32px;
+}
+.wf-building-header {
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: var(--surface);
+  border-radius: 6px;
+}
+.wf-building-hint {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-left: 6px;
+}
+.wf-scroll-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.wf-table {
+  min-width: max-content;
+}
+.wf-time-th {
+  min-width: 68px;
+}
+.wf-col-header {
+  min-width: 72px;
+  max-width: 88px;
+  font-size: 0.65rem;
+  text-align: center;
+  padding: 4px 3px;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
+}
+.wf-col-header.wf-col-used {
+  background: #e0f2fe22;
+}
+.wf-day-name {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.wf-room-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.wf-room-sub {
+  display: block;
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+.wf-time-cell {
+  font-size: 0.62rem;
+}
+.wf-cell-td {
+  padding: 2px;
+  border: 1px solid var(--border);
+}
+.wf-cell-inner {
+  min-height: 44px;
+  min-width: 68px;
+  font-size: 0.65rem;
+  border-radius: 4px;
+}
+/* Przycisk widoku WF */
+.btn-view-wf {
+  background: linear-gradient(135deg, #166534 0%, #16a34a 100%);
+  color: #fff !important;
+  border-color: #15803d !important;
+}
+.btn-view-wf.active,
+.btn-view-wf:hover {
+  background: linear-gradient(135deg, #14532d 0%, #15803d 100%);
+}
+
+/* Checkbox „Obiekt sportowy" w kreatorze i ustawieniach */
+.building-multi-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 6px 8px;
+  margin-top: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+body.light .building-multi-label {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+.building-multi-label input[type=checkbox] {
+  width: 16px;
+  height: 16px;
+  accent-color: #16a34a;
+  flex-shrink: 0;
+}
+.building-multi-hint {
+  font-weight: 400;
+  color: #4ade80;
+  font-size: 0.75rem;
+}
+body.light .building-multi-hint { color: #15803d; }
+.sp-building-row {
+  margin-bottom: 6px;
+}

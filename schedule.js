@@ -21,7 +21,7 @@ import { undoPush, _undoUpdateUI, undoAction, redoAction } from './utils.js';
 
 import {
   esc, sbSet, notify, showConfirm,
-  colKey, flattenColumns, invalidateColumnCache,
+  colKey, flattenColumns, invalidateColumnCache, roomLabelShort,
   getTeacherByAbbr, teacherDisplayName, resolveClassName,
   buildTeacherSelectOptions, mergeClassNames,
 } from './helpers.js';
@@ -318,22 +318,33 @@ export function setViewMode(mode, filter) {
 
 function _updateViewToolbar() {
   const isRooms = _viewMode === 'rooms';
+  const isWF    = _viewMode === 'wf';
 
-  ['viewBtnRooms', 'viewBtnTeacher', 'viewBtnClass'].forEach(id => {
+  ['viewBtnRooms', 'viewBtnTeacher', 'viewBtnClass', 'viewBtnWF'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    const mode = id === 'viewBtnRooms' ? 'rooms' : id === 'viewBtnTeacher' ? 'teacher' : 'class';
+    const mode = id === 'viewBtnRooms' ? 'rooms'
+               : id === 'viewBtnTeacher' ? 'teacher'
+               : id === 'viewBtnClass'   ? 'class'
+               : 'wf';
     el.classList.toggle('active', mode === _viewMode);
   });
 
   const sel = document.getElementById('viewFilterSelect');
   if (sel) {
-    sel.style.display = isRooms ? 'none' : '';
-    if (!isRooms) _populateViewFilter(sel);
+    sel.style.display = (isRooms || isWF) ? 'none' : '';
+    if (!isRooms && !isWF) _populateViewFilter(sel);
   }
 
   const dayTabsEl = document.getElementById('dayTabs');
-  if (dayTabsEl) dayTabsEl.style.display = isRooms ? 'flex' : 'none';
+  if (dayTabsEl) dayTabsEl.style.display = (isRooms || isWF) ? 'flex' : 'none';
+
+  // Przycisk WF — widoczny tylko gdy są budynki multi
+  const btnWF = document.getElementById('viewBtnWF');
+  if (btnWF) {
+    const hasMulti = (appState.buildings || []).some(b => b.multi);
+    btnWF.style.display = hasMulti ? '' : 'none';
+  }
 
   const vmBar = document.getElementById('viewModeBar');
   if (vmBar) vmBar.style.display = 'flex';
@@ -591,8 +602,142 @@ export function touchEnd(e, day, hour, key) {
   _touchOverEl   = null;
 }
 
+
+// ================================================================
+//  WIDOK WF — obiekty sportowe / wieloosobowe
+// ================================================================
+
+function renderWFView() {
+  const buildings  = appState.buildings || [];
+  const floors     = appState.floors    || [];
+  const hours      = appState.hours     || [];
+  const allCols    = flattenColumns(floors);
+
+  // Budynki oznaczone jako multi (sportowe)
+  const multiBldIdxs = buildings
+    .map((b, bi) => b.multi ? bi : null)
+    .filter(bi => bi !== null);
+
+  if (multiBldIdxs.length === 0) {
+    document.getElementById('scheduleWrap').innerHTML =
+      '<div class="view-mode-banner">🏃 WF — brak obiektów sportowych. Oznacz budynek jako sportowy w ⚙️ Ustawieniach.</div>';
+    return;
+  }
+
+  // Kolumny tylko z budynków sportowych
+  const wfCols = allCols.filter(col => {
+    const bi = col.floor?.buildingIdx ?? 0;
+    return buildings[bi]?.multi;
+  });
+
+  // Grupuj kolumny per budynek
+  const byBuilding = {};
+  wfCols.forEach(col => {
+    const bi = col.floor?.buildingIdx ?? 0;
+    if (!byBuilding[bi]) byBuilding[bi] = [];
+    byBuilding[bi].push(col);
+  });
+
+  const DAYS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek'];
+
+  let html = '';
+
+  // Jeden blok na każdy budynek sportowy
+  multiBldIdxs.forEach(bi => {
+    const bld     = buildings[bi];
+    const bldCols = byBuilding[bi] || [];
+    const color   = BUILDING_COLORS[bi % BUILDING_COLORS.length];
+    const bldName = esc(bld.name || ('Budynek ' + (bi + 1)));
+
+    html += `<div class="wf-building-block">
+      <div class="wf-building-header" style="border-left:4px solid ${color};color:${color}">
+        🏃 ${bldName}
+        <span class="wf-building-hint">— wiele grup może ćwiczyć jednocześnie</span>
+      </div>
+      <div class="wf-scroll-wrap">
+      <table class="schedule-table wf-table">
+        <thead>
+          <tr>
+            <th class="time-th wf-time-th">Godz.</th>`;
+
+    // Nagłówki dni × sale
+    DAYS.forEach((dayName, di) => {
+      const dayData = schedData[appState.yearKey]?.[di] || {};
+      bldCols.forEach(col => {
+        const key       = colKey(col);
+        const roomLabel = roomLabelShort(col.floorIdx, col.segIdx, col.room.num || '?');
+        const roomSub   = col.room.sub ? `<span class="wf-room-sub">${esc(col.room.sub)}</span>` : '';
+        // Count how many entries this room has on this day
+        const usedHours = hours.filter(h => {
+          const e = dayData[h]?.[key] || {};
+          return !!(e.teacherAbbr || e.className || (e.classes && e.classes.length));
+        }).length;
+        html += `<th class="wf-col-header ${usedHours > 0 ? 'wf-col-used' : ''}">
+          <div class="wf-day-name">${dayName.slice(0,3)}</div>
+          <div class="wf-room-label">${esc(roomLabel)}</div>${roomSub}
+        </th>`;
+      });
+    });
+
+    html += `</tr></thead><tbody>`;
+
+    // Wiersze godzin
+    hours.forEach(h => {
+      html += `<tr><td class="time-cell wf-time-cell">${formatTimeCell(h)}</td>`;
+
+      DAYS.forEach((_, di) => {
+        const dayData = schedData[appState.yearKey]?.[di] || {};
+
+        bldCols.forEach(col => {
+          const key   = colKey(col);
+          const entry = dayData[h]?.[key] || {};
+          const filled = !!(entry.teacherAbbr || entry.subject || entry.className || (entry.classes && entry.classes.length));
+
+          // Class names display
+          const clsStr = filled
+            ? mergeClassNames(
+                entry.classes && entry.classes.length
+                  ? entry.classes
+                  : entry.className ? [entry.className] : []
+              ).map(cls => `<span class="cell-abbr cell-abbr-cls">${esc(cls)}</span>`).join('')
+            : '';
+
+          html += `<td class="wf-cell-td">
+            <div class="cell-inner wf-cell-inner ${filled ? 'filled' : ''}"
+              onclick="openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
+              ${filled ? `draggable="true"
+              ondragstart="dndStart(event,${di},'${esc(String(h))}','${esc(key)}')"
+              ondragend="dndEnd(event)"` : ''}
+              ondragover="dndOver(event)"
+              ondragleave="dndLeave(event)"
+              ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(key)}')">
+              ${filled
+                ? `<div class="cell-row-cls">${clsStr}</div>
+                   ${entry.subject ? `<div class="cell-row-subject">${esc(subjectAbbr(entry.subject))}</div>` : ''}
+                   ${entry.teacherAbbr ? `<div class="cell-row-teacher"><span class="cell-abbr">${esc(entry.teacherAbbr)}</span></div>` : ''}`
+                : '<div class="cell-plus">＋</div>'}
+            </div></td>`;
+        });
+      });
+
+      html += `</tr>`;
+    });
+
+    html += `</tbody></table></div></div>`;
+  });
+
+  document.getElementById('scheduleWrap').innerHTML = html;
+}
+
 export function renderSchedule() {
   if (!appState) return;
+
+  // ── Widok WF ──
+  if (_viewMode === 'wf') {
+    renderWFView();
+    updateStatusBar();
+    return;
+  }
 
   // ── Widok nauczyciela / klasy ──
   if (_viewMode !== 'rooms') {

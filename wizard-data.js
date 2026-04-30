@@ -114,6 +114,12 @@ function _buildBuildingEl(b, bi) {
       </div>
       ${wBuildings.length > 1 ? `<button class="icon-btn danger" onclick="removeBuilding(${bi})">🗑</button>` : ''}
     </div>
+    <label class="building-multi-label" title="Obiekt wieloosobowy — wiele grup może ćwiczyć jednocześnie. Kolizje nie są wykrywane.">
+      <input type="checkbox" class="building-multi-chk" data-bi="${bi}"
+        ${b.multi ? 'checked' : ''}
+        onchange="wBuildings[${bi}].multi=this.checked">
+      🏃 Obiekt sportowy / wieloosobowy <span class="building-multi-hint">(brak wykrywania kolizji)</span>
+    </label>
     <div class="building-floor-count">Przypisane piętra/strefy: <strong style="color:${color}">${floorsInBuilding}</strong></div>`;
   return div;
 }
@@ -141,6 +147,9 @@ export function syncBuildingsFromDOM() {
   });
   document.querySelectorAll('.building-addr-inp').forEach(el => {
     const bi = +el.dataset.bi; if (wBuildings[bi]) wBuildings[bi].address = el.value;
+  });
+  document.querySelectorAll('.building-multi-chk').forEach(el => {
+    const bi = +el.dataset.bi; if (wBuildings[bi]) wBuildings[bi].multi = el.checked;
   });
 }
 

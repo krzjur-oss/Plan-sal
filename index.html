@@ -563,6 +563,7 @@ if (typeof structuredClone === 'undefined') {
       <button id="viewBtnRooms"   class="btn-view active" onclick="setViewMode('rooms')">🏢 Sale</button>
       <button id="viewBtnTeacher" class="btn-view"        onclick="setViewMode('teacher',document.getElementById('viewFilterSelect').value)">👤 Nauczyciel</button>
       <button id="viewBtnClass"   class="btn-view"        onclick="setViewMode('class',document.getElementById('viewFilterSelect').value)">🏫 Klasa</button>
+      <button id="viewBtnWF"      class="btn-view btn-view-wf" style="display:none" onclick="setViewMode('wf')">🏃 WF</button>
     </div>
     <select id="viewFilterSelect" class="view-filter-select" style="display:none"
             onchange="onViewFilterChange(this.value)"></select>
