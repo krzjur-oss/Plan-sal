@@ -392,9 +392,20 @@ export function confirmImport() {
   }
 }
 
+// Flaga ustawiana przez schedule.js przy starcie wewnętrznego DnD komórki
+// — niezawodna metoda rozróżnienia przeciągania komórki od pliku z dysku
+// na wszystkich przeglądarkach (w tym Safari/Chrome na tabletach)
+let _internalDndActive = false;
+export function setInternalDndActive(val) { _internalDndActive = val; }
+
 export function initImportDragDrop() {
   let _dragOver = false;
+
   document.body.addEventListener('dragover', e => {
+    if (_internalDndActive) return; // wewnętrzny DnD komórki — ignoruj
+    // Sprawdź czy to plik z zewnątrz (dodatkowe zabezpieczenie)
+    const types = Array.from(e.dataTransfer?.types || []);
+    if (!types.includes('Files')) return;
     e.preventDefault();
     if (!_dragOver) {
       _dragOver = true;
@@ -402,12 +413,16 @@ export function initImportDragDrop() {
     }
   });
   document.body.addEventListener('dragleave', e => {
+    if (!_dragOver) return;
     if (e.relatedTarget === null || !document.body.contains(e.relatedTarget)) {
       _dragOver = false;
       document.getElementById('dropOverlay')?.classList.remove('show');
     }
   });
   document.body.addEventListener('drop', e => {
+    if (_internalDndActive) return;
+    const types = Array.from(e.dataTransfer?.types || []);
+    if (!types.includes('Files')) return;
     e.preventDefault();
     _dragOver = false;
     document.getElementById('dropOverlay')?.classList.remove('show');

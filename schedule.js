@@ -28,7 +28,7 @@ import {
 
 import { detectCollisions } from './collisions.js';
 
-import { persistAll, storageUsageBytes, formatBytes } from './import-export.js';
+import { persistAll, storageUsageBytes, formatBytes, setInternalDndActive } from './import-export.js';
 
 import { wizardSaveDraft } from './storage.js';
 
@@ -218,6 +218,7 @@ export function dndStart(e, day, hour, key) {
   _dndSrcDay  = day;
   _dndSrcHour = hour;
   _dndSrcKey  = key;
+  setInternalDndActive(true);  // blokuj overlay importu JSON
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', day + '|' + hour + '|' + key);
 
@@ -242,6 +243,7 @@ export function dndStart(e, day, hour, key) {
 }
 
 export function dndEnd(e) {
+  setInternalDndActive(false); // odblokuj overlay importu JSON
   e.target?.classList.remove('dnd-dragging');
   const ghost = document.getElementById('_dndGhost');
   if (ghost) ghost.remove();
