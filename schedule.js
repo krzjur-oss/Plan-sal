@@ -1290,11 +1290,11 @@ export function openEditModal(day, hour, key) {
     const buildings = appState.buildings || [];
     let opts = '';
     cols.forEach(c => {
-      if (buildings[c.floor?.buildingIdx ?? 0]?.multi) return;
       const ck      = colKey(c);
       const abbr    = _roomLabel(c.floorIdx, c.segIdx, c.room.num || c.room.sub || '?');
       const bldName = buildings[c.floor?.buildingIdx ?? 0]?.name || '';
-      const full    = `${bldName ? bldName + ' · ' : ''}${c.floor.name || ''} › ${c.seg.name || ''} — sala ${c.room.num || c.room.sub || '?'}`;
+      const isMulti = !!(buildings[c.floor?.buildingIdx ?? 0]?.multi);
+      const full    = `${bldName ? bldName + ' · ' : ''}${c.floor.name || ''} › ${c.seg.name || ''} — ${isMulti ? '' : 'sala '}${c.room.num || c.room.sub || '?'}`;
       opts += `<option value="${esc(ck)}"${ck === key ? ' selected' : ''}>${esc(abbr)}  (${esc(full)})</option>`;
     });
     inpRoom.innerHTML = opts;
