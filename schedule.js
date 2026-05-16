@@ -457,14 +457,6 @@ export function renderViewTable(mode, filter) {
     collisionsByDay[di] = detectCollisions(dayData, hours, cols);
   });
 
-  // Pierwsza sala spośród niepomijanych (dla pustej komórki w trybie nauczyciela/klasy)
-  // Szukamy kolumny, którą można zaproponować do edycji gdy komórka jest pusta.
-  // Bierzemy pierwszą col z cols (tę samą listę co kolizje), która nie jest budynkiem sportowym.
-  const _firstEditableCol = cols.find(c => {
-    const buildings = appState.buildings || [];
-    return !buildings[c.floor?.buildingIdx ?? 0]?.multi;
-  }) || cols[0];
-
   let tbody = '<tbody>';
   hours.forEach(h => {
     tbody += `<tr><td class="time-cell">${formatTimeCell(h)}</td>`;
@@ -473,14 +465,13 @@ export function renderViewTable(mode, filter) {
       const dayColls = collisionsByDay[di];
 
       if (!entries.length) {
-        // Pusta komórka — klikalna jak w widoku sal.
-        // Otwiera modal w pierwszej dostępnej sali tego dnia/godziny.
-        const fk = _firstEditableCol ? colKey(_firstEditableCol) : '';
+        // Pusta komórka — otwiera modal z wyborem sali (bez preselected key).
+        // Klucz sali zostanie wybrany przez użytkownika w select #inpRoom.
         tbody += `<td><div class="cell-inner cell-inner-view-empty"
-            data-day="${di}" data-hour="${esc(String(h))}" data-key="${esc(fk)}"
-            onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','${esc(fk)}')"
+            data-day="${di}" data-hour="${esc(String(h))}" data-key=""
+            onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','')"
             ondragover="dndOver(event)" ondragleave="dndLeave(event)"
-            ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(fk)}')">
+            ondrop="dndDrop(event,${di},'${esc(String(h))}','')">
           <div class="cell-plus">＋</div></div></td>`;
       } else {
         tbody += `<td style="padding:2px;vertical-align:top">`;
@@ -1282,9 +1273,7 @@ export function openEditModal(day, hour, key) {
   document.getElementById('inpTeacher')?.classList.remove('input-error');
   document.getElementById('inpSubject')?.classList.remove('input-error');
   const cols  = flattenColumns(appState.floors);
-  const col   = cols.find(c => colKey(c) === key);
-  const entry = schedData[appState.yearKey]?.[day]?.[hour]?.[key] || {};
-  const defaultCls = (appState.assignments[day] || {})[key] || '';
+  const col = cols.find(c => colKey(c) === key);
   const bld = (appState.buildings || [])[col?.floor?.buildingIdx || 0];
 
   // ── Select sali — widoczny tylko w widoku nauczyciela/klasy ──
@@ -1293,9 +1282,8 @@ export function openEditModal(day, hour, key) {
   const isViewMode = _viewMode === 'teacher' || _viewMode === 'class';
   if (roomGroup) roomGroup.style.display = isViewMode ? '' : 'none';
   if (isViewMode && inpRoom) {
-    // Buduj opcje ze wszystkich sal (z pominięciem WF multi)
     const buildings = appState.buildings || [];
-    let opts = '';
+    let opts = '<option value="">— wybierz salę —</option>';
     cols.forEach(c => {
       const ck      = colKey(c);
       const abbr    = _roomLabel(c.floorIdx, c.segIdx, c.room.num || c.room.sub || '?');
@@ -1305,21 +1293,46 @@ export function openEditModal(day, hour, key) {
       opts += `<option value="${esc(ck)}"${ck === key ? ' selected' : ''}>${esc(abbr)}  (${esc(full)})</option>`;
     });
     inpRoom.innerHTML = opts;
-    inpRoom.dataset.originalKey = key; // zapamiętaj oryginalną salę do wykrycia zmiany
-    // Przy zmianie sali — aktualizuj _mKey i tytuł modalu na bieżąco
+    inpRoom.dataset.originalKey = key;
     inpRoom.onchange = () => {
       const newKey = inpRoom.value;
       setMKey(newKey);
       const newCol = cols.find(c => colKey(c) === newKey);
       const newBld = buildings[newCol?.floor?.buildingIdx ?? 0];
       document.getElementById('modalTitle').textContent =
-        `Sala ${newCol?.room.num || '?'} — Godz. ${hour}`;
-      document.getElementById('modalSub').textContent =
-        `${newBld ? newBld.name + ' · ' : ''}${newCol?.floor.name || ''} › ${newCol?.seg.name || ''} · ${appState.days[day]}`;
+        newKey ? `Sala ${newCol?.room.num || '?'} — Godz. ${hour}` : `Godz. ${hour}`;
+      document.getElementById('modalSub').textContent = newKey
+        ? `${newBld ? newBld.name + ' · ' : ''}${newCol?.floor.name || ''} › ${newCol?.seg.name || ''} · ${appState.days[day]}`
+        : appState.days[day];
+      // Gdy sala wybrana po raz pierwszy — wczytaj istniejący wpis z tej sali
+      if (newKey) {
+        const existingEntry = schedData[appState.yearKey]?.[day]?.[hour]?.[newKey] || {};
+        if (existingEntry.teacherAbbr || existingEntry.subject) {
+          if (_viewMode !== 'teacher') {
+            const selT2 = document.getElementById('inpTeacher');
+            if (selT2) selT2.value = existingEntry.teacherAbbr || '';
+          }
+          document.getElementById('inpSubject').value = existingEntry.subject || '';
+          document.getElementById('inpNote').value    = existingEntry.note    || '';
+          const selS2 = document.getElementById('inpSupportTeacher');
+          if (selS2) selS2.value = existingEntry.supportTeacherAbbr || '';
+          const existCls = existingEntry.classes?.length
+            ? existingEntry.classes
+            : existingEntry.className ? [existingEntry.className] : [];
+          renderMultiClassList(existCls);
+        }
+      }
     };
   }
 
-  document.getElementById('modalTitle').textContent = `Sala ${col?.room.num || '?'} — Godz. ${hour}`;
+  // Tytuł i dane — gdy key pusty (nowa lekcja bez wybranej sali) formularz czysty
+  const entry = key
+    ? schedData[appState.yearKey]?.[day]?.[hour]?.[key] || {}
+    : {};
+  const defaultCls = key ? (appState.assignments[day] || {})[key] || '' : '';
+
+  document.getElementById('modalTitle').textContent =
+    key ? `Sala ${col?.room.num || '?'} — Godz. ${hour}` : `Godz. ${hour}`;
   document.getElementById('modalSub').textContent =
     `${bld ? bld.name + ' · ' : ''}${col?.floor.name || ''} › ${col?.seg.name || ''} · ${appState.days[day]}`;
 
@@ -1449,6 +1462,14 @@ export function saveCellData() {
   const teacherInp = document.getElementById('inpTeacher');
   const subjectInp = document.getElementById('inpSubject');
   const teacherVal = (_viewMode === 'teacher' ? _viewFilter : teacherInp.value.trim()) || teacherInp.value.trim();
+
+  // W widoku nauczyciela/klasy sala musi być wybrana
+  if ((_viewMode === 'teacher' || _viewMode === 'class') && !_mKey) {
+    const inpRoom = document.getElementById('inpRoom');
+    if (inpRoom) inpRoom.focus();
+    notify('⚠ Wybierz salę', true);
+    return;
+  }
   const subjectVal = subjectInp.value.trim();
 
   if (!teacherVal) {
