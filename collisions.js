@@ -51,13 +51,26 @@ export function detectCollisions(dayData, hours, cols) {
       }
     });
 
-    // ── Kolizje nauczyciela ──────────────────────────────────────
+    // ── Kolizje nauczyciela prowadzącego ────────────────────────
     const byTeacher = {};
     entries.forEach(function(e) {
       if (!e.entry.teacherAbbr) return;
       const abbr = e.entry.teacherAbbr;
       if (!byTeacher[abbr]) byTeacher[abbr] = [];
       byTeacher[abbr].push(e);
+    });
+
+    // ── Kolizje nauczyciela wspomagającego ───────────────────────
+    // Wspomagający nie może być w dwóch miejscach jednocześnie,
+    // ani zajmować tej samej sali co prowadzący innej lekcji.
+    entries.forEach(function(e) {
+      if (!e.entry.supportTeacherAbbr) return;
+      const abbr = e.entry.supportTeacherAbbr;
+      if (!byTeacher[abbr]) byTeacher[abbr] = [];
+      // Dodaj tylko jeśli ten wpis jeszcze nie jest na liście dla tego skrótu
+      if (!byTeacher[abbr].some(function(x) { return x.key === e.key; })) {
+        byTeacher[abbr].push(e);
+      }
     });
 
     Object.keys(byTeacher).forEach(function(abbr) {

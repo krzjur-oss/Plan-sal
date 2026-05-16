@@ -655,6 +655,10 @@ if (typeof structuredClone === 'undefined') {
       <input type="text" class="form-input" id="inpSubject" placeholder="Nazwa przedmiotu lub zajęć" autocomplete="off" maxlength="100" required>
     </div>
     <div class="form-group">
+      <label class="form-label">Nauczyciel wspomagający <span style="font-size:0.6rem;color:var(--text-dim);font-weight:400">(opcjonalnie)</span></label>
+      <select class="teacher-select" id="inpSupportTeacher"></select>
+    </div>
+    <div class="form-group">
       <label class="form-label">Uwagi</label>
       <textarea class="form-textarea" id="inpNote" placeholder="Dodatkowe uwagi (opcjonalnie)..." maxlength="500"></textarea>
     </div>
@@ -948,7 +952,7 @@ if (typeof structuredClone === 'undefined') {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.5.8</span></span>
+      <span class="about-version">v<span id="aboutVersionText">2.5.9</span></span>
       <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">30 kwietnia 2026</strong></span>
     </div>
 
@@ -1119,6 +1123,13 @@ if (typeof structuredClone === 'undefined') {
     <!-- Zakładka: Historia zmian -->
     <div class="about-body about-body--hidden" id="aboutPaneChangelog">
       <div class="changelog-list">
+        <div class="changelog-entry">
+          <div class="changelog-version">v2.5.9 <span class="changelog-date">16 maja 2026</span></div>
+          <ul>
+            <li><b>Nauczyciel wspomagający</b> — nowe pole w modalu edycji; wspomagający jest widoczny w widoku tygodniowym nauczyciela (obok lekcji jako prowadzący) i uwzględniany przy wykrywaniu kolizji</li>
+            <li><b>Edytowalny widok Nauczyciela i Klasy</b> — puste komórki są teraz klikalne (otwierają modal edycji jak w widoku sal), wypełnione obsługują przeciąganie (DnD) oraz kolizje z ikoną ⚠; widok zastępuje wyłącznie podgląd</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-version">v2.5.8 <span class="changelog-date">30 kwietnia 2026</span></div>
           <ul>

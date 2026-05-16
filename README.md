@@ -10,8 +10,8 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.5.8 |
-| **Ostatnia aktualizacja** | 30 kwietnia 2026 |
+| **Aktualna wersja** | v2.5.9 |
+| **Ostatnia aktualizacja** | 16 maja 2026 |
 | **Status** | Aktywny, rozwijany |
 
 ---
@@ -283,7 +283,7 @@ Plan-sal/
 ├── storage.js          # Ładowanie danych, ekran powitalny, kreator (zapis/przywracanie draftu)
 ├── wizard-data.js      # Dane kreatora: budynki, piętra, sale, klasy, nauczyciele
 ├── wizard.js           # Logika kroków kreatora (nawigacja, przypisania, finalizacja)
-├── schedule.js         # Renderowanie planu, drag-and-drop, modal edycji, słownik przedmiotów (~1270 linii)
+├── schedule.js         # Renderowanie planu, drag-and-drop, modal edycji, słownik przedmiotów (~1480 linii)
 ├── ui.js               # UI ogólne: archiwum, PDF, motywy, wychowawcy, szybkie dodawanie (~775 linii)
 └── settings.js         # Panel ustawień (klasy, nauczyciele, przedmioty, godziny) (~600 linii)
 ```
@@ -297,6 +297,13 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 ---
 
 ## 🆕 Co nowego
+
+### v2.5.9 — 16 maja 2026
+
+- **Nauczyciel wspomagający** — nowe pole w modalu edycji komórki; wspomagający pojawia się w widoku tygodniowym nauczyciela (zarówno jako prowadzący jak i wspomagający) i jest brany pod uwagę przy wykrywaniu kolizji
+- **Edytowalny widok Nauczyciela i Klasy** — puste komórki otwierają modal edycji, wypełnione obsługują przeciąganie (DnD) i wyświetlają ikonę ⚠ przy kolizji; widok przestaje być wyłącznie podglądem
+
+---
 
 ### v2.5.8 — 30 kwietnia 2026
 

@@ -419,7 +419,7 @@ export function renderViewTable(mode, filter) {
         if (!filled) return;
         let match;
         if (mode === 'teacher') {
-          match = entry.teacherAbbr === filter;
+          match = entry.teacherAbbr === filter || entry.supportTeacherAbbr === filter;
         } else {
           const entryCls = (entry.classes || []).length
             ? entry.classes
@@ -449,28 +449,63 @@ export function renderViewTable(mode, filter) {
     ).join('')}
   </tr></thead>`;
 
+  // Kolizje: liczymy dla każdego dnia osobno (ten sam mechanizm co widok sal)
+  const collisionsByDay = {};
+  days.forEach((_, di) => {
+    const dayData = schedData[yk]?.[di] || {};
+    collisionsByDay[di] = detectCollisions(dayData, hours, cols);
+  });
+
+  // Pierwsza sala spośród niepomijanych (dla pustej komórki w trybie nauczyciela/klasy)
+  // Szukamy kolumny, którą można zaproponować do edycji gdy komórka jest pusta.
+  // Bierzemy pierwszą col z cols (tę samą listę co kolizje), która nie jest budynkiem sportowym.
+  const _firstEditableCol = cols.find(c => {
+    const buildings = appState.buildings || [];
+    return !buildings[c.floor?.buildingIdx ?? 0]?.multi;
+  }) || cols[0];
+
   let tbody = '<tbody>';
   hours.forEach(h => {
     tbody += `<tr><td class="time-cell">${formatTimeCell(h)}</td>`;
     days.forEach((_, di) => {
-      const entries = byDayHour[di][h] || [];
+      const entries  = byDayHour[di][h] || [];
+      const dayColls = collisionsByDay[di];
+
       if (!entries.length) {
+        // Pusta komórka — klikalna jak w widoku sal.
+        // Otwiera modal w pierwszej dostępnej sali tego dnia/godziny.
+        const fk = _firstEditableCol ? colKey(_firstEditableCol) : '';
         tbody += `<td><div class="cell-inner cell-inner-view-empty"
-          title="Brak zajęć — przełącz na widok sal aby edytować"
-          style="cursor:default"><div class="cell-plus" style="opacity:0.25">—</div></div></td>`;
+            data-day="${di}" data-hour="${esc(String(h))}" data-key="${esc(fk)}"
+            onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','${esc(fk)}')"
+            ondragover="dndOver(event)" ondragleave="dndLeave(event)"
+            ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(fk)}')">
+          <div class="cell-plus">＋</div></div></td>`;
       } else {
         tbody += `<td style="padding:2px;vertical-align:top">`;
         entries.forEach(({col, key, entry}) => {
-          const roomLabel = _roomLabel(col.floorIdx, col.segIdx, col.room.num || col.room.sub || '?');
-          const clsList   = (entry.classes || []).length ? entry.classes : (entry.className ? [entry.className] : []);
-          tbody += `<div class="cell-inner filled view-cell"
+          const roomLabel  = _roomLabel(col.floorIdx, col.segIdx, col.room.num || col.room.sub || '?');
+          const clsList    = (entry.classes || []).length ? entry.classes : (entry.className ? [entry.className] : []);
+          const cellId     = h + '|' + key;
+          const cellErrs   = dayColls[cellId] || [];
+          const hasErr     = cellErrs.length > 0;
+          const errTip     = cellErrs.join('\n');
+          tbody += `<div class="cell-inner filled view-cell ${hasErr ? 'collision' : ''}"
+              data-day="${di}" data-hour="${esc(String(h))}" data-key="${esc(key)}"
               onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
+              draggable="true"
+              ondragstart="dndStart(event,${di},'${esc(String(h))}','${esc(key)}')"
+              ondragend="dndEnd(event)"
+              ondragover="dndOver(event)" ondragleave="dndLeave(event)"
+              ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(key)}')"
+              ${hasErr ? `data-collision-tip="${esc(errTip)}"` : ''}
               style="cursor:pointer;margin-bottom:2px">
+            ${hasErr ? '<span class="cell-collision-icon">⚠</span>' : ''}
             <div class="cell-row-cls">${clsList.map(c =>
               `<span class="cell-abbr cell-abbr-cls" title="${esc(resolveClassName(c))}">${esc(c)}</span>`
             ).join('')}</div>
             ${entry.subject ? `<div class="cell-row-subject" title="${esc(entry.subject)}">${esc(subjectAbbr(entry.subject))}</div>` : ''}
-            <div class="cell-row-teacher" style="font-size:0.6rem;color:var(--text-muted)">${esc(roomLabel)}</div>
+            <div class="cell-row-teacher" style="font-size:0.6rem;color:var(--text-muted)">${esc(entry.teacherAbbr || '')} ${esc(roomLabel)}</div>
           </div>`;
         });
         tbody += '</td>';
@@ -748,6 +783,17 @@ export function renderSchedule() {
       `<div class="view-mode-banner">${modeLabel}: <strong>${esc(filterLabel)}</strong>
         <span style="font-size:0.72rem;color:var(--text-muted);margin-left:10px">${totalLessons} godz. tygodniowo</span></div>
        <table class="schedule-table view-mode-table">${thead}${tbody}</table>`;
+
+    // Touch eventy — long-press DnD i tap-to-edit (identycznie jak w widoku sal)
+    document.getElementById('scheduleWrap').querySelectorAll('.cell-inner').forEach(el => {
+      const day  = parseInt(el.dataset.day);
+      const hour = el.dataset.hour;
+      const key  = el.dataset.key;
+      el.addEventListener('touchstart', e => touchStart(e, day, hour, key), { passive: true });
+      el.addEventListener('touchmove',  e => touchMove(e),                  { passive: false });
+      el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),   { passive: false });
+    });
+
     updateStatusBar();
     return;
   }
@@ -1240,6 +1286,9 @@ export function openEditModal(day, hour, key) {
   const selT = document.getElementById('inpTeacher');
   selT.innerHTML = buildTeacherSelectOptions(entry.teacherAbbr || '');
 
+  const selS = document.getElementById('inpSupportTeacher');
+  if (selS) selS.innerHTML = buildTeacherSelectOptions(entry.supportTeacherAbbr || '');
+
   const _initClasses = entry.classes && entry.classes.length
     ? entry.classes
     : (entry.className || defaultCls) ? [entry.className || defaultCls] : [];
@@ -1369,11 +1418,12 @@ export function saveCellData() {
   if (!schedData[yk][_mDay])    schedData[yk][_mDay] = {};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour] = {};
   schedData[yk][_mDay][_mHour][_mKey] = {
-    teacherAbbr: teacherVal,
-    classes:     _clsList,
-    className:   _clsList[0] || '',
-    subject:     subjectVal,
-    note:        document.getElementById('inpNote').value.trim(),
+    teacherAbbr:        teacherVal,
+    supportTeacherAbbr: (document.getElementById('inpSupportTeacher')?.value || '').trim() || undefined,
+    classes:            _clsList,
+    className:          _clsList[0] || '',
+    subject:            subjectVal,
+    note:               document.getElementById('inpNote').value.trim(),
   };
   persistAll();
   closeEditModal();
