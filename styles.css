@@ -3310,8 +3310,36 @@ body.light #tutBox { background: #fff; }
   background: var(--surface);
   border-bottom: 2px solid var(--border);
 }
+.wf-room-header {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  padding: 4px 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
 .wf-col-header.wf-col-used {
   background: #e0f2fe22;
+}
+.wf-slot-header {
+  text-align: center;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  padding: 2px 4px;
+  border-bottom: 2px solid var(--border);
+  min-width: 72px;
+}
+.wf-slot-empty {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.wf-cell-add .cell-inner,
+.wf-cell-add .wf-cell-inner {
+  opacity: 0.4;
+  border: 1px dashed var(--border) !important;
+  background: transparent !important;
 }
 .wf-day-name {
   font-size: 0.6rem;

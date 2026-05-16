@@ -215,15 +215,74 @@ const SCROLL_THRESHOLD = 8;  // px — powyżej tej wartości traktuj ruch jako 
 const LONG_PRESS_MS = 500;
 const MIN_TAP_MS    = 120;  // krótsze dotknięcie = przypadkowe muśnięcie, ignoruj
 
-export function dndStart(e, day, hour, key) {
+
+// Sprawdza czy kolumna należy do budynku multi (sportowego)
+function _isMultiCol(col) {
+  const bi = col?.floor?.buildingIdx ?? 0;
+  return !!((appState.buildings || [])[bi]?.multi);
+}
+
+// Zwraca wpis dla zwykłej sali lub slot z tablicy multi
+// slotIdx: undefined → zwykła sala, liczba → slot multi
+function _getEntry(dayData, hour, key, slotIdx) {
+  const raw = dayData?.[hour]?.[key];
+  if (Array.isArray(raw)) return (slotIdx !== undefined ? raw[slotIdx] : raw[0]) || {};
+  return raw || {};
+}
+
+// Ustawia wpis — dla multi nadpisuje konkretny slot lub dodaje nowy
+function _setEntry(yk, day, hour, key, entry, slotIdx) {
+  if (!schedData[yk])             schedData[yk] = {};
+  if (!schedData[yk][day])        schedData[yk][day] = {};
+  if (!schedData[yk][day][hour])  schedData[yk][day][hour] = {};
+  const cur = schedData[yk][day][hour][key];
+  if (Array.isArray(cur)) {
+    if (slotIdx !== undefined && slotIdx < cur.length) {
+      cur[slotIdx] = entry;
+    } else {
+      cur.push(entry);
+    }
+  } else {
+    schedData[yk][day][hour][key] = entry;
+  }
+}
+
+// Usuwa slot z tablicy multi lub czyści obiekt zwykłej sali
+function _clearEntry(yk, day, hour, key, slotIdx) {
+  if (!schedData[yk]?.[day]?.[hour]) return;
+  const cur = schedData[yk][day][hour][key];
+  if (Array.isArray(cur)) {
+    if (slotIdx !== undefined) {
+      cur.splice(slotIdx, 1);
+    }
+  } else {
+    schedData[yk][day][hour][key] = {};
+  }
+}
+
+// Zwraca liczbę slotów w sali multi dla danego dnia (max po wszystkich godzinach)
+// używane do wyznaczenia stałej liczby kolumn na cały dzień
+function _multiSlotCount(dayData, hours, key) {
+  let max = 0;
+  hours.forEach(h => {
+    const raw = dayData?.[h]?.[key];
+    if (Array.isArray(raw)) max = Math.max(max, raw.filter(s => s && (s.teacherAbbr || s.subject || (s.classes||[]).length)).length);
+    else if (raw && (raw.teacherAbbr || raw.subject || (raw.classes||[]).length)) max = Math.max(max, 1);
+  });
+  return max;
+}
+let _dndSrcSlot = undefined; // slotIdx dla sal multi
+
+export function dndStart(e, day, hour, key, slotIdx) {
   _dndSrcDay  = day;
   _dndSrcHour = hour;
   _dndSrcKey  = key;
+  _dndSrcSlot = (slotIdx !== undefined && slotIdx !== null) ? Number(slotIdx) : undefined;
   setInternalDndActive(true);  // blokuj overlay importu JSON
   e.dataTransfer.effectAllowed = 'move';
   e.dataTransfer.setData('text/plain', day + '|' + hour + '|' + key);
 
-  const entry    = schedData[appState.yearKey]?.[day]?.[hour]?.[key] || {};
+  const entry = _getEntry(schedData[appState.yearKey]?.[day] || {}, hour, key, _dndSrcSlot);
   const clsLabel = (entry.classes && entry.classes.length
     ? entry.classes
     : entry.className ? [entry.className] : []).join(', ');
@@ -267,24 +326,25 @@ export function dndLeave(e) {
 }
 
 // Wspólna logika przenoszenia (używana przez DnD myszy i touch long-press)
-function _doDndMove(dstDay, dstHour, dstKey) {
-  if (_dndSrcDay === dstDay && _dndSrcHour === dstHour && _dndSrcKey === dstKey) return;
+function _doDndMove(dstDay, dstHour, dstKey, dstSlot) {
+  const sameCell = _dndSrcDay === dstDay && _dndSrcHour === dstHour &&
+                   _dndSrcKey === dstKey && _dndSrcSlot === dstSlot;
+  if (sameCell) return;
 
   const yk       = appState.yearKey;
-  const srcEntry = schedData[yk]?.[_dndSrcDay]?.[_dndSrcHour]?.[_dndSrcKey];
+  const srcEntry = _getEntry(schedData[yk]?.[_dndSrcDay] || {}, _dndSrcHour, _dndSrcKey, _dndSrcSlot);
   if (!srcEntry || (!srcEntry.teacherAbbr && !(srcEntry.classes || []).length && !srcEntry.className)) return;
 
-  const dstEntry  = schedData[yk]?.[dstDay]?.[dstHour]?.[dstKey];
+  const dstRaw    = schedData[yk]?.[dstDay]?.[dstHour]?.[dstKey];
+  const dstEntry  = Array.isArray(dstRaw)
+    ? (dstSlot !== undefined ? dstRaw[dstSlot] : undefined)
+    : dstRaw;
   const dstFilled = dstEntry && (dstEntry.teacherAbbr || (dstEntry.classes || []).length || dstEntry.className);
 
   function _doDrop() {
     undoPush(`DnD → ${dstKey}, godz. ${dstHour}, ${appState.days[dstDay]}`);
-    if (!schedData[yk][dstDay])             schedData[yk][dstDay] = {};
-    if (!schedData[yk][dstDay][dstHour])    schedData[yk][dstDay][dstHour] = {};
-    schedData[yk][dstDay][dstHour][dstKey] = structuredClone(srcEntry);
-    if (schedData[yk][_dndSrcDay]?.[_dndSrcHour]) {
-      schedData[yk][_dndSrcDay][_dndSrcHour][_dndSrcKey] = {};
-    }
+    _setEntry(yk, dstDay, dstHour, dstKey, structuredClone(srcEntry), dstSlot);
+    _clearEntry(yk, _dndSrcDay, _dndSrcHour, _dndSrcKey, _dndSrcSlot);
     persistAll();
     renderSchedule();
     sbSet('✓ Przeniesiono zajęcia');
@@ -302,10 +362,11 @@ function _doDndMove(dstDay, dstHour, dstKey) {
   }
 }
 
-export function dndDrop(e, day, hour, key) {
+export function dndDrop(e, day, hour, key, slotIdx) {
   e.preventDefault();
   e.currentTarget.classList.remove('dnd-over', 'dnd-over-filled');
-  _doDndMove(day, hour, key);
+  const si = (slotIdx !== undefined && slotIdx !== null) ? Number(slotIdx) : undefined;
+  _doDndMove(day, hour, key, si);
 }
 
 // ================================================================
@@ -634,6 +695,9 @@ export function touchEnd(e, day, hour, key) {
 
 // ================================================================
 //  WIDOK WF — obiekty sportowe / wieloosobowe
+//  Model danych: schedData[yk][day][hour][key] = Array<slot>
+//  Każdy slot = { teacherAbbr, classes[], subject, note, ... }
+//  Liczba kolumn = max wypełnionych slotów w danym dniu + 1 pusta
 // ================================================================
 
 function renderWFView() {
@@ -643,8 +707,8 @@ function renderWFView() {
   const allCols   = flattenColumns(floors);
   const di        = currentDay;
   const dayData   = schedData[appState.yearKey]?.[di] || {};
+  const yk        = appState.yearKey;
 
-  // Budynki oznaczone jako multi (sportowe)
   const multiBldIdxs = buildings
     .map((b, bi) => b.multi ? bi : null)
     .filter(bi => bi !== null);
@@ -655,19 +719,13 @@ function renderWFView() {
     return;
   }
 
-  // Kolumny tylko z budynków sportowych
   const wfCols = allCols.filter(col => buildings[col.floor?.buildingIdx ?? 0]?.multi);
-
-  // Grupuj kolumny per budynek
   const byBuilding = {};
   wfCols.forEach(col => {
     const bi = col.floor?.buildingIdx ?? 0;
     if (!byBuilding[bi]) byBuilding[bi] = [];
     byBuilding[bi].push(col);
   });
-
-  // Kolizje dla bieżącego dnia
-  const collisions = detectCollisions(dayData, hours, wfCols);
 
   let html = '';
 
@@ -677,6 +735,27 @@ function renderWFView() {
     const color   = BUILDING_COLORS[bi % BUILDING_COLORS.length];
     const bldName = esc(bld.name || ('Budynek ' + (bi + 1)));
 
+    // Dla każdej sali: ile slotów (kolumn) pokazać w tym dniu
+    // = max wypełnionych slotów po wszystkich godzinach + 1 pusta
+    const slotCounts = {};
+    bldCols.forEach(col => {
+      const key = colKey(col);
+      // Migracja on-the-fly: stary obiekt → tablica
+      hours.forEach(h => {
+        const raw = dayData[h]?.[key];
+        if (raw && !Array.isArray(raw) && (raw.teacherAbbr || raw.subject || (raw.classes||[]).length)) {
+          if (!schedData[yk])              schedData[yk] = {};
+          if (!schedData[yk][di])          schedData[yk][di] = {};
+          if (!schedData[yk][di][h])       schedData[yk][di][h] = {};
+          schedData[yk][di][h][key] = [raw];
+        }
+      });
+      slotCounts[key] = _multiSlotCount(dayData, hours, key) + 1; // +1 pusta
+    });
+
+    // Kolizje dla bieżącego dnia — przekazujemy spłaszczone sloty
+    const collisions = detectCollisions(dayData, hours, wfCols);
+
     html += `<div class="wf-building-block">
       <div class="wf-building-header" style="border-left:4px solid ${color};color:${color}">
         🏃 ${bldName}
@@ -684,81 +763,105 @@ function renderWFView() {
       </div>
       <div class="wf-scroll-wrap">
       <table class="schedule-table wf-table">
-        <thead><tr>
-          <th class="time-th wf-time-th">Godz.</th>`;
+        <thead>`;
 
-    // Nagłówek — jedna kolumna na salę
+    // Wiersz 1 nagłówka: nazwa sali z colspan = liczba slotów
+    html += '<tr><th class="time-th wf-time-th" rowspan="2">Godz.</th>';
     bldCols.forEach(col => {
       const key       = colKey(col);
       const roomLabel = roomLabelShort(col.floorIdx, col.segIdx, col.room.num || '?');
-      const roomSub   = col.room.sub
-        ? `<span class="wf-room-sub">${esc(col.room.sub)}</span>` : '';
-      const usedHours = hours.filter(h => {
-        const e = dayData[h]?.[key] || {};
-        return !!(e.teacherAbbr || e.className || (e.classes && e.classes.length));
-      }).length;
-      html += `<th class="wf-col-header ${usedHours > 0 ? 'wf-col-used' : ''}">
+      const roomSub   = col.room.sub ? `<span class="wf-room-sub">${esc(col.room.sub)}</span>` : '';
+      const sc        = slotCounts[key];
+      html += `<th class="wf-col-header wf-room-header" colspan="${sc}">
         <div class="wf-room-label">${esc(roomLabel)}</div>${roomSub}
       </th>`;
     });
+    html += '</tr>';
 
-    html += `</tr></thead><tbody>`;
+    // Wiersz 2 nagłówka: numery slotów pod każdą salą
+    html += '<tr>';
+    bldCols.forEach(col => {
+      const key = colKey(col);
+      const sc  = slotCounts[key];
+      for (let si = 0; si < sc; si++) {
+        const isLast = si === sc - 1;
+        html += `<th class="wf-slot-header ${isLast ? 'wf-slot-empty' : ''}">
+          ${isLast ? '＋' : (si + 1)}
+        </th>`;
+      }
+    });
+    html += '</tr></thead><tbody>';
 
     // Wiersze godzin
     hours.forEach(h => {
       html += `<tr><td class="time-cell wf-time-cell">${formatTimeCell(h)}</td>`;
 
       bldCols.forEach(col => {
-        const key    = colKey(col);
-        const entry  = dayData[h]?.[key] || {};
-        const filled = !!(entry.teacherAbbr || entry.subject || entry.className ||
-                          (entry.classes && entry.classes.length));
-        const cellId  = h + '|' + key;
-        const cellErr = collisions[cellId] || [];
-        const hasErr  = cellErr.length > 0;
-        const errTip  = cellErr.join('\n');
+        const key  = colKey(col);
+        const sc   = slotCounts[key];
+        const raw  = dayData[h]?.[key];
+        const slots = Array.isArray(raw) ? raw : (raw && (raw.teacherAbbr || raw.subject || (raw.classes||[]).length) ? [raw] : []);
 
-        const clsStr = filled
-          ? mergeClassNames(
-              entry.classes && entry.classes.length
-                ? entry.classes
-                : entry.className ? [entry.className] : []
-            ).map(cls => `<span class="cell-abbr cell-abbr-cls">${esc(cls)}</span>`).join('')
-          : '';
+        for (let si = 0; si < sc; si++) {
+          const entry   = slots[si] || null;
+          const filled  = !!(entry && (entry.teacherAbbr || entry.subject || (entry.classes||[]).length));
+          const isAddCol = si === sc - 1; // ostatni slot = kolumna dodawania
+          const cellId  = h + '|' + key;
+          const cellErr = collisions[cellId] || [];
+          const hasErr  = filled && cellErr.length > 0;
+          const errTip  = cellErr.join('\n');
 
-        html += `<td class="wf-cell-td">
-          <div class="cell-inner wf-cell-inner ${filled ? 'filled' : ''} ${hasErr ? 'collision' : ''}"
-            data-day="${di}" data-hour="${esc(String(h))}" data-key="${esc(key)}"
-            onclick="openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
-            ${filled ? `draggable="true"
-            ondragstart="dndStart(event,${di},'${esc(String(h))}','${esc(key)}')"
-            ondragend="dndEnd(event)"` : ''}
-            ondragover="dndOver(event)"
-            ondragleave="dndLeave(event)"
-            ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(key)}')"
-            ${hasErr ? `data-collision-tip="${esc(errTip)}"` : ''}>
-            ${filled
-              ? `${hasErr ? '<span class="cell-collision-icon">⚠</span>' : ''}
-                 <div class="cell-row-cls">${clsStr}</div>
-                 ${entry.subject ? `<div class="cell-row-subject">${esc(subjectAbbr(entry.subject))}</div>` : ''}
-                 ${entry.teacherAbbr ? `<div class="cell-row-teacher"><span class="cell-abbr">${esc(entry.teacherAbbr)}</span></div>` : ''}`
-              : '<div class="cell-plus">＋</div>'}
-          </div></td>`;
+          const clsStr = filled
+            ? mergeClassNames(
+                entry.classes?.length ? entry.classes : (entry.className ? [entry.className] : [])
+              ).map(cls => `<span class="cell-abbr cell-abbr-cls">${esc(cls)}</span>`).join('')
+            : '';
+
+          if (isAddCol) {
+            // Kolumna ＋ — zawsze pusta, tylko do dodawania nowego slotu
+            html += `<td class="wf-cell-td wf-cell-add">
+              <div class="cell-inner wf-cell-inner"
+                data-day="${di}" data-hour="${esc(String(h))}" data-key="${esc(key)}" data-slot="${sc - 1}"
+                onclick="openEditModal(${di},'${esc(String(h))}','${esc(key)}',${sc - 1})"
+                ondragover="dndOver(event)" ondragleave="dndLeave(event)"
+                ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(key)}',${sc - 1})">
+                <div class="cell-plus">＋</div>
+              </div></td>`;
+          } else {
+            html += `<td class="wf-cell-td">
+              <div class="cell-inner wf-cell-inner ${filled ? 'filled' : ''} ${hasErr ? 'collision' : ''}"
+                data-day="${di}" data-hour="${esc(String(h))}" data-key="${esc(key)}" data-slot="${si}"
+                onclick="openEditModal(${di},'${esc(String(h))}','${esc(key)}',${si})"
+                ${filled ? `draggable="true"
+                ondragstart="dndStart(event,${di},'${esc(String(h))}','${esc(key)}',${si})"
+                ondragend="dndEnd(event)"` : ''}
+                ondragover="dndOver(event)" ondragleave="dndLeave(event)"
+                ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(key)}',${si})"
+                ${hasErr ? `data-collision-tip="${esc(errTip)}"` : ''}>
+                ${filled
+                  ? `${hasErr ? '<span class="cell-collision-icon">⚠</span>' : ''}
+                     <div class="cell-row-cls">${clsStr}</div>
+                     ${entry.subject ? `<div class="cell-row-subject">${esc(subjectAbbr(entry.subject))}</div>` : ''}
+                     ${entry.teacherAbbr ? `<div class="cell-row-teacher"><span class="cell-abbr">${esc(entry.teacherAbbr)}</span></div>` : ''}`
+                  : '<div class="cell-plus" style="opacity:.3">·</div>'}
+              </div></td>`;
+          }
+        }
       });
 
-      html += `</tr>`;
+      html += '</tr>';
     });
 
-    html += `</tbody></table></div></div>`;
+    html += '</tbody></table></div></div>';
   });
 
   document.getElementById('scheduleWrap').innerHTML = html;
 
-  // Touch eventy — identycznie jak widok sal
   document.getElementById('scheduleWrap').querySelectorAll('.cell-inner').forEach(el => {
     const day  = parseInt(el.dataset.day);
     const hour = el.dataset.hour;
     const key  = el.dataset.key;
+    const slot = el.dataset.slot !== undefined ? Number(el.dataset.slot) : undefined;
     el.addEventListener('touchstart', e => touchStart(e, day, hour, key), { passive: true });
     el.addEventListener('touchmove',  e => touchMove(e),                  { passive: false });
     el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),   { passive: false });
@@ -1268,8 +1371,10 @@ function _hideSubjectDropdown() {
 //  EDIT MODAL
 // ================================================================
 
-export function openEditModal(day, hour, key) {
+export function openEditModal(day, hour, key, slotIdx) {
   setMDay(day); setMHour(hour); setMKey(key);
+  // Dla sal multi zapamiętujemy indeks slotu w module-level zmiennej
+  window._mSlotIdx = (slotIdx !== undefined && slotIdx !== null) ? Number(slotIdx) : undefined;
   document.getElementById('inpTeacher')?.classList.remove('input-error');
   document.getElementById('inpSubject')?.classList.remove('input-error');
   const cols  = flattenColumns(appState.floors);
@@ -1304,10 +1409,14 @@ export function openEditModal(day, hour, key) {
       document.getElementById('modalSub').textContent = newKey
         ? `${newBld ? newBld.name + ' · ' : ''}${newCol?.floor.name || ''} › ${newCol?.seg.name || ''} · ${appState.days[day]}`
         : appState.days[day];
-      // Gdy sala wybrana po raz pierwszy — wczytaj istniejący wpis z tej sali
+      // Gdy sala wybrana — wczytaj istniejący wpis (dla zwykłych sal)
+      // Dla sal multi formularz pozostaje pusty — nowa klasa zostanie dopisana
       if (newKey) {
         const existingEntry = schedData[appState.yearKey]?.[day]?.[hour]?.[newKey] || {};
-        if (existingEntry.teacherAbbr || existingEntry.subject) {
+        const newCol2   = cols.find(c => colKey(c) === newKey);
+        const buildings2 = appState.buildings || [];
+        const isNewMulti = !!(newCol2 && buildings2[newCol2.floor?.buildingIdx ?? 0]?.multi);
+        if (!isNewMulti && (existingEntry.teacherAbbr || existingEntry.subject)) {
           if (_viewMode !== 'teacher') {
             const selT2 = document.getElementById('inpTeacher');
             if (selT2) selT2.value = existingEntry.teacherAbbr || '';
@@ -1325,14 +1434,16 @@ export function openEditModal(day, hour, key) {
     };
   }
 
-  // Tytuł i dane — gdy key pusty (nowa lekcja bez wybranej sali) formularz czysty
+  // Tytuł i dane — gdy key pusty formularz czysty; dla multi czytaj z tablicy
+  const _si = window._mSlotIdx;
   const entry = key
-    ? schedData[appState.yearKey]?.[day]?.[hour]?.[key] || {}
+    ? _getEntry(schedData[appState.yearKey]?.[day] || {}, hour, key, _si)
     : {};
   const defaultCls = key ? (appState.assignments[day] || {})[key] || '' : '';
 
+  const slotLabel = (_isMultiCol(col) && _si !== undefined) ? ` · gr. ${_si + 1}` : '';
   document.getElementById('modalTitle').textContent =
-    key ? `Sala ${col?.room.num || '?'} — Godz. ${hour}` : `Godz. ${hour}`;
+    key ? `Sala ${col?.room.num || col?.room.sub || '?'} — Godz. ${hour}${slotLabel}` : `Godz. ${hour}`;
   document.getElementById('modalSub').textContent =
     `${bld ? bld.name + ' · ' : ''}${col?.floor.name || ''} › ${col?.seg.name || ''} · ${appState.days[day]}`;
 
@@ -1501,7 +1612,9 @@ export function saveCellData() {
   if (originalKey && originalKey !== _mKey && schedData[yk][_mDay][_mHour][originalKey]) {
     schedData[yk][_mDay][_mHour][originalKey] = {};
   }
-  schedData[yk][_mDay][_mHour][_mKey] = {
+
+  // Nowy wpis — zapisz do właściwego slotu (multi) lub zastąp (zwykła sala)
+  const _saveEntry = {
     teacherAbbr:        teacherVal,
     supportTeacherAbbr: (document.getElementById('inpSupportTeacher')?.value || '').trim() || undefined,
     classes:            _clsList,
@@ -1509,6 +1622,29 @@ export function saveCellData() {
     subject:            subjectVal,
     note:               document.getElementById('inpNote').value.trim(),
   };
+
+  const allColsSave   = flattenColumns(appState.floors);
+  const targetColSave = allColsSave.find(c => colKey(c) === _mKey);
+  const isMultiSave   = _isMultiCol(targetColSave);
+  const _si           = window._mSlotIdx;
+
+  if (isMultiSave) {
+    // Upewnij się że wartość to tablica
+    if (!schedData[yk][_mDay][_mHour][_mKey] ||
+        !Array.isArray(schedData[yk][_mDay][_mHour][_mKey])) {
+      const cur = schedData[yk][_mDay][_mHour][_mKey];
+      schedData[yk][_mDay][_mHour][_mKey] =
+        (cur && (cur.teacherAbbr || cur.subject || (cur.classes||[]).length)) ? [cur] : [];
+    }
+    const arr = schedData[yk][_mDay][_mHour][_mKey];
+    if (_si !== undefined && _si < arr.length) {
+      arr[_si] = _saveEntry;          // edycja istniejącego slotu
+    } else {
+      arr.push(_saveEntry);           // nowy slot
+    }
+  } else {
+    schedData[yk][_mDay][_mHour][_mKey] = _saveEntry;
+  }
   persistAll();
   closeEditModal();
   renderSchedule();
@@ -1517,9 +1653,9 @@ export function saveCellData() {
 
 export function clearCellData() {
   undoPush(`Wyczyszczenie ${_mKey}, godz. ${_mHour}, ${appState.days[_mDay]}`);
-  if (schedData[appState.yearKey]?.[_mDay]?.[_mHour]) {
-    schedData[appState.yearKey][_mDay][_mHour][_mKey] = {};
-  }
+  const yk  = appState.yearKey;
+  const _si = window._mSlotIdx;
+  _clearEntry(yk, _mDay, _mHour, _mKey, _si);
   persistAll();
   closeEditModal();
   renderSchedule();

@@ -32,7 +32,7 @@ function _isDemoMode()     { return window.isDemoMode?.() || false; }
 // ================================================================
 //  WERSJA PLIKU I MIGRACJE
 // ================================================================
-export const FILE_VERSION = 2;
+export const FILE_VERSION = 3;
 
 const _FILE_MIGRATIONS = {
   // v1 → v2: wprowadzono pole homerooms w appState
@@ -41,6 +41,49 @@ const _FILE_MIGRATIONS = {
       data.appState.homerooms = {};
     }
     data._version = 2;
+    return data;
+  },
+  // v2 → v3: sale multi (budynki z flagą multi) zmieniają model danych
+  // schedData[yk][day][hour][key] = obiekt → tablica obiektów (sloty)
+  2: function(data) {
+    const buildings = (data.appState && data.appState.buildings) || [];
+    const multiIdxs = new Set(
+      buildings.map((b, bi) => b.multi ? bi : null).filter(bi => bi !== null)
+    );
+    if (multiIdxs.size > 0 && data.schedData) {
+      Object.keys(data.schedData).forEach(function(yk) {
+        const ykData = data.schedData[yk];
+        Object.keys(ykData).forEach(function(day) {
+          Object.keys(ykData[day]).forEach(function(hour) {
+            Object.keys(ykData[day][hour]).forEach(function(key) {
+              const val = ykData[day][hour][key];
+              // Jeśli to obiekt z danymi (nie tablica, nie pusty) — owij w tablicę
+              if (val && !Array.isArray(val) &&
+                  (val.teacherAbbr || val.subject || (val.classes && val.classes.length))) {
+                // Sprawdź czy klucz należy do sali multi
+                // Klucz ma format "floorIdx|segIdx|roomIdx" — musimy znaleźć budynek
+                const floors = (data.appState && data.appState.floors) || [];
+                let isMigMulti = false;
+                floors.forEach(function(floor) {
+                  if (multiIdxs.has(floor.buildingIdx)) {
+                    (floor.segments || []).forEach(function(seg, si) {
+                      (seg.rooms || []).forEach(function(room, ri) {
+                        const fi = floors.indexOf(floor);
+                        if (fi + '|' + si + '|' + ri === key) isMigMulti = true;
+                      });
+                    });
+                  }
+                });
+                if (isMigMulti) {
+                  ykData[day][hour][key] = [val];
+                }
+              }
+            });
+          });
+        });
+      });
+    }
+    data._version = 3;
     return data;
   },
 };
