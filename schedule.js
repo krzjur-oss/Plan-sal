@@ -646,10 +646,12 @@ export function touchEnd(e, day, hour, key) {
 // ================================================================
 
 function renderWFView() {
-  const buildings  = appState.buildings || [];
-  const floors     = appState.floors    || [];
-  const hours      = appState.hours     || [];
-  const allCols    = flattenColumns(floors);
+  const buildings = appState.buildings || [];
+  const floors    = appState.floors    || [];
+  const hours     = appState.hours     || [];
+  const allCols   = flattenColumns(floors);
+  const di        = currentDay;
+  const dayData   = schedData[appState.yearKey]?.[di] || {};
 
   // Budynki oznaczone jako multi (sportowe)
   const multiBldIdxs = buildings
@@ -663,10 +665,7 @@ function renderWFView() {
   }
 
   // Kolumny tylko z budynków sportowych
-  const wfCols = allCols.filter(col => {
-    const bi = col.floor?.buildingIdx ?? 0;
-    return buildings[bi]?.multi;
-  });
+  const wfCols = allCols.filter(col => buildings[col.floor?.buildingIdx ?? 0]?.multi);
 
   // Grupuj kolumny per budynek
   const byBuilding = {};
@@ -676,11 +675,11 @@ function renderWFView() {
     byBuilding[bi].push(col);
   });
 
-  const DAYS = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek'];
+  // Kolizje dla bieżącego dnia
+  const collisions = detectCollisions(dayData, hours, wfCols);
 
   let html = '';
 
-  // Jeden blok na każdy budynek sportowy
   multiBldIdxs.forEach(bi => {
     const bld     = buildings[bi];
     const bldCols = byBuilding[bi] || [];
@@ -694,27 +693,22 @@ function renderWFView() {
       </div>
       <div class="wf-scroll-wrap">
       <table class="schedule-table wf-table">
-        <thead>
-          <tr>
-            <th class="time-th wf-time-th">Godz.</th>`;
+        <thead><tr>
+          <th class="time-th wf-time-th">Godz.</th>`;
 
-    // Nagłówki dni × sale
-    DAYS.forEach((dayName, di) => {
-      const dayData = schedData[appState.yearKey]?.[di] || {};
-      bldCols.forEach(col => {
-        const key       = colKey(col);
-        const roomLabel = roomLabelShort(col.floorIdx, col.segIdx, col.room.num || '?');
-        const roomSub   = col.room.sub ? `<span class="wf-room-sub">${esc(col.room.sub)}</span>` : '';
-        // Count how many entries this room has on this day
-        const usedHours = hours.filter(h => {
-          const e = dayData[h]?.[key] || {};
-          return !!(e.teacherAbbr || e.className || (e.classes && e.classes.length));
-        }).length;
-        html += `<th class="wf-col-header ${usedHours > 0 ? 'wf-col-used' : ''}">
-          <div class="wf-day-name">${dayName.slice(0,3)}</div>
-          <div class="wf-room-label">${esc(roomLabel)}</div>${roomSub}
-        </th>`;
-      });
+    // Nagłówek — jedna kolumna na salę
+    bldCols.forEach(col => {
+      const key       = colKey(col);
+      const roomLabel = roomLabelShort(col.floorIdx, col.segIdx, col.room.num || '?');
+      const roomSub   = col.room.sub
+        ? `<span class="wf-room-sub">${esc(col.room.sub)}</span>` : '';
+      const usedHours = hours.filter(h => {
+        const e = dayData[h]?.[key] || {};
+        return !!(e.teacherAbbr || e.className || (e.classes && e.classes.length));
+      }).length;
+      html += `<th class="wf-col-header ${usedHours > 0 ? 'wf-col-used' : ''}">
+        <div class="wf-room-label">${esc(roomLabel)}</div>${roomSub}
+      </th>`;
     });
 
     html += `</tr></thead><tbody>`;
@@ -723,39 +717,42 @@ function renderWFView() {
     hours.forEach(h => {
       html += `<tr><td class="time-cell wf-time-cell">${formatTimeCell(h)}</td>`;
 
-      DAYS.forEach((_, di) => {
-        const dayData = schedData[appState.yearKey]?.[di] || {};
+      bldCols.forEach(col => {
+        const key    = colKey(col);
+        const entry  = dayData[h]?.[key] || {};
+        const filled = !!(entry.teacherAbbr || entry.subject || entry.className ||
+                          (entry.classes && entry.classes.length));
+        const cellId  = h + '|' + key;
+        const cellErr = collisions[cellId] || [];
+        const hasErr  = cellErr.length > 0;
+        const errTip  = cellErr.join('\n');
 
-        bldCols.forEach(col => {
-          const key   = colKey(col);
-          const entry = dayData[h]?.[key] || {};
-          const filled = !!(entry.teacherAbbr || entry.subject || entry.className || (entry.classes && entry.classes.length));
+        const clsStr = filled
+          ? mergeClassNames(
+              entry.classes && entry.classes.length
+                ? entry.classes
+                : entry.className ? [entry.className] : []
+            ).map(cls => `<span class="cell-abbr cell-abbr-cls">${esc(cls)}</span>`).join('')
+          : '';
 
-          // Class names display
-          const clsStr = filled
-            ? mergeClassNames(
-                entry.classes && entry.classes.length
-                  ? entry.classes
-                  : entry.className ? [entry.className] : []
-              ).map(cls => `<span class="cell-abbr cell-abbr-cls">${esc(cls)}</span>`).join('')
-            : '';
-
-          html += `<td class="wf-cell-td">
-            <div class="cell-inner wf-cell-inner ${filled ? 'filled' : ''}"
-              onclick="openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
-              ${filled ? `draggable="true"
-              ondragstart="dndStart(event,${di},'${esc(String(h))}','${esc(key)}')"
-              ondragend="dndEnd(event)"` : ''}
-              ondragover="dndOver(event)"
-              ondragleave="dndLeave(event)"
-              ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(key)}')">
-              ${filled
-                ? `<div class="cell-row-cls">${clsStr}</div>
-                   ${entry.subject ? `<div class="cell-row-subject">${esc(subjectAbbr(entry.subject))}</div>` : ''}
-                   ${entry.teacherAbbr ? `<div class="cell-row-teacher"><span class="cell-abbr">${esc(entry.teacherAbbr)}</span></div>` : ''}`
-                : '<div class="cell-plus">＋</div>'}
-            </div></td>`;
-        });
+        html += `<td class="wf-cell-td">
+          <div class="cell-inner wf-cell-inner ${filled ? 'filled' : ''} ${hasErr ? 'collision' : ''}"
+            data-day="${di}" data-hour="${esc(String(h))}" data-key="${esc(key)}"
+            onclick="openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
+            ${filled ? `draggable="true"
+            ondragstart="dndStart(event,${di},'${esc(String(h))}','${esc(key)}')"
+            ondragend="dndEnd(event)"` : ''}
+            ondragover="dndOver(event)"
+            ondragleave="dndLeave(event)"
+            ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(key)}')"
+            ${hasErr ? `data-collision-tip="${esc(errTip)}"` : ''}>
+            ${filled
+              ? `${hasErr ? '<span class="cell-collision-icon">⚠</span>' : ''}
+                 <div class="cell-row-cls">${clsStr}</div>
+                 ${entry.subject ? `<div class="cell-row-subject">${esc(subjectAbbr(entry.subject))}</div>` : ''}
+                 ${entry.teacherAbbr ? `<div class="cell-row-teacher"><span class="cell-abbr">${esc(entry.teacherAbbr)}</span></div>` : ''}`
+              : '<div class="cell-plus">＋</div>'}
+          </div></td>`;
       });
 
       html += `</tr>`;
@@ -765,6 +762,16 @@ function renderWFView() {
   });
 
   document.getElementById('scheduleWrap').innerHTML = html;
+
+  // Touch eventy — identycznie jak widok sal
+  document.getElementById('scheduleWrap').querySelectorAll('.cell-inner').forEach(el => {
+    const day  = parseInt(el.dataset.day);
+    const hour = el.dataset.hour;
+    const key  = el.dataset.key;
+    el.addEventListener('touchstart', e => touchStart(e, day, hour, key), { passive: true });
+    el.addEventListener('touchmove',  e => touchMove(e),                  { passive: false });
+    el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),   { passive: false });
+  });
 }
 
 export function renderSchedule() {
