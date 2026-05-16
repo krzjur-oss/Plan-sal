@@ -1326,6 +1326,15 @@ export function openEditModal(day, hour, key) {
   const selT = document.getElementById('inpTeacher');
   selT.innerHTML = buildTeacherSelectOptions(entry.teacherAbbr || '');
 
+  // W widoku nauczyciela — pole nauczyciela ukryte, wartość = filtr widoku
+  const teacherGroup = document.getElementById('inpTeacher')?.closest('.form-group');
+  if (_viewMode === 'teacher') {
+    if (teacherGroup) teacherGroup.style.display = 'none';
+    selT.value = _viewFilter; // nauczyciel = aktualnie przeglądany
+  } else {
+    if (teacherGroup) teacherGroup.style.display = '';
+  }
+
   const selS = document.getElementById('inpSupportTeacher');
   if (selS) selS.innerHTML = buildTeacherSelectOptions(entry.supportTeacherAbbr || '');
 
@@ -1431,7 +1440,7 @@ export function mcRemoveClass(idx) {
 export function saveCellData() {
   const teacherInp = document.getElementById('inpTeacher');
   const subjectInp = document.getElementById('inpSubject');
-  const teacherVal = teacherInp.value.trim();
+  const teacherVal = (_viewMode === 'teacher' ? _viewFilter : teacherInp.value.trim()) || teacherInp.value.trim();
   const subjectVal = subjectInp.value.trim();
 
   if (!teacherVal) {
