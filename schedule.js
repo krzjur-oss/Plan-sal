@@ -475,20 +475,24 @@ export function renderViewTable(mode, filter) {
     hours.forEach(h => {
       byDayHour[di][h] = [];
       cols.forEach(col => {
-        const key   = colKey(col);
-        const entry = dayData[h]?.[key] || {};
-        const filled = !!(entry.teacherAbbr || entry.subject || entry.className || (entry.classes || []).length);
-        if (!filled) return;
-        let match;
-        if (mode === 'teacher') {
-          match = entry.teacherAbbr === filter || entry.supportTeacherAbbr === filter;
-        } else {
-          const entryCls = (entry.classes || []).length
-            ? entry.classes
-            : (entry.className ? [entry.className] : []);
-          match = entryCls.some(cls => classAbbrSet.has(cls));
-        }
-        if (match) byDayHour[di][h].push({col, key, entry});
+        const key = colKey(col);
+        const raw = dayData[h]?.[key];
+        // Obsługa nowego modelu: sala multi = tablica slotów
+        const slots = Array.isArray(raw)
+          ? raw.filter(s => s && (s.teacherAbbr || s.subject || s.className || (s.classes||[]).length))
+          : (raw && (raw.teacherAbbr || raw.subject || raw.className || (raw.classes||[]).length) ? [raw] : []);
+        slots.forEach(entry => {
+          let match;
+          if (mode === 'teacher') {
+            match = entry.teacherAbbr === filter || entry.supportTeacherAbbr === filter;
+          } else {
+            const entryCls = (entry.classes || []).length
+              ? entry.classes
+              : (entry.className ? [entry.className] : []);
+            match = entryCls.some(cls => classAbbrSet.has(cls));
+          }
+          if (match) byDayHour[di][h].push({col, key, entry});
+        });
       });
     });
   });
@@ -706,8 +710,9 @@ function renderWFView() {
   const hours     = appState.hours     || [];
   const allCols   = flattenColumns(floors);
   const di        = currentDay;
-  const dayData   = schedData[appState.yearKey]?.[di] || {};
   const yk        = appState.yearKey;
+  // getDayData() jako getter — zawsze aktualna referencja po migracjach on-the-fly
+  const getDayData = () => schedData[yk]?.[di] || {};
 
   const multiBldIdxs = buildings
     .map((b, bi) => b.multi ? bi : null)
@@ -742,7 +747,7 @@ function renderWFView() {
       const key = colKey(col);
       // Migracja on-the-fly: stary obiekt → tablica
       hours.forEach(h => {
-        const raw = dayData[h]?.[key];
+        const raw = getDayData()[h]?.[key];
         if (raw && !Array.isArray(raw) && (raw.teacherAbbr || raw.subject || (raw.classes||[]).length)) {
           if (!schedData[yk])              schedData[yk] = {};
           if (!schedData[yk][di])          schedData[yk][di] = {};
@@ -750,11 +755,11 @@ function renderWFView() {
           schedData[yk][di][h][key] = [raw];
         }
       });
-      slotCounts[key] = _multiSlotCount(dayData, hours, key) + 1; // +1 pusta
+      slotCounts[key] = _multiSlotCount(getDayData(), hours, key) + 1; // +1 pusta
     });
 
     // Kolizje dla bieżącego dnia — przekazujemy spłaszczone sloty
-    const collisions = detectCollisions(dayData, hours, wfCols);
+    const collisions = detectCollisions(getDayData(), hours, wfCols);
 
     html += `<div class="wf-building-block">
       <div class="wf-building-header" style="border-left:4px solid ${color};color:${color}">
@@ -799,7 +804,7 @@ function renderWFView() {
       bldCols.forEach(col => {
         const key  = colKey(col);
         const sc   = slotCounts[key];
-        const raw  = dayData[h]?.[key];
+        const raw  = getDayData()[h]?.[key];
         const slots = Array.isArray(raw) ? raw : (raw && (raw.teacherAbbr || raw.subject || (raw.classes||[]).length) ? [raw] : []);
 
         for (let si = 0; si < sc; si++) {
