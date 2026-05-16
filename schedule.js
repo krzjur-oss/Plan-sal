@@ -1291,10 +1291,11 @@ export function openEditModal(day, hour, key) {
     let opts = '';
     cols.forEach(c => {
       if (buildings[c.floor?.buildingIdx ?? 0]?.multi) return;
-      const ck    = colKey(c);
+      const ck      = colKey(c);
+      const abbr    = _roomLabel(c.floorIdx, c.segIdx, c.room.num || c.room.sub || '?');
       const bldName = buildings[c.floor?.buildingIdx ?? 0]?.name || '';
-      const label = `${c.room.num || c.room.sub || '?'} — ${bldName ? bldName + ' · ' : ''}${c.floor.name || ''} › ${c.seg.name || ''}`;
-      opts += `<option value="${esc(ck)}"${ck === key ? ' selected' : ''}>${esc(label)}</option>`;
+      const full    = `${bldName ? bldName + ' · ' : ''}${c.floor.name || ''} › ${c.seg.name || ''} — sala ${c.room.num || c.room.sub || '?'}`;
+      opts += `<option value="${esc(ck)}"${ck === key ? ' selected' : ''}>${esc(abbr)}  (${esc(full)})</option>`;
     });
     inpRoom.innerHTML = opts;
     inpRoom.dataset.originalKey = key; // zapamiętaj oryginalną salę do wykrycia zmiany
