@@ -1346,7 +1346,7 @@ export function openEditModal(day, hour, key) {
 
   document.getElementById('inpSubject').value = entry.subject || '';
   document.getElementById('inpNote').value    = entry.note    || '';
-  renderMcSelect();
+  renderMcSelect(_viewMode === 'class' ? _viewFilter : undefined);
   document.getElementById('editModal').classList.add('show');
   { const _m = document.getElementById('editModal'); if (_m) { const _fi = _m.querySelector('select,input,button'); if (_fi) setTimeout(() => _fi.focus({ preventScroll: true }), 50); } }
   initSubjectAutocomplete();
@@ -1369,14 +1369,22 @@ export function closeEditModal() {
 //  ZAJĘCIA MIĘDZYODDZIAŁOWE
 // ================================================================
 
-export function renderMcSelect() {
+export function renderMcSelect(filterClass) {
   const wrap = document.getElementById('mcSelectWrap');
   if (!wrap) return;
   const classes = appState?.classes || [];
   if (!classes.length) { wrap.innerHTML = ''; return; }
-  const sortedClasses = classes.slice().sort((a, b) =>
+  let sortedClasses = classes.slice().sort((a, b) =>
     (a.name || '').localeCompare(b.name || '', 'pl', {numeric: true, sensitivity: 'base'})
   );
+  // W widoku klasy — pokazuj tylko tę klasę i jej grupy
+  if (filterClass) {
+    sortedClasses = sortedClasses.filter(cl =>
+      (cl.abbr || cl.name) === filterClass ||
+      cl.name === filterClass ||
+      cl.baseClass === filterClass
+    );
+  }
   const opts = sortedClasses.map(cl => {
     const val   = cl.abbr || cl.name;
     const label = (cl.group && cl.group.toLowerCase() !== 'cała klasa')
@@ -1423,7 +1431,7 @@ export function mcAddClass() {
   }
   setSelectedClasses([..._selectedClasses, val]);
   renderMultiClassList(_selectedClasses);
-  renderMcSelect();
+  renderMcSelect(_viewMode === 'class' ? _viewFilter : undefined);
 }
 
 export function mcRemoveClass(idx) {
