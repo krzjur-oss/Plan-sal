@@ -7,7 +7,7 @@
 //              wizardSaveDraft, wizardClearDraft, wizardCheckDraft,
 //              wizardCollectDraft, startWizardAutosave,
 //              stopWizardAutosave, openEditWizard, exitDemo,
-//              autoClassAbbr, CLASS_ABBR_IGNORE, DRAFT_KEY
+//              autoClassAbbr, CLASS_ABBR_IGNORE, DRAFT_KEY (re-eksport z state.js)
 // ================================================================
 
 import {
@@ -372,7 +372,7 @@ export function openEditWizard() {
 // ================================================================
 //  KREATOR — AUTOSAVE SZKICU
 // ================================================================
-export const DRAFT_KEY = 'sp_wiz_draft';
+export { DRAFT_KEY } from './state.js'; // re-eksport — stała przeniesiona do state.js (Etap 9)
 let _draftTimer       = null;
 let _autosaveInterval = null;
 

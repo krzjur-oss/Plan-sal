@@ -7,6 +7,13 @@
 // ── Ciasteczka / RODO ──────────────────────────────────────────
 export const COOKIE_KEY = 'sp_cookies_accepted';
 
+// ── Klucze localStorage ────────────────────────────────────────
+export const LS_SCHED   = 'sp_sched';
+export const LS_VFDATES = 'sp_vfdates';
+export const LS_ARCHIVE = 'sp_archive';
+export const LS_ACTIVE  = 'sp_active';
+export const DRAFT_KEY  = 'sp_wiz_draft';
+
 // ── Dane aplikacji ─────────────────────────────────────────────
 export const DAYS_DEFAULT     = ['Poniedziałek','Wtorek','Środa','Czwartek','Piątek'];
 export const FLOOR_COLORS     = ['#f59e0b','#3b82f6','#10b981','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];

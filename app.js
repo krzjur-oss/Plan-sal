@@ -1,7 +1,8 @@
 // ================================================================
-//  app.js — Etap 8: cienka warstwa inicjalizacyjna
-//  Importuje wszystkie moduły i eksponuje funkcje na window
-//  tak, by inline handlery w index.html nadal działały.
+//  app.js — cienka warstwa inicjalizacyjna
+//  Importuje wszystkie moduły, eksponuje funkcje na window
+//  (dla inline onclick= w index.html) oraz rejestruje callbacki
+//  Dependency Injection dla modułów niższego poziomu.
 // ================================================================
 
 import {
@@ -9,6 +10,7 @@ import {
   toggleAppHelp, closeAppHelp,
   wpUpdate,
   undoAction, redoAction,
+  initUndoCallbacks,
 } from './utils.js';
 
 import { scrollToFirstCollision } from './collisions.js';
@@ -186,3 +188,11 @@ Object.assign(window, {
   spHourAdd, spHourSetTime, spHourSetLabel, spHourDelete, spHoursSave,
   spSetBuildingMulti,
 });
+
+// ================================================================
+//  DEPENDENCY INJECTION — Etap 10
+//  Rejestracja callbacków dla modułów, które nie mogą importować
+//  funkcji bezpośrednio ze względu na kierunek łańcucha zależności.
+// ================================================================
+
+initUndoCallbacks({ persistAll, switchDay, renderSchedule, updateStatusBar, sbSet });

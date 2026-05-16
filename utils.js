@@ -2,7 +2,7 @@
 //  UTILS.JS — funkcje pomocnicze bez zależności zewnętrznych
 //  Zależy od: state.js
 //  Eksportuje: funkcje cookie, pomoc, kreator-sidebar, undo/redo,
-//              generator skrótów
+//              generator skrótów, initUndoCallbacks
 // ================================================================
 
 import {
@@ -14,16 +14,30 @@ import {
   currentDay,
 } from './state.js';
 
-// ── Zewnętrzne funkcje (z innych modułów — zostaną podmienione
-//    przez app.js po pełnym załadowaniu wszystkich modułów) ─────
-// Używamy globalnych referencji żeby uniknąć cyklicznych importów
-// na etapie refaktoryzacji. Po zakończeniu wszystkich etapów
-// zastąpione właściwymi importami.
-function _persistAll()      { if (typeof persistAll      === 'function') persistAll(); }
-function _switchDay(d)      { if (typeof switchDay       === 'function') switchDay(d); }
-function _renderSchedule()  { if (typeof renderSchedule  === 'function') renderSchedule(); }
-function _updateStatusBar() { if (typeof updateStatusBar === 'function') updateStatusBar(); }
-function _sbSet(msg)        { if (typeof sbSet           === 'function') sbSet(msg); }
+// ── Dependency Injection — wstrzykiwane przez app.js po załadowaniu
+//    wszystkich modułów (Etap 10). Domyślne no-ops zapobiegają błędom
+//    przy ewentualnym wywołaniu przed initUndoCallbacks(). ──────────
+let _cb = {
+  persistAll:      () => {},
+  switchDay:       () => {},
+  renderSchedule:  () => {},
+  updateStatusBar: () => {},
+  sbSet:           () => {},
+};
+
+/**
+ * Rejestruje referencje do funkcji z modułów wyżej w łańcuchu.
+ * Wywołać raz z app.js po Object.assign(window, {...}).
+ */
+export function initUndoCallbacks(callbacks) {
+  Object.assign(_cb, callbacks);
+}
+
+function _persistAll()      { _cb.persistAll(); }
+function _switchDay(d)      { _cb.switchDay(d); }
+function _renderSchedule()  { _cb.renderSchedule(); }
+function _updateStatusBar() { _cb.updateStatusBar(); }
+function _sbSet(msg)        { _cb.sbSet(msg); }
 
 
 // ================================================================

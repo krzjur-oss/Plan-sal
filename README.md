@@ -266,7 +266,7 @@ Aplikacja nie zbiera, nie wysyła ani nie przechowuje żadnych danych zewnętrzn
 ```
 Plan-sal/
 ├── index.html          # Struktura HTML aplikacji
-├── app.js              # Cienka warstwa inicjalizacyjna — importuje moduły, eksponuje funkcje na window (~184 linii)
+├── app.js              # Cienka warstwa inicjalizacyjna — importuje moduły, eksponuje funkcje na window (~197 linii)
 ├── styles.css          # Style CSS (~3200 linii)
 ├── manifest.json       # PWA manifest
 ├── sw.js               # Service Worker (cache + powiadomienia o aktualizacji)
@@ -275,7 +275,7 @@ Plan-sal/
 ├── REGULAMIN.md        # Regulamin użytkowania
 ├── README.md           # Dokumentacja
 │
-├── state.js            # Centralny stan aplikacji (appState, schedData, currentDay)
+├── state.js            # Centralny stan aplikacji (appState, schedData, currentDay, klucze localStorage)
 ├── utils.js            # Narzędzia ogólne (undo/redo, cookie banner, pomoc)
 ├── helpers.js          # Funkcje pomocnicze (colKey, flattenColumns, roomLabelShort, skróty przedmiotów)
 ├── collisions.js       # Wykrywanie kolizji nauczycieli i klas

@@ -2,7 +2,7 @@
 //  IMPORT-EXPORT.JS — migracja danych, eksport/import JSON,
 //                     bezpieczny zapis localStorage, persistAll,
 //                     dane demo, migracja nazw klas
-//  Zależy od: state.js, storage.js (DRAFT_KEY)
+//  Zależy od: state.js (w tym DRAFT_KEY)
 //  Eksportuje: normalizeAppState, migrateImportData, migrateClassNames,
 //              normalizeClassName, exportJSON, handleImportFile,
 //              openImportModal, closeImportModal, confirmImport,
@@ -18,9 +18,8 @@ import {
   validFromDates, setValidFromDates,
   archive,        setArchive,
   currentDay,
+  DRAFT_KEY,
 } from './state.js';
-
-import { DRAFT_KEY } from './storage.js';
 import { flattenColumns, colKey, notify, esc, sbSet } from './helpers.js';
 
 // mountApp i isDemoMode są w modułach wyżej w łańcuchu — używamy window
