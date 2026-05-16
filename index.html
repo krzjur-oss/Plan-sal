@@ -597,6 +597,12 @@ if (typeof structuredClone === 'undefined') {
     <div class="modal-title" id="modalTitle">Edytuj</div>
     <div class="modal-sub" id="modalSub"></div>
 
+    <!-- Wybór sali — widoczny tylko w widoku Nauczyciela / Klasy -->
+    <div class="form-group" id="roomSelectGroup" style="display:none">
+      <label class="form-label">Sala</label>
+      <select class="teacher-select" id="inpRoom"></select>
+    </div>
+
     <!-- Teacher select + quick-add -->
     <div class="form-group">
       <label class="form-label">Nauczyciel</label>

@@ -1280,6 +1280,37 @@ export function openEditModal(day, hour, key) {
   const defaultCls = (appState.assignments[day] || {})[key] || '';
   const bld = (appState.buildings || [])[col?.floor?.buildingIdx || 0];
 
+  // ── Select sali — widoczny tylko w widoku nauczyciela/klasy ──
+  const roomGroup = document.getElementById('roomSelectGroup');
+  const inpRoom   = document.getElementById('inpRoom');
+  const isViewMode = _viewMode === 'teacher' || _viewMode === 'class';
+  if (roomGroup) roomGroup.style.display = isViewMode ? '' : 'none';
+  if (isViewMode && inpRoom) {
+    // Buduj opcje ze wszystkich sal (z pominięciem WF multi)
+    const buildings = appState.buildings || [];
+    let opts = '';
+    cols.forEach(c => {
+      if (buildings[c.floor?.buildingIdx ?? 0]?.multi) return;
+      const ck    = colKey(c);
+      const bldName = buildings[c.floor?.buildingIdx ?? 0]?.name || '';
+      const label = `${c.room.num || c.room.sub || '?'} — ${bldName ? bldName + ' · ' : ''}${c.floor.name || ''} › ${c.seg.name || ''}`;
+      opts += `<option value="${esc(ck)}"${ck === key ? ' selected' : ''}>${esc(label)}</option>`;
+    });
+    inpRoom.innerHTML = opts;
+    inpRoom.dataset.originalKey = key; // zapamiętaj oryginalną salę do wykrycia zmiany
+    // Przy zmianie sali — aktualizuj _mKey i tytuł modalu na bieżąco
+    inpRoom.onchange = () => {
+      const newKey = inpRoom.value;
+      setMKey(newKey);
+      const newCol = cols.find(c => colKey(c) === newKey);
+      const newBld = buildings[newCol?.floor?.buildingIdx ?? 0];
+      document.getElementById('modalTitle').textContent =
+        `Sala ${newCol?.room.num || '?'} — Godz. ${hour}`;
+      document.getElementById('modalSub').textContent =
+        `${newBld ? newBld.name + ' · ' : ''}${newCol?.floor.name || ''} › ${newCol?.seg.name || ''} · ${appState.days[day]}`;
+    };
+  }
+
   document.getElementById('modalTitle').textContent = `Sala ${col?.room.num || '?'} — Godz. ${hour}`;
   document.getElementById('modalSub').textContent =
     `${bld ? bld.name + ' · ' : ''}${col?.floor.name || ''} › ${col?.seg.name || ''} · ${appState.days[day]}`;
@@ -1414,10 +1445,16 @@ export function saveCellData() {
   const _clsList = (_selectedClasses || []).filter(Boolean);
 
   const yk = appState.yearKey;
+  // Jeśli sala została zmieniona przez select w widoku nauczyciela/klasy,
+  // usuwamy wpis ze starego klucza żeby nie zostawić duplikatu.
+  const originalKey = document.getElementById('inpRoom')?.dataset?.originalKey;
   undoPush(`Zapis ${_mKey}, godz. ${_mHour}, ${appState.days[_mDay]}`);
   if (!schedData[yk])           schedData[yk] = {};
   if (!schedData[yk][_mDay])    schedData[yk][_mDay] = {};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour] = {};
+  if (originalKey && originalKey !== _mKey && schedData[yk][_mDay][_mHour][originalKey]) {
+    schedData[yk][_mDay][_mHour][originalKey] = {};
+  }
   schedData[yk][_mDay][_mHour][_mKey] = {
     teacherAbbr:        teacherVal,
     supportTeacherAbbr: (document.getElementById('inpSupportTeacher')?.value || '').trim() || undefined,
