@@ -1280,7 +1280,7 @@ body {
     background: #f5f5f5 !important;
     text-align: center !important;
     font-size: 0.58rem !important;
-    white-space: nowrap !important;
+    white-space: normal !important;
   }
   .view-cell {
     font-size: 0.62rem !important;
@@ -2795,12 +2795,16 @@ body.light #tutBox { background: #fff; }
   font-size: 0.82rem;
   color: var(--text);
 }
-.time-range {
+.time-start,
+.time-end {
   display: block;
   font-size: 0.6rem;
   color: var(--text-dim);
   letter-spacing: -0.01em;
   white-space: nowrap;
+}
+.time-end {
+  color: var(--text-muted);
 }
 
 /* Kreator — edytor timeslotów */

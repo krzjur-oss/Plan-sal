@@ -114,8 +114,9 @@ export function getTimeslot(hourKey) {
 export function formatTimeCell(hourKey) {
   const ts = getTimeslot(hourKey);
   if (!ts || (!ts.start && !ts.end)) return `<span class="time-num">${esc(String(hourKey))}</span>`;
-  return `<span class="time-num">${esc(ts.label || String(hourKey))}</span>
-          <span class="time-range">${esc(ts.start || '')}–${esc(ts.end || '')}</span>`;
+  return `<span class="time-num">${esc(ts.label || String(hourKey))}</span>${
+    ts.start ? `<span class="time-start">${esc(ts.start)}</span>` : ''}${
+    ts.end   ? `<span class="time-end">${esc(ts.end)}</span>`     : ''}`;
 }
 
 // ================================================================
