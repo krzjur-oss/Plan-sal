@@ -549,7 +549,7 @@ export function renderViewTable(mode, filter) {
           <div class="cell-plus">＋</div></div></td>`;
       } else {
         tbody += `<td style="padding:2px;vertical-align:top">`;
-        entries.forEach(({col, key, entry}) => {
+        entries.forEach(({col, key, entry, slotIdx}) => {
           const roomLabel  = _roomLabel(col.floorIdx, col.segIdx, col.room.num || col.room.sub || '?');
           const clsList    = (entry.classes || []).length ? entry.classes : (entry.className ? [entry.className] : []);
           const cellId     = h + '|' + key;
