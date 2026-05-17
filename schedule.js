@@ -872,7 +872,6 @@ function renderWFView() {
     const hour = el.dataset.hour;
     const key  = el.dataset.key;
     const slot = el.dataset.slot !== undefined ? Number(el.dataset.slot) : undefined;
-    const slot = el.dataset.slot !== undefined ? Number(el.dataset.slot) : undefined;
     el.addEventListener('touchstart', e => touchStart(e, day, hour, key, slot), { passive: true });
     el.addEventListener('touchmove',  e => touchMove(e),                         { passive: false });
     el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),           { passive: false });
