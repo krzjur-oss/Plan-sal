@@ -10,8 +10,8 @@ Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w ca
 
 | | |
 |---|---|
-| **Aktualna wersja** | v2.5.9 |
-| **Ostatnia aktualizacja** | 16 maja 2026 |
+| **Aktualna wersja** | v2.6.0 |
+| **Ostatnia aktualizacja** | 17 maja 2026 |
 | **Status** | Aktywny, rozwijany |
 
 ---
@@ -298,10 +298,13 @@ Czysty HTML + CSS + JavaScript — zero zewnętrznych zależności. Dane: localS
 
 ## 🆕 Co nowego
 
-### v2.5.9 — 16 maja 2026
+### v2.6.0 — 17 maja 2026
 
-- **Nauczyciel wspomagający** — nowe pole w modalu edycji komórki; wspomagający pojawia się w widoku tygodniowym nauczyciela (zarówno jako prowadzący jak i wspomagający) i jest brany pod uwagę przy wykrywaniu kolizji
-- **Edytowalny widok Nauczyciela i Klasy** — puste komórki otwierają modal edycji, wypełnione obsługują przeciąganie (DnD) i wyświetlają ikonę ⚠ przy kolizji; widok przestaje być wyłącznie podglądem
+- **Widok WF — niezależne sloty** — każda klasa w sali sportowej (basen, hala) ma własną kolumnę; nowy model danych v3 (tablica slotów per sala multi); migracja automatyczna przy imporcie pliku v2
+- **Pełna edycja w widoku Nauczyciela i Klasy** — modal otwiera się bez przeładowania widoku; wybór sali z pełną nazwą dla sal sportowych; slotIdx przekazywany do DnD i clearCellData
+- **Nauczyciel wspomagający** — nowe pole w modalu; widoczny w widoku tygodniowym; kolizje naprawione (ta sama sala = brak kolizji; deduplikacja etykiet)
+- **Wybór przedmiotu** — naprawiono brak wstawiania nazwy z listy podpowiedzi (błąd cudzysłowów w atrybucie `onclick` łamał parser JS)
+- **Naprawiono błąd startu** — brakujące importy `updateStatusBar` i `sbSet` w `app.js` powodowały `ReferenceError` przy inicjalizacji
 
 ---
 

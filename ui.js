@@ -736,8 +736,8 @@ document.addEventListener('keydown', e => {
 //  O PROGRAMIE
 // ================================================================
 
-export const APP_VERSION     = '2.5.9';
-export const APP_LAST_UPDATE = '2026-05-16';
+export const APP_VERSION     = '2.6.0';
+export const APP_LAST_UPDATE = '2026-05-17';
 
 export function showAboutModal() {
   const vEl = document.getElementById('aboutVersionText');

@@ -958,8 +958,8 @@ if (typeof structuredClone === 'undefined') {
       <button class="about-close" onclick="closeAboutModal()">✕</button>
     </div>
     <div class="about-version-bar">
-      <span class="about-version">v<span id="aboutVersionText">2.5.9</span></span>
-      <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">16 maja 2026</strong></span>
+      <span class="about-version">v<span id="aboutVersionText">2.6.0</span></span>
+      <span class="about-update-date">Aktualizacja: <strong id="aboutUpdateDate">17 maja 2026</strong></span>
     </div>
 
     <!-- Zakładki -->
@@ -1130,10 +1130,13 @@ if (typeof structuredClone === 'undefined') {
     <div class="about-body about-body--hidden" id="aboutPaneChangelog">
       <div class="changelog-list">
         <div class="changelog-entry">
-          <div class="changelog-version">v2.5.9 <span class="changelog-date">16 maja 2026</span></div>
+          <div class="changelog-version">v2.6.0 <span class="changelog-date">17 maja 2026</span></div>
           <ul>
-            <li><b>Nauczyciel wspomagający</b> — nowe pole w modalu edycji; wspomagający jest widoczny w widoku tygodniowym nauczyciela (obok lekcji jako prowadzący) i uwzględniany przy wykrywaniu kolizji</li>
-            <li><b>Edytowalny widok Nauczyciela i Klasy</b> — puste komórki są teraz klikalne (otwierają modal edycji jak w widoku sal), wypełnione obsługują przeciąganie (DnD) oraz kolizje z ikoną ⚠; widok zastępuje wyłącznie podgląd</li>
+            <li><b>Widok WF — niezależne sloty</b> — każda klasa w sali sportowej ma własną kolumnę; model danych v3 (tablica slotów per sala multi); automatyczna migracja starych danych</li>
+            <li><b>Edycja w widoku Nauczyciela i Klasy</b> — pełna edycja, DnD i kolizje; modal otwiera się bez przeładowania widoku; wybór sali z poprawną etykietą (pełna nazwa dla sal sportowych)</li>
+            <li><b>Nauczyciel wspomagający</b> — nowe pole w modalu; widoczny w widoku tygodniowym; naprawiono fałszywe kolizje (ta sama sala = brak kolizji)</li>
+            <li><b>Wybór przedmiotu</b> — naprawiono brak wstawiania z listy (błąd cudzysłowów w onclick)</li>
+            <li><b>Naprawiono błąd startu</b> — brakujące importy <code>updateStatusBar</code> i <code>sbSet</code> w <code>app.js</code></li>
           </ul>
         </div>
         <div class="changelog-entry">
