@@ -80,15 +80,20 @@ export function detectCollisions(dayData, hours, cols) {
     });
 
     Object.keys(byTeacher).forEach(function(abbr) {
-      if (byTeacher[abbr].length < 2) return;
+      // Kolizja tylko gdy ten sam nauczyciel w RÓŻNYCH kolumnach (salach)
+      const uniqueKeys = [...new Set(byTeacher[abbr].map(function(e) { return e.key; }))];
+      if (uniqueKeys.length < 2) return;
       byTeacher[abbr].forEach(function(e) {
         const cellId = h + '|' + e.key;
         if (!result[cellId]) result[cellId] = [];
         const others = byTeacher[abbr]
-          .filter(x => x !== e)
-          .map(x => _roomLabel(x.col.floorIdx, x.col.segIdx, x.col.room.num || x.key))
+          .filter(function(x) { return x.key !== e.key; })
+          .map(function(x) { return _roomLabel(x.col.floorIdx, x.col.segIdx, x.col.room.num || x.key); })
+          .filter(function(v, i, a) { return a.indexOf(v) === i; }) // deduplikacja etykiet
           .join(', ');
-        result[cellId].push('Nauczyciel ' + abbr + ' jednocześnie w: ' + others);
+        if (others && !result[cellId].some(function(m) { return m.startsWith('Nauczyciel ' + abbr); })) {
+          result[cellId].push('Nauczyciel ' + abbr + ' jednocześnie w: ' + others);
+        }
       });
     });
 

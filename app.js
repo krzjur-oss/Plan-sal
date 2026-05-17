@@ -14,6 +14,7 @@ import {
 } from './utils.js';
 
 import { scrollToFirstCollision } from './collisions.js';
+import { sbSet } from './helpers.js';
 
 import { setAppState } from './state.js';
 
@@ -62,10 +63,10 @@ import {
 } from './wizard.js';
 
 import {
-  mountApp, switchDay,
+  mountApp, switchDay, _switchDayNoRender,
   dndStart, dndEnd, dndOver, dndLeave, dndDrop,
   setViewMode, onViewFilterChange,
-  renderSchedule,
+  renderSchedule, updateStatusBar,
   openEditModal, closeEditModal,
   saveCellData, clearCellData,
   initTimeslotEditor, fillTimeslotsDefault, clearTimeslots,
@@ -152,7 +153,7 @@ Object.assign(window, {
   finishWizard,
   renderAssignmentsStep, switchAssignDay, renderAssignTable, setAssign,
 
-  mountApp, switchDay,
+  mountApp, switchDay, _switchDayNoRender,
   dndStart, dndEnd, dndOver, dndLeave, dndDrop,
   setViewMode, onViewFilterChange,
   renderSchedule,

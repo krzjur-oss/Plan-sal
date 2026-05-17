@@ -193,6 +193,15 @@ export function switchDay(idx) {
   renderSchedule();
 }
 
+// Zmiana dnia bez re-renderowania — używana przez onclick w widoku nauczyciela/klasy
+// aby nie niszczyć DOM przed otwarciem modalu
+export function _switchDayNoRender(idx) {
+  setCurrentDay(idx);
+  document.querySelectorAll('.day-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+  const vfDates = validFromDates[appState.yearKey] || {};
+  document.getElementById('validFrom').value = vfDates[currentDay] || '';
+}
+
 // ================================================================
 //  DRAG & DROP
 // ================================================================
@@ -535,7 +544,7 @@ export function renderViewTable(mode, filter) {
         // Klucz sali zostanie wybrany przez użytkownika w select #inpRoom.
         tbody += `<td><div class="cell-inner cell-inner-view-empty"
             data-day="${di}" data-hour="${esc(String(h))}" data-key=""
-            onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','')"
+            onclick="_switchDayNoRender(${di});openEditModal(${di},'${esc(String(h))}','')"
             ondragover="dndOver(event)" ondragleave="dndLeave(event)"
             ondrop="dndDrop(event,${di},'${esc(String(h))}','')">
           <div class="cell-plus">＋</div></div></td>`;
@@ -550,7 +559,7 @@ export function renderViewTable(mode, filter) {
           const errTip     = cellErrs.join('\n');
           tbody += `<div class="cell-inner filled view-cell ${hasErr ? 'collision' : ''}"
               data-day="${di}" data-hour="${esc(String(h))}" data-key="${esc(key)}"
-              onclick="switchDay(${di});openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
+              onclick="_switchDayNoRender(${di});openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
               draggable="true"
               ondragstart="dndStart(event,${di},'${esc(String(h))}','${esc(key)}')"
               ondragend="dndEnd(event)"
@@ -778,12 +787,15 @@ function renderWFView() {
     // Wiersz 1 nagłówka: nazwa sali z colspan = liczba slotów
     html += '<tr><th class="time-th wf-time-th" rowspan="2">Godz.</th>';
     bldCols.forEach(col => {
-      const key       = colKey(col);
-      const roomLabel = roomLabelShort(col.floorIdx, col.segIdx, col.room.num || '?');
-      const roomSub   = col.room.sub ? `<span class="wf-room-sub">${esc(col.room.sub)}</span>` : '';
-      const sc        = slotCounts[key];
+      const key = colKey(col);
+      const sc  = slotCounts[key];
+      // Dla sal sportowych etykieta = room.sub (np. "basen", "duża", "mała")
+      // lub room.num jeśli sub brak; nigdy nie używamy globalnego floorIdx
+      const roomName = col.room.sub || col.room.num || '?';
+      const segName  = col.seg.name || '';
       html += `<th class="wf-col-header wf-room-header" colspan="${sc}">
-        <div class="wf-room-label">${esc(roomLabel)}</div>${roomSub}
+        <div class="wf-room-label">${esc(roomName)}</div>
+        ${segName ? `<div class="wf-room-sub">${esc(segName)}</div>` : ''}
       </th>`;
     });
     html += '</tr>';
@@ -1403,10 +1415,13 @@ export function openEditModal(day, hour, key, slotIdx) {
     let opts = '<option value="">— wybierz salę —</option>';
     cols.forEach(c => {
       const ck      = colKey(c);
-      const abbr    = _roomLabel(c.floorIdx, c.segIdx, c.room.num || c.room.sub || '?');
       const bldName = buildings[c.floor?.buildingIdx ?? 0]?.name || '';
       const isMulti = !!(buildings[c.floor?.buildingIdx ?? 0]?.multi);
-      const full    = `${bldName ? bldName + ' · ' : ''}${c.floor.name || ''} › ${c.seg.name || ''} — ${isMulti ? '' : 'sala '}${c.room.num || c.room.sub || '?'}`;
+      // Skrót: dla sal sportowych = room.sub, dla zwykłych = klasyczny _roomLabel
+      const abbr = isMulti
+        ? (c.room.sub || c.room.num || '?')
+        : _roomLabel(c.floorIdx, c.segIdx, c.room.num || '?');
+      const full = `${bldName ? bldName + ' · ' : ''}${c.floor.name || ''} › ${c.seg.name || ''} — ${isMulti ? '' : 'sala '}${c.room.num || c.room.sub || '?'}`;
       opts += `<option value="${esc(ck)}"${ck === key ? ' selected' : ''}>${esc(abbr)}  (${esc(full)})</option>`;
     });
     inpRoom.innerHTML = opts;
