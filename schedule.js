@@ -262,9 +262,8 @@ function _clearEntry(yk, day, hour, key, slotIdx) {
   if (!schedData[yk]?.[day]?.[hour]) return;
   const cur = schedData[yk][day][hour][key];
   if (Array.isArray(cur)) {
-    if (slotIdx !== undefined) {
-      cur.splice(slotIdx, 1);
-    }
+    // slotIdx undefined = fallback do 0 (pierwszy slot)
+    cur.splice(slotIdx !== undefined ? slotIdx : 0, 1);
   } else {
     schedData[yk][day][hour][key] = {};
   }
@@ -488,10 +487,9 @@ export function renderViewTable(mode, filter) {
         const key = colKey(col);
         const raw = dayData[h]?.[key];
         // Obsługa nowego modelu: sala multi = tablica slotów
-        const slots = Array.isArray(raw)
-          ? raw.filter(s => s && (s.teacherAbbr || s.subject || s.className || (s.classes||[]).length))
-          : (raw && (raw.teacherAbbr || raw.subject || raw.className || (raw.classes||[]).length) ? [raw] : []);
-        slots.forEach(entry => {
+        const rawSlots = Array.isArray(raw) ? raw : (raw && (raw.teacherAbbr || raw.subject || raw.className || (raw.classes||[]).length) ? [raw] : []);
+        rawSlots.forEach((entry, slotIdx) => {
+          if (!entry || (!entry.teacherAbbr && !entry.subject && !entry.className && !(entry.classes||[]).length)) return;
           let match;
           if (mode === 'teacher') {
             match = entry.teacherAbbr === filter || entry.supportTeacherAbbr === filter;
@@ -501,7 +499,8 @@ export function renderViewTable(mode, filter) {
               : (entry.className ? [entry.className] : []);
             match = entryCls.some(cls => classAbbrSet.has(cls));
           }
-          if (match) byDayHour[di][h].push({col, key, entry});
+          // slotIdx: dla sali multi = indeks w tablicy, dla zwykłej = undefined
+          if (match) byDayHour[di][h].push({col, key, entry, slotIdx: Array.isArray(raw) ? slotIdx : undefined});
         });
       });
     });
@@ -557,14 +556,16 @@ export function renderViewTable(mode, filter) {
           const cellErrs   = dayColls[cellId] || [];
           const hasErr     = cellErrs.length > 0;
           const errTip     = cellErrs.join('\n');
+          const sIdx = slotIdx !== undefined ? `,${slotIdx}` : '';
           tbody += `<div class="cell-inner filled view-cell ${hasErr ? 'collision' : ''}"
               data-day="${di}" data-hour="${esc(String(h))}" data-key="${esc(key)}"
-              onclick="_switchDayNoRender(${di});openEditModal(${di},'${esc(String(h))}','${esc(key)}')"
+              ${slotIdx !== undefined ? `data-slot="${slotIdx}"` : ''}
+              onclick="_switchDayNoRender(${di});openEditModal(${di},'${esc(String(h))}','${esc(key)}'${sIdx})"
               draggable="true"
-              ondragstart="dndStart(event,${di},'${esc(String(h))}','${esc(key)}')"
+              ondragstart="dndStart(event,${di},'${esc(String(h))}','${esc(key)}'${sIdx})"
               ondragend="dndEnd(event)"
               ondragover="dndOver(event)" ondragleave="dndLeave(event)"
-              ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(key)}')"
+              ondrop="dndDrop(event,${di},'${esc(String(h))}','${esc(key)}'${sIdx})"
               ${hasErr ? `data-collision-tip="${esc(errTip)}"` : ''}
               style="cursor:pointer;margin-bottom:2px">
             ${hasErr ? '<span class="cell-collision-icon">⚠</span>' : ''}
