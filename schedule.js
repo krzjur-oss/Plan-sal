@@ -1346,7 +1346,7 @@ function _showSubjectDropdown(items, inp) {
   const rect = inp.getBoundingClientRect();
   dd.style.cssText = `position:fixed;z-index:9999;left:${rect.left}px;top:${rect.bottom + 2}px;width:${rect.width}px`;
   dd.innerHTML = items.slice(0, 12).map((s, i) =>
-    `<div class="subject-dd-item" data-idx="${i}" onmousedown="pickSubject(${JSON.stringify(s.name)})">
+    `<div class="subject-dd-item" data-idx="${i}" data-name="${esc(s.name)}">
       <span class="subject-dd-name">${esc(s.name)}</span>
       ${s.abbr ? `<span class="subject-dd-abbr">${esc(s.abbr)}</span>` : ''}
     </div>`
@@ -1355,6 +1355,11 @@ function _showSubjectDropdown(items, inp) {
   _subjectDropdownVisible = true;
   _subjectDropdownItems   = items.slice(0, 12);
   _subjectDropdownIdx     = -1;
+
+  // Podpinamy onmousedown przez JS — unikamy problemów z cudzysłowami w atrybutach onclick
+  dd.querySelectorAll('.subject-dd-item').forEach(el => {
+    el.onmousedown = (e) => { e.preventDefault(); pickSubject(el.dataset.name); };
+  });
 }
 
 function _onSubjectKeydown(e) {
