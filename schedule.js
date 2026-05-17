@@ -550,7 +550,11 @@ export function renderViewTable(mode, filter) {
       } else {
         tbody += `<td style="padding:2px;vertical-align:top">`;
         entries.forEach(({col, key, entry, slotIdx}) => {
-          const roomLabel  = _roomLabel(col.floorIdx, col.segIdx, col.room.num || col.room.sub || '?');
+          const buildings  = appState.buildings || [];
+          const isMultiCol = _isMultiCol(col);
+          const roomLabel  = isMultiCol
+            ? [buildings[col.floor?.buildingIdx ?? 0]?.name, col.room.sub || col.room.num].filter(Boolean).join(' · ')
+            : _roomLabel(col.floorIdx, col.segIdx, col.room.num || col.room.sub || '?');
           const clsList    = (entry.classes || []).length ? entry.classes : (entry.className ? [entry.className] : []);
           const cellId     = h + '|' + key;
           const cellErrs   = dayColls[cellId] || [];
