@@ -205,6 +205,7 @@ let _touchSrcEl   = null;
 let _touchSrcDay  = null;
 let _touchSrcHour = null;
 let _touchSrcKey  = null;
+let _touchSrcSlot = undefined;
 let _touchDragging = false;
 let _touchOverEl   = null;
 let _touchStartTime = 0;
@@ -583,7 +584,7 @@ export function renderViewTable(mode, filter) {
 // ================================================================
 
 // ── TOUCH LONG-PRESS DRAG ──────────────────────────────────────────────────
-export function touchStart(e, day, hour, key) {
+export function touchStart(e, day, hour, key, slotIdx) {
   if (e.touches.length !== 1) return;
   _touchStartTime = Date.now();
   _touchStartX    = e.touches[0].clientX;
@@ -597,6 +598,7 @@ export function touchStart(e, day, hour, key) {
     _touchSrcDay  = day;
     _touchSrcHour = hour;
     _touchSrcKey  = key;
+    _touchSrcSlot = (slotIdx !== undefined && slotIdx !== null) ? Number(slotIdx) : undefined;
     el.classList.add('dnd-dragging');
     if (navigator.vibrate) navigator.vibrate(40);
   }, LONG_PRESS_MS);
@@ -684,7 +686,9 @@ export function touchEnd(e, day, hour, key) {
       _dndSrcDay  = _touchSrcDay;
       _dndSrcHour = _touchSrcHour;
       _dndSrcKey  = _touchSrcKey;
-      _doDndMove(dstDay, dstHour, dstKey);
+      _dndSrcSlot = _touchSrcSlot;
+      const dstSlot = cell.dataset.slot !== undefined ? Number(cell.dataset.slot) : undefined;
+      _doDndMove(dstDay, dstHour, dstKey, dstSlot);
     }
   }
 
@@ -693,6 +697,7 @@ export function touchEnd(e, day, hour, key) {
   _touchSrcDay   = null;
   _touchSrcHour  = null;
   _touchSrcKey   = null;
+  _touchSrcSlot  = undefined;
   _touchOverEl   = null;
 }
 
@@ -867,9 +872,10 @@ function renderWFView() {
     const hour = el.dataset.hour;
     const key  = el.dataset.key;
     const slot = el.dataset.slot !== undefined ? Number(el.dataset.slot) : undefined;
-    el.addEventListener('touchstart', e => touchStart(e, day, hour, key), { passive: true });
-    el.addEventListener('touchmove',  e => touchMove(e),                  { passive: false });
-    el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),   { passive: false });
+    const slot = el.dataset.slot !== undefined ? Number(el.dataset.slot) : undefined;
+    el.addEventListener('touchstart', e => touchStart(e, day, hour, key, slot), { passive: true });
+    el.addEventListener('touchmove',  e => touchMove(e),                         { passive: false });
+    el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),           { passive: false });
   });
 }
 
@@ -1029,7 +1035,9 @@ export function renderSchedule() {
     tbody += `<tr><td class="time-cell">${formatTimeCell(h)}</td>`;
     cols.forEach(col => {
       const key    = colKey(col);
-      const entry  = dayData[h]?.[key] || {};
+      const raw    = dayData[h]?.[key];
+      // Sala multi = tablica slotów — w widoku sal pokazuj pierwszy slot
+      const entry  = Array.isArray(raw) ? (raw[0] || {}) : (raw || {});
       const filled = !!(entry.teacherAbbr || entry.subject || entry.className || (entry.classes && entry.classes.length));
       const cellId   = h + '|' + key;
       const cellErrs = collisions[cellId] || [];
@@ -1657,14 +1665,25 @@ export function saveCellData() {
 }
 
 export function clearCellData() {
-  undoPush(`Wyczyszczenie ${_mKey}, godz. ${_mHour}, ${appState.days[_mDay]}`);
-  const yk  = appState.yearKey;
-  const _si = window._mSlotIdx;
-  _clearEntry(yk, _mDay, _mHour, _mKey, _si);
-  persistAll();
-  closeEditModal();
-  renderSchedule();
-  sbSet('Wpis wyczyszczony');
+  if (!_mKey && !(window._mSlotIdx !== undefined)) {
+    notify('⚠ Nie wybrano komórki do wyczyszczenia', true);
+    return;
+  }
+  showConfirm({
+    message:      'Wyczyścić zawartość tej komórki?',
+    confirmLabel: 'Wyczyść',
+    danger:       true,
+    onConfirm:    () => {
+      undoPush(`Wyczyszczenie ${_mKey}, godz. ${_mHour}, ${appState.days[_mDay]}`);
+      const yk  = appState.yearKey;
+      const _si = window._mSlotIdx;
+      _clearEntry(yk, _mDay, _mHour, _mKey, _si);
+      persistAll();
+      closeEditModal();
+      renderSchedule();
+      sbSet('Wpis wyczyszczony');
+    },
+  });
 }
 
 // ================================================================
