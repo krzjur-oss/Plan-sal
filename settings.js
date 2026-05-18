@@ -486,18 +486,49 @@ export function spHoursSave() {
   const hours = appState.hours || [];
   if (!appState.timeslots) appState.timeslots = [];
 
+  // Zbierz nowe wartości z DOM
+  const pending = {};
   document.querySelectorAll('[data-hour-idx]').forEach(inp => {
     const i = parseInt(inp.dataset.hourIdx, 10);
     const field = inp.dataset.hourField;
     const h = hours[i];
     if (h === undefined) return;
-    let ts = appState.timeslots.find(t => String(t.label) === String(h));
-    if (!ts) { ts = {label: h, start: '', end: ''}; appState.timeslots.push(ts); }
-    if (field === 'label') {
-      ts.label = inp.value.trim() || h;
-    } else {
-      ts[field] = inp.value;
-    }
+    if (!pending[h]) pending[h] = {};
+    pending[h][field] = inp.value;
+  });
+
+  // Zbuduj tymczasowe timesloty do walidacji
+  const draft = hours.map(h => {
+    const existing = appState.timeslots.find(t => String(t.label) === String(h)) || { label: h, start: '', end: '' };
+    const p = pending[h] || {};
+    return {
+      label: p.label !== undefined ? (p.label.trim() || h) : existing.label,
+      start: p.start !== undefined ? p.start : existing.start,
+      end:   p.end   !== undefined ? p.end   : existing.end,
+    };
+  });
+
+  // Walidacja — zatrzymaj zapis jeśli są błędy
+  const errors = _validateTimeslots(draft);
+  if (errors.length) {
+    notify(`⚠️ Popraw błędy przed zapisem:\n${errors.join('\n')}`, true);
+    return;
+  }
+
+  // Zastosuj zatwierdzone wartości
+  draft.forEach(d => {
+    let ts = appState.timeslots.find(t => String(t.label) === String(d.label) ||
+             String(t.label) === String(hours[hours.indexOf(d.label)]));
+    // dopasuj po oryginalnym kluczu godziny
+    const origH = hours.find(h => {
+      const existing = appState.timeslots.find(t => String(t.label) === String(h));
+      return existing ? existing.label === d.label : String(h) === String(d.label);
+    });
+    ts = origH !== undefined
+      ? appState.timeslots.find(t => String(t.label) === String(origH)) || null
+      : null;
+    if (!ts) { ts = { label: d.label, start: d.start, end: d.end }; appState.timeslots.push(ts); }
+    else { ts.label = d.label; ts.start = d.start; ts.end = d.end; }
   });
 
   _spHoursDirty = false;
@@ -523,12 +554,57 @@ export function spHourAdd() {
   _renderSettingsTab('hours');
 }
 
+// ================================================================
+//  WALIDACJA TIMESLOTÓW
+// ================================================================
+
+/** Sprawdza czy wartość ma format HH:MM i jest poprawną godziną */
+function _isValidTime(val) {
+  if (!val || !/^\d{2}:\d{2}$/.test(val)) return false;
+  const [h, m] = val.split(':').map(Number);
+  return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+}
+
+/**
+ * Waliduje cały zestaw timeslotów — zwraca tablicę komunikatów błędów.
+ * Sprawdza: poprawność formatu, start < end, brak nakładania sąsiednich.
+ */
+function _validateTimeslots(timeslots) {
+  const errors = [];
+  timeslots.forEach((ts, i) => {
+    const label = `Godz. ${ts.label}`;
+    if (ts.start && !_isValidTime(ts.start))
+      errors.push(`${label}: nieprawidłowy format początku (${ts.start}), oczekiwano HH:MM`);
+    if (ts.end && !_isValidTime(ts.end))
+      errors.push(`${label}: nieprawidłowy format końca (${ts.end}), oczekiwano HH:MM`);
+    if (ts.start && ts.end && _isValidTime(ts.start) && _isValidTime(ts.end) && ts.start >= ts.end)
+      errors.push(`${label}: początek (${ts.start}) musi być wcześniej niż koniec (${ts.end})`);
+    if (i > 0) {
+      const prev = timeslots[i - 1];
+      if (prev.end && ts.start && _isValidTime(prev.end) && _isValidTime(ts.start) && prev.end > ts.start)
+        errors.push(`Godz. ${prev.label} (koniec ${prev.end}) nakłada się na godz. ${ts.label} (początek ${ts.start})`);
+    }
+  });
+  return errors;
+}
+
 export function spHourSetTime(i, field, val) {
   const h = (appState.hours || [])[i];
   if (h === undefined) return;
+  // Walidacja formatu — puste pole jest dozwolone (brak timeslotu)
+  if (val && !_isValidTime(val)) {
+    notify(`⚠️ Nieprawidłowy format czasu „${val}" — oczekiwano HH:MM (np. 08:00)`, true);
+    return;
+  }
   if (!appState.timeslots) appState.timeslots = [];
   let ts = appState.timeslots.find(t => String(t.label) === String(h));
   if (!ts) { ts = {label: h, start: '', end: ''}; appState.timeslots.push(ts); }
+  // Walidacja start < end po wpisaniu obu wartości
+  const newTs = { ...ts, [field]: val };
+  if (newTs.start && newTs.end && _isValidTime(newTs.start) && _isValidTime(newTs.end) && newTs.start >= newTs.end) {
+    notify(`⚠️ Godz. ${h}: początek (${newTs.start}) musi być wcześniej niż koniec (${newTs.end})`, true);
+    return;
+  }
   ts[field] = val;
   persistAll();
 }

@@ -15,7 +15,7 @@ import {
   wTeachers,  setWTeachers,
 } from './state.js';
 
-import { esc, notify, showConfirm }  from './helpers.js';
+import { esc, notify, showConfirm, roomLabelShort } from './helpers.js';
 import { genAbbr, ensureUniqueAbbr } from './utils.js';
 
 // normalizeClassName globalnie dostępna z import-export.js / app.js;
@@ -84,9 +84,8 @@ export function migrateScheduleKeys(oldFloors, newFloors, yearKey, schedData) {
 // ================================================================
 //  ETYKIETA SALI
 // ================================================================
-export function _roomLabel(fi, si, num) {
-  return `${fi}${String.fromCharCode(65 + si)}${num}`;
-}
+// _roomLabel → alias do roomLabelShort z helpers.js (jedno miejsce definicji)
+export const _roomLabel = roomLabelShort;
 
 // ================================================================
 //  BUDYNKI

@@ -15,7 +15,7 @@ function _isMultiCol(col) {
 }
 
 function _colKey(col)        { return colKey(col); }
-function _roomLabel(fi,si,n) { return roomLabelShort(fi, si, n); }
+const _roomLabel = roomLabelShort;
 
 // Spłaszcza wpisy dla danej godziny i kolumny:
 // - zwykła sala: zwraca [entry]

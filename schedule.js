@@ -80,10 +80,8 @@ const SUBJECTS_PRESET = [
 //  HELPERS LOKALNE
 // ================================================================
 
-function _roomLabel(fi, si, num) {
-  const segLetter = String.fromCharCode(65 + si); // A, B, C…
-  return `${fi}${segLetter}${num}`;
-}
+// _roomLabel → alias do roomLabelShort importowanego z helpers.js
+const _roomLabel = roomLabelShort;
 
 // Skrót nazwy przedmiotu
 export function subjectAbbr(subject) {

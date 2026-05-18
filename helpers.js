@@ -35,9 +35,11 @@ export function esc(str) {
 }
 
 /** Tymczasowy komunikat w stopce statusu (2,5 s) */
+let _sbTimer = null;
 export function sbSet(msg) {
   document.getElementById('sbText').textContent = msg;
-  setTimeout(() => document.getElementById('sbText').textContent = 'Gotowy', 2500);
+  clearTimeout(_sbTimer);
+  _sbTimer = setTimeout(() => document.getElementById('sbText').textContent = 'Gotowy', 2500);
 }
 
 /** Toast powiadomienie (2,9 s); warn=true → żółta ramka */
