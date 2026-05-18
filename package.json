@@ -1,0 +1,14 @@
+{
+  "name": "plan-sal",
+  "version": "1.0.0",
+  "description": "Aplikacja PWA do układania i zarządzania planem sal zajęciowych. Działa w całości w przeglądarce — **bez serwera, bez instalacji, bez zbierania danych**. Można ją zainstalować na komputerze lub tablecie jak aplikację natywną.",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "check": "node --check app.js state.js utils.js helpers.js collisions.js import-export.js storage.js wizard-data.js wizard.js schedule.js ui.js settings.js sw.js",
+    "test": "node --test tests/helpers.test.js tests/collisions.test.js tests/utils.test.js tests/import-export.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
