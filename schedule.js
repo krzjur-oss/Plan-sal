@@ -151,6 +151,10 @@ export function mountApp() {
 
   renderSchedule();
 
+  // Rejestruj touch-handlery raz na kontenerze (event delegation)
+  // zamiast per-komórka przy każdym re-renderze
+  _initTouchDelegation();
+
   const undoBar = document.getElementById('undoRedoBtns');
   if (undoBar) undoBar.style.display = 'flex';
   setUndoStack([]);
@@ -596,6 +600,121 @@ export function renderViewTable(mode, filter) {
 // ================================================================
 
 // ── TOUCH LONG-PRESS DRAG ──────────────────────────────────────────────────
+// ================================================================
+//  TOUCH — EVENT DELEGATION
+//  Rejestracja raz na scheduleWrap zamiast per-komórka przy re-renderze.
+//  Wywoływana jednorazowo z mountApp().
+// ================================================================
+
+let _touchDelegationInit = false;
+
+function _initTouchDelegation() {
+  if (_touchDelegationInit) return; // zabezpieczenie przed podwójną rejestracją
+  _touchDelegationInit = true;
+
+  const wrap = document.getElementById('scheduleWrap');
+  if (!wrap) return;
+
+  wrap.addEventListener('touchstart', e => {
+    const cell = e.target.closest('.cell-inner');
+    if (!cell) return;
+    const day     = parseInt(cell.dataset.day);
+    const hour    = cell.dataset.hour;
+    const key     = cell.dataset.key;
+    const slotIdx = cell.dataset.slot !== undefined ? Number(cell.dataset.slot) : undefined;
+    if (isNaN(day) || !hour || !key) return;
+    _touchStartFn(e, cell, day, hour, key, slotIdx);
+  }, { passive: true });
+
+  wrap.addEventListener('touchmove', e => {
+    touchMove(e);
+  }, { passive: false });
+
+  wrap.addEventListener('touchend', e => {
+    const cell = e.target.closest('.cell-inner');
+    const day  = cell ? parseInt(cell.dataset.day)  : _touchSrcDay;
+    const hour = cell ? cell.dataset.hour            : _touchSrcHour;
+    const key  = cell ? cell.dataset.key             : _touchSrcKey;
+    _touchEndFn(e, cell, day, hour, key);
+  }, { passive: false });
+}
+
+// Wewnętrzna implementacja touchStart — przyjmuje element komórki zamiast e.currentTarget
+function _touchStartFn(e, el, day, hour, key, slotIdx) {
+  if (e.touches.length !== 1) return;
+  _touchStartTime = Date.now();
+  _touchStartX    = e.touches[0].clientX;
+  _touchStartY    = e.touches[0].clientY;
+  _touchScrolled  = false;
+  _touchTimer = setTimeout(() => {
+    if (_touchScrolled) return;
+    _touchDragging = true;
+    _touchSrcEl   = el;
+    _touchSrcDay  = day;
+    _touchSrcHour = hour;
+    _touchSrcKey  = key;
+    _touchSrcSlot = (slotIdx !== undefined && slotIdx !== null) ? Number(slotIdx) : undefined;
+    el.classList.add('dnd-dragging');
+    if (navigator.vibrate) navigator.vibrate(40);
+  }, LONG_PRESS_MS);
+}
+
+// Wewnętrzna implementacja touchEnd — przyjmuje element komórki zamiast e.currentTarget
+function _touchEndFn(e, tEl, day, hour, key) {
+  if (_touchTimer) { clearTimeout(_touchTimer); _touchTimer = null; }
+
+  if (_touchScrolled) {
+    _touchScrolled = false;
+    return;
+  }
+
+  e.preventDefault();
+
+  if (!_touchDragging) {
+    if (Date.now() - _touchStartTime < MIN_TAP_MS) return;
+    if (tEl && tEl.dataset.collisionTip) {
+      if (!tEl.classList.contains('tip-open')) {
+        document.querySelectorAll('.cell-inner.tip-open').forEach(el => el.classList.remove('tip-open'));
+        tEl.classList.add('tip-open');
+        return;
+      } else {
+        tEl.classList.remove('tip-open');
+      }
+    }
+    openEditModal(day, hour, key);
+    return;
+  }
+
+  if (_touchSrcEl) _touchSrcEl.classList.remove('dnd-dragging');
+  if (_touchOverEl) _touchOverEl.classList.remove('dnd-over', 'dnd-over-filled');
+
+  const touch = e.changedTouches[0];
+  const el    = document.elementFromPoint(touch.clientX, touch.clientY);
+  const cell  = el ? el.closest('.cell-inner') : null;
+
+  if (cell && cell !== _touchSrcEl) {
+    const dstDay  = parseInt(cell.dataset.day);
+    const dstHour = cell.dataset.hour;
+    const dstKey  = cell.dataset.key;
+    if (!isNaN(dstDay) && dstHour && dstKey) {
+      _dndSrcDay  = _touchSrcDay;
+      _dndSrcHour = _touchSrcHour;
+      _dndSrcKey  = _touchSrcKey;
+      _dndSrcSlot = _touchSrcSlot;
+      const dstSlot = cell.dataset.slot !== undefined ? Number(cell.dataset.slot) : undefined;
+      _doDndMove(dstDay, dstHour, dstKey, dstSlot);
+    }
+  }
+
+  _touchDragging = false;
+  _touchSrcEl    = null;
+  _touchSrcDay   = null;
+  _touchSrcHour  = null;
+  _touchSrcKey   = null;
+  _touchSrcSlot  = undefined;
+  _touchOverEl   = null;
+}
+
 export function touchStart(e, day, hour, key, slotIdx) {
   if (e.touches.length !== 1) return;
   _touchStartTime = Date.now();
@@ -882,15 +1001,7 @@ function renderWFView() {
 
   document.getElementById('scheduleWrap').innerHTML = html;
 
-  document.getElementById('scheduleWrap').querySelectorAll('.cell-inner').forEach(el => {
-    const day  = parseInt(el.dataset.day);
-    const hour = el.dataset.hour;
-    const key  = el.dataset.key;
-    const slot = el.dataset.slot !== undefined ? Number(el.dataset.slot) : undefined;
-    el.addEventListener('touchstart', e => touchStart(e, day, hour, key, slot), { passive: true });
-    el.addEventListener('touchmove',  e => touchMove(e),                         { passive: false });
-    el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),           { passive: false });
-  });
+  // Touch handlery obsługuje delegacja z _initTouchDelegation() — nie trzeba dodawać per-komórka
 }
 
 export function renderSchedule() {
@@ -911,15 +1022,7 @@ export function renderSchedule() {
         <span style="font-size:0.72rem;color:var(--text-muted);margin-left:10px">${totalLessons} godz. tygodniowo</span></div>
        <table class="schedule-table view-mode-table">${thead}${tbody}</table>`;
 
-    // Touch eventy — long-press DnD i tap-to-edit (identycznie jak w widoku sal)
-    document.getElementById('scheduleWrap').querySelectorAll('.cell-inner').forEach(el => {
-      const day  = parseInt(el.dataset.day);
-      const hour = el.dataset.hour;
-      const key  = el.dataset.key;
-      el.addEventListener('touchstart', e => touchStart(e, day, hour, key), { passive: true });
-      el.addEventListener('touchmove',  e => touchMove(e),                  { passive: false });
-      el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),   { passive: false });
-    });
+    // Touch handlery obsługuje delegacja z _initTouchDelegation() — nie trzeba dodawać per-komórka
 
     updateStatusBar();
     return;
@@ -1108,15 +1211,7 @@ export function renderSchedule() {
   document.getElementById('scheduleWrap').innerHTML =
     `<table class="schedule-table">${thead}${tbody}</table>`;
 
-  // Podepnij touch eventy przez addEventListener (bezpieczne w ES modules)
-  document.getElementById('scheduleWrap').querySelectorAll('.cell-inner').forEach(el => {
-    const day  = parseInt(el.dataset.day);
-    const hour = el.dataset.hour;
-    const key  = el.dataset.key;
-    el.addEventListener('touchstart', e => touchStart(e, day, hour, key), { passive: true });
-    el.addEventListener('touchmove',  e => touchMove(e),                  { passive: false });
-    el.addEventListener('touchend',   e => touchEnd(e, day, hour, key),   { passive: false });
-  });
+  // Touch handlery obsługuje delegacja z _initTouchDelegation() — nie trzeba dodawać per-komórka
 
   updateStatusBar();
 }
