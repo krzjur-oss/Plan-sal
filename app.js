@@ -25,6 +25,7 @@ import {
   openCSVModal, closeCSVModal,
   exportCSVDay, exportCSVWeekBySala, exportCSVFlat,
   persistAll,
+  initImportCallbacks,
 } from './import-export.js';
 
 import {
@@ -38,6 +39,8 @@ import {
   wizardSaveDraft, wizardClearDraft, wizardCheckDraft,
   startWizardAutosave, stopWizardAutosave,
   isWizardEditMode, setWizardEditMode,
+  isDemoMode,
+  initStorageCallbacks,
 } from './storage.js';
 
 import {
@@ -53,6 +56,7 @@ import {
   renderTeacherList, removeTeacher, autoAbbr,
   syncBuildingsFromDOM, syncTeachersFromDOM,
   getClassesFromDOM, migrateScheduleKeys, renderFloorList,
+  syncFloorsFromDOM,
 } from './wizard-data.js';
 
 import {
@@ -60,6 +64,7 @@ import {
   wizardNext, wizardBack,
   finishWizard,
   renderAssignmentsStep, switchAssignDay, renderAssignTable, setAssign,
+  updateWizardStep,
 } from './wizard.js';
 
 import {
@@ -197,3 +202,30 @@ Object.assign(window, {
 // ================================================================
 
 initUndoCallbacks({ persistAll, switchDay, renderSchedule, updateStatusBar, sbSet });
+
+initStorageCallbacks({
+  mountApp,
+  openWizardNewYear,
+  openImportModal,
+  confirmImport,
+  closeSettingsPanel,
+  renderBuildingList,
+  renderFloorList,
+  renderClassGrid,
+  renderTeacherList,
+  renderSubjectList,
+  renderAssignmentsStep,
+  updateWizardStep,
+  wpUpdate,
+  syncFloorsFromDOM,
+  initTimeslotEditor,
+  buildTimeslotsFromHours,
+  syncBuildingsFromDOM,
+  syncTeachersFromDOM,
+  getClassesFromDOM,
+});
+
+initImportCallbacks({
+  mountApp,
+  isDemoMode,
+});

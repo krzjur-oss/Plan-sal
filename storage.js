@@ -33,36 +33,66 @@ import {
 
 import { esc, notify, sbSet } from './helpers.js';
 
-// ── Wrappery dla funkcji z modułów wyżej w łańcuchu (unikamy cykli) ──
-// mountApp, openWizardNewYear, renderX itp. są w schedule/wizard/ui
-// które importują storage.js — nie możemy ich tu importować (cykl)
-// Używamy window.* bo app.js eksponuje je na window
-function _mountApp()             { window.mountApp?.(); }
-function _openWizardNewYear()    { window.openWizardNewYear?.(); }
-function _openImportModal(d)     { window.openImportModal?.(d); }
-function _confirmImport()        { window.confirmImport?.(); }
-function _closeSettingsPanel()   { window.closeSettingsPanel?.(); }
-function _renderBuildingList()    { window.renderBuildingList?.(); }
-function _renderFloorList()      { window.renderFloorList?.(); }
-function _renderClassGrid()       { window.renderClassGrid?.(); }
-function _renderTeacherList()    { window.renderTeacherList?.(); }
-function _renderSubjectList()    { window.renderSubjectList?.(); }
-function _renderAssignmentsStep(){ window.renderAssignmentsStep?.(); }
-function _updateWizardStep()     { window.updateWizardStep?.(); }
-function _wpUpdate(s)            { window.wpUpdate?.(s); }
-function _syncFloorsFromDOM()    { window.syncFloorsFromDOM?.(); }
-function _initTimeslotEditor()   { window.initTimeslotEditor?.(); }
-function _notify(msg, err)       { notify(msg, err); }
-function _esc(s)                 { return esc(s); }
-function _normalizeAppState(s)   { return normalizeAppState(s); }
-function _migrateClassNames(s)   { migrateClassNames(s); }
-function _migrateImportData(d)   { return migrateImportData(d); }
-function _persistAll()           { persistAll(); }
-function _loadDemoData()         { loadDemoData(); }
-function _buildTimeslotsFromHours(h,t){ if (typeof buildTimeslotsFromHours === 'function') return buildTimeslotsFromHours(h,t); return []; }
-function _syncBuildingsFromDOM(){ if (typeof syncBuildingsFromDOM === 'function') syncBuildingsFromDOM(); }
-function _syncTeachersFromDOM() { if (typeof syncTeachersFromDOM  === 'function') syncTeachersFromDOM(); }
-function _getClassesFromDOM()   { if (typeof getClassesFromDOM    === 'function') return getClassesFromDOM(); return []; }
+// ── Dependency Injection — wstrzykiwane przez app.js po załadowaniu
+//    wszystkich modułów. Domyślne no-ops zapobiegają błędom przy
+//    wywołaniu przed initStorageCallbacks(). ────────────────────────
+let _cb = {
+  mountApp:             () => {},
+  openWizardNewYear:    () => {},
+  openImportModal:      () => {},
+  confirmImport:        () => {},
+  closeSettingsPanel:   () => {},
+  renderBuildingList:   () => {},
+  renderFloorList:      () => {},
+  renderClassGrid:      () => {},
+  renderTeacherList:    () => {},
+  renderSubjectList:    () => {},
+  renderAssignmentsStep:() => {},
+  updateWizardStep:     () => {},
+  wpUpdate:             () => {},
+  syncFloorsFromDOM:    () => {},
+  initTimeslotEditor:   () => {},
+  buildTimeslotsFromHours: () => [],
+  syncBuildingsFromDOM: () => {},
+  syncTeachersFromDOM:  () => {},
+  getClassesFromDOM:    () => [],
+};
+
+/**
+ * Rejestruje referencje do funkcji z modułów wyżej w łańcuchu.
+ * Wywołać raz z app.js po Object.assign(window, {...}).
+ * @param {Object} callbacks — obiekt z funkcjami do wstrzyknięcia
+ */
+export function initStorageCallbacks(callbacks) {
+  Object.assign(_cb, callbacks);
+}
+
+function _mountApp()              { _cb.mountApp(); }
+function _openWizardNewYear()     { _cb.openWizardNewYear(); }
+function _openImportModal(d)      { _cb.openImportModal(d); }
+function _confirmImport()         { _cb.confirmImport(); }
+function _closeSettingsPanel()    { _cb.closeSettingsPanel(); }
+function _renderBuildingList()    { _cb.renderBuildingList(); }
+function _renderFloorList()       { _cb.renderFloorList(); }
+function _renderClassGrid()       { _cb.renderClassGrid(); }
+function _renderTeacherList()     { _cb.renderTeacherList(); }
+function _renderSubjectList()     { _cb.renderSubjectList(); }
+function _renderAssignmentsStep() { _cb.renderAssignmentsStep(); }
+function _updateWizardStep()      { _cb.updateWizardStep(); }
+function _wpUpdate(s)             { _cb.wpUpdate(s); }
+function _syncFloorsFromDOM()     { _cb.syncFloorsFromDOM(); }
+function _initTimeslotEditor()    { _cb.initTimeslotEditor(); }
+function _notify(msg, err)        { notify(msg, err); }
+function _esc(s)                  { return esc(s); }
+function _normalizeAppState(s)    { return normalizeAppState(s); }
+function _migrateClassNames(s)    { migrateClassNames(s); }
+function _migrateImportData(d)    { return migrateImportData(d); }
+function _persistAll()            { persistAll(); }
+function _loadDemoData()          { loadDemoData(); }
+function _buildTimeslotsFromHours(h, t) { return _cb.buildTimeslotsFromHours(h, t); }
+function _syncBuildingsFromDOM()  { _cb.syncBuildingsFromDOM(); }
+function _syncTeachersFromDOM()   { _cb.syncTeachersFromDOM(); }
+function _getClassesFromDOM()     { return _cb.getClassesFromDOM(); }
 
 
 // ================================================================

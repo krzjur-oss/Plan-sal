@@ -23,11 +23,27 @@ import {
 import { flattenColumns, colKey, notify, esc, sbSet } from './helpers.js';
 import { undoPushYear } from './utils.js';
 
-// mountApp i isDemoMode są w modułach wyżej w łańcuchu — używamy window
+// ── Dependency Injection — wstrzykiwane przez app.js po załadowaniu
+//    wszystkich modułów. Domyślne no-ops zapobiegają błędom przy
+//    wywołaniu przed initImportCallbacks(). ────────────────────────
+let _cb = {
+  mountApp:   () => {},
+  isDemoMode: () => false,
+};
+
+/**
+ * Rejestruje referencje do funkcji z modułów wyżej w łańcuchu.
+ * Wywołać raz z app.js po Object.assign(window, {...}).
+ * @param {Object} callbacks — obiekt z funkcjami do wstrzyknięcia
+ */
+export function initImportCallbacks(callbacks) {
+  Object.assign(_cb, callbacks);
+}
+
 function _notify(msg, err) { notify(msg, err); }
-function _mountApp()       { window.mountApp?.(); }
+function _mountApp()       { _cb.mountApp(); }
 function _sbSet(msg)       { sbSet(msg); }
-function _isDemoMode()     { return window.isDemoMode?.() || false; }
+function _isDemoMode()     { return _cb.isDemoMode(); }
 
 
 // ================================================================
