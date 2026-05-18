@@ -9,7 +9,7 @@ import {
   initCookieBanner, acceptCookies, showCookieDetail, closeCookieDetail,
   toggleAppHelp, closeAppHelp,
   wpUpdate,
-  undoAction, redoAction,
+  undoAction, redoAction, undoPushYear,
   initUndoCallbacks,
 } from './utils.js';
 
@@ -112,7 +112,7 @@ Object.assign(window, {
   initCookieBanner, acceptCookies, showCookieDetail, closeCookieDetail,
   toggleAppHelp, closeAppHelp,
   wpUpdate,
-  undoAction, redoAction,
+  undoAction, redoAction, undoPushYear,
 
   scrollToFirstCollision,
   setAppState,

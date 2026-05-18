@@ -100,15 +100,45 @@ export function wpUpdate(step) {
 // ================================================================
 //  UNDO / REDO
 // ================================================================
+
+/**
+ * Zapisuje migawkę bieżącego dnia na stos undo.
+ * Używaj dla operacji dotyczących pojedynczego dnia
+ * (DnD, zapis komórki, wyczyszczenie dnia).
+ * @param {string} label — czytelny opis akcji dla użytkownika
+ */
 export function undoPush(label) {
   const yk = appState?.yearKey;
   if (!yk) return;
 
   _undoStack.push({
     label,
-    yearKey: yk,
+    yearKey:  yk,
     day:      currentDay,
+    scope:    'day',
     snapshot: structuredClone(schedData[yk]?.[currentDay] || {}),
+  });
+  if (_undoStack.length > UNDO_LIMIT) _undoStack.shift();
+  setRedoStack([]); // nowa operacja kasuje redo
+  _undoUpdateUI();
+}
+
+/**
+ * Zapisuje migawkę CAŁEGO roku na stos undo.
+ * Używaj dla operacji dotyczących całego planu:
+ * import planu, przywracanie roku z archiwum.
+ * @param {string} label — czytelny opis akcji dla użytkownika
+ */
+export function undoPushYear(label) {
+  const yk = appState?.yearKey;
+  if (!yk) return;
+
+  _undoStack.push({
+    label,
+    yearKey:  yk,
+    day:      currentDay,
+    scope:    'year',
+    snapshot: structuredClone(schedData[yk] || {}),
   });
   if (_undoStack.length > UNDO_LIMIT) _undoStack.shift();
   setRedoStack([]); // nowa operacja kasuje redo
@@ -120,17 +150,33 @@ export function undoApply(stack, targetStack, action) {
   const entry = stack.pop();
   const yk    = appState.yearKey;
 
-  // Zapisz aktualny stan na docelowy stos
-  targetStack.push({
-    label:    entry.label,
-    yearKey:  yk,
-    day:      entry.day,
-    snapshot: structuredClone(schedData[yk]?.[entry.day] || {}),
-  });
+  if (entry.scope === 'year') {
+    // ── Przywracanie migawki całego roku ────────────────────────
+    // Zapisz bieżący cały rok na stos docelowy
+    targetStack.push({
+      label:    entry.label,
+      yearKey:  yk,
+      day:      entry.day,
+      scope:    'year',
+      snapshot: structuredClone(schedData[yk] || {}),
+    });
+    // Przywróć migawkę całego roku
+    if (!schedData[yk]) schedData[yk] = {};
+    Object.keys(schedData[yk]).forEach(d => delete schedData[yk][d]);
+    Object.assign(schedData[yk], structuredClone(entry.snapshot));
+  } else {
+    // ── Przywracanie migawki jednego dnia (scope: 'day') ────────
+    targetStack.push({
+      label:    entry.label,
+      yearKey:  yk,
+      day:      entry.day,
+      scope:    'day',
+      snapshot: structuredClone(schedData[yk]?.[entry.day] || {}),
+    });
+    if (!schedData[yk]) schedData[yk] = {};
+    schedData[yk][entry.day] = structuredClone(entry.snapshot);
+  }
 
-  // Przywróć snapshot
-  if (!schedData[yk]) schedData[yk] = {};
-  schedData[yk][entry.day] = structuredClone(entry.snapshot);
   _persistAll();
 
   // Przełącz na właściwy dzień jeśli potrzeba

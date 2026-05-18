@@ -21,6 +21,7 @@ import {
   DRAFT_KEY,
 } from './state.js';
 import { flattenColumns, colKey, notify, esc, sbSet } from './helpers.js';
+import { undoPushYear } from './utils.js';
 
 // mountApp i isDemoMode są w modułach wyżej w łańcuchu — używamy window
 function _notify(msg, err) { notify(msg, err); }
@@ -374,6 +375,12 @@ export function confirmImport() {
   if (!_importData) return;
   const merge    = document.getElementById('importModeMerge').checked;
   const impSched = _importData.schedData || {};
+
+  // Zapisz migawkę całego bieżącego roku przed jakąkolwiek zmianą
+  if (appState?.yearKey) {
+    const label = merge ? 'Import (scalenie)' : 'Import (nadpisanie)';
+    undoPushYear(label);
+  }
 
   if (merge) {
     // ── 1. Scal wpisy planu (tylko puste komórki) ──────────────

@@ -14,7 +14,7 @@ import {
   wBuildings, wFloors,
 } from './state.js';
 
-import { undoPush, genAbbr, ensureUniqueAbbr } from './utils.js';
+import { undoPush, undoPushYear, genAbbr, ensureUniqueAbbr } from './utils.js';
 
 import {
   esc, sbSet, notify, showConfirm,
@@ -108,7 +108,7 @@ export function restoreYear(yearKey) {
     return;
   }
   showConfirm({
-    message:      `Przywrócić rok <strong>${esc(item.label)}</strong>?<br><span style="font-size:0.78rem;color:var(--text-muted)">Bieżący rok zostanie zarchiwizowany.</span>`,
+    message:      `Przywrócić rok <strong>${esc(item.label)}</strong>?<br><span style="font-size:0.78rem;color:var(--text-muted)">Bieżący rok zostanie zarchiwizowany. Możesz cofnąć tę operację przez Ctrl+Z.</span>`,
     confirmLabel: '📁 Przywróć',
     danger:       false,
     onConfirm: () => {
@@ -123,6 +123,8 @@ export function restoreYear(yearKey) {
           });
         }
       }
+      // Zapisz migawkę całego bieżącego roku przed zastąpieniem
+      undoPushYear(`Przywrócenie roku: ${item.label}`);
       // Mutuj przez referencję (appState jest exportowanym let z state.js)
       Object.assign(appState, {homerooms: item.config?.homerooms || {}, ...item.config});
       setArchive(archive.filter(a => a.yearKey !== yearKey));
