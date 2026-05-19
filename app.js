@@ -71,7 +71,7 @@ import {
   mountApp, switchDay, _switchDayNoRender,
   dndStart, dndEnd, dndOver, dndLeave, dndDrop,
   setViewMode, onViewFilterChange,
-  renderSchedule, updateStatusBar,
+  renderSchedule, renderScheduleSync, updateStatusBar,
   openEditModal, closeEditModal,
   saveCellData, clearCellData,
   initTimeslotEditor, fillTimeslotsDefault, clearTimeslots,
@@ -201,7 +201,7 @@ Object.assign(window, {
 //  funkcji bezpośrednio ze względu na kierunek łańcucha zależności.
 // ================================================================
 
-initUndoCallbacks({ persistAll, switchDay, renderSchedule, updateStatusBar, sbSet });
+initUndoCallbacks({ persistAll, switchDay, renderSchedule: renderScheduleSync, updateStatusBar, sbSet });
 
 initStorageCallbacks({
   mountApp,

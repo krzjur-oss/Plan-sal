@@ -164,7 +164,7 @@ export function mountApp() {
     appState.hours.forEach(h => { if (!schedData[yk][i][h]) schedData[yk][i][h] = {}; });
   });
 
-  renderSchedule();
+  renderScheduleSync();
 
   // Rejestruj touch-handlery raz na kontenerze (event delegation)
   // zamiast per-komórka przy każdym re-renderze
@@ -1020,7 +1020,16 @@ function renderWFView() {
   // Touch handlery obsługuje delegacja z _initTouchDelegation() — nie trzeba dodawać per-komórka
 }
 
-export function renderSchedule() {
+// ── RAF throttle — zapobiega wielokrotnym re-renderom w jednej klatce ──
+// (np. przy szybkich DnD-over lub kolejnych wywołaniach w jednym tick)
+let _rafPending = false;
+
+/**
+ * Wewnętrzna implementacja renderowania — pełna logika.
+ * Wywoływana przez renderSchedule() przez requestAnimationFrame.
+ */
+function _doRenderSchedule() {
+  _rafPending = false;
   if (!appState) return;
 
   // ── Widok WF ──
@@ -1253,6 +1262,29 @@ export function updateStatusBar() {
       `<span style="color:${color}" title="Użycie pamięci lokalnej przeglądarki">` +
       `💾 ${formatBytes(used)} (${pct}%)</span>`;
   }
+}
+
+/**
+ * Publiczny wrapper — odkłada render do najbliższej klatki animacji (RAF).
+ * Wielokrotne wywołania w jednym tick → jeden faktyczny render.
+ * Używaj renderScheduleSync() gdy render musi być natychmiastowy
+ * (np. w testach jednostkowych lub po operacjach synchronicznych wymagających
+ * natychmiastowego DOM przed kolejną akcją).
+ */
+export function renderSchedule() {
+  if (_rafPending) return; // już zakolejkowany w tej klatce
+  _rafPending = true;
+  requestAnimationFrame(_doRenderSchedule);
+}
+
+/**
+ * Synchroniczna wersja renderSchedule — wywołuje _doRenderSchedule natychmiast.
+ * Używana przez mountApp (pierwsze renderowanie przed _initTouchDelegation)
+ * oraz przez initUndoCallbacks (callback DI w utils.js).
+ */
+export function renderScheduleSync() {
+  _rafPending = false;
+  _doRenderSchedule();
 }
 
 // ================================================================
