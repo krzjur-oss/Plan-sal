@@ -60,9 +60,17 @@ let _lastFocusConfirm = null; // element fokusowany przed otwarciem confirmModal
 
 /**
  * Wyświetla modal z przyciskami Potwierdź / Anuluj.
- * @param {{ message, confirmLabel, cancelLabel, danger, onConfirm, onCancel }} opts
+ * @param {{
+ *   message?:      string  — HTML wstawiany przez innerHTML (musi być HTML-escaped!)
+ *   messageText?:  string  — czysty tekst, automatycznie escapowany — preferowane dla danych użytkownika
+ *   confirmLabel?: string
+ *   cancelLabel?:  string
+ *   danger?:       boolean
+ *   onConfirm?:    Function
+ *   onCancel?:     Function
+ * }} opts
  */
-export function showConfirm({ message, confirmLabel = 'Tak', cancelLabel = 'Anuluj', danger = false, onConfirm, onCancel }) {
+export function showConfirm({ message, messageText, confirmLabel = 'Tak', cancelLabel = 'Anuluj', danger = false, onConfirm, onCancel }) {
   let modal = document.getElementById('confirmModal');
   if (!modal) {
     modal = document.createElement('div');
@@ -84,7 +92,14 @@ export function showConfirm({ message, confirmLabel = 'Tak', cancelLabel = 'Anul
 
   _lastFocusConfirm = document.activeElement; // zapamiętaj fokus przed otwarciem
 
-  document.getElementById('confirmMsg').innerHTML = message;
+  const msgEl = document.getElementById('confirmMsg');
+  if (messageText !== undefined) {
+    // Bezpieczna ścieżka — dane użytkownika trafiają przez textContent
+    msgEl.textContent = messageText;
+  } else {
+    // Ścieżka HTML — wywołujący odpowiada za poprawny HTML-escape
+    msgEl.innerHTML = message || '';
+  }
   const okBtn     = document.getElementById('confirmOkBtn');
   const cancelBtn = document.getElementById('confirmCancelBtn');
 

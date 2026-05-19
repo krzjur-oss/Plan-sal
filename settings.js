@@ -245,7 +245,7 @@ export function spClassDelete(i) {
   };
   if (used) {
     showConfirm({
-      message:      `Klasa „${abbr}" jest używana w planie. Usunięcie nie wyczyści istniejących wpisów — pojawią się jako nieznane. Kontynuować?`,
+      messageText:  `Klasa „${abbr}" jest używana w planie. Usunięcie nie wyczyści istniejących wpisów — pojawią się jako nieznane. Kontynuować?`,
       confirmLabel: '🗑 Usuń mimo to',
       danger:       true,
       onConfirm:    doDelete,
@@ -351,7 +351,7 @@ export function spTeacherDelete(i) {
   };
   if (used) {
     showConfirm({
-      message:      `Nauczyciel „${t.abbr}" ma zajęcia w planie. Wpisy pozostaną, ale nauczyciel nie będzie rozpoznawany. Kontynuować?`,
+      messageText:  `Nauczyciel „${t.abbr}" ma zajęcia w planie. Wpisy pozostaną, ale nauczyciel nie będzie rozpoznawany. Kontynuować?`,
       confirmLabel: '🗑 Usuń mimo to',
       danger:       true,
       onConfirm:    doDelete,
@@ -422,7 +422,7 @@ export function spSubjectDelete(i) {
   };
   if (used) {
     showConfirm({
-      message:      `Przedmiot „${s.name}" jest używany w planie. Wpisy pozostaną, ale przedmiot zniknie z podpowiedzi. Kontynuować?`,
+      messageText:  `Przedmiot „${s.name}" jest używany w planie. Wpisy pozostaną, ale przedmiot zniknie z podpowiedzi. Kontynuować?`,
       confirmLabel: '🗑 Usuń mimo to',
       danger:       true,
       onConfirm:    doDelete,
@@ -643,7 +643,7 @@ export function spHourDelete(i) {
   };
   if (usedInPlan) {
     showConfirm({
-      message:      `Godzina ${h} ma zajęcia w planie — zostaną trwale usunięte. Kontynuować?`,
+      messageText:  `Godzina ${h} ma zajęcia w planie — zostaną trwale usunięte. Kontynuować?`,
       confirmLabel: '🗑 Usuń z danymi',
       danger:       true,
       onConfirm:    doDelete,
