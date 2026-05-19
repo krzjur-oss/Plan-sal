@@ -42,14 +42,46 @@ export function sbSet(msg) {
   _sbTimer = setTimeout(() => document.getElementById('sbText').textContent = 'Gotowy', 2500);
 }
 
+// ── Kolejka toastów — zapobiega nakładaniu się powiadomień ────────
+const _TOAST_DURATION  = 2900;  // ms — jak długo toast jest widoczny
+const _TOAST_HEIGHT    = 50;    // px — szacowana wysokość tosta (padding + linia tekstu)
+const _TOAST_GAP       = 8;     // px — odstęp między toastami
+const _TOAST_BASE      = 42;    // px — bottom dla pierwszego tosta (nad statusbarem)
+const _MAX_TOASTS      = 4;     // maksymalna liczba jednoczesnych toastów
+let   _activeToasts    = [];    // [ { el, timer } ]
+
+/** Przelicza pozycję bottom dla każdego aktywnego tosta */
+function _repositionToasts() {
+  _activeToasts.forEach((t, i) => {
+    t.el.style.bottom = (_TOAST_BASE + i * (_TOAST_HEIGHT + _TOAST_GAP)) + 'px';
+  });
+}
+
 /** Toast powiadomienie (2,9 s); warn=true → żółta ramka */
 export function notify(msg, warn) {
+  // Ogranicz liczbę jednoczesnych toastów — usuń najstarszy jeśli przekroczono limit
+  if (_activeToasts.length >= _MAX_TOASTS) {
+    const oldest = _activeToasts[0];
+    clearTimeout(oldest.timer);
+    oldest.el.remove();
+    _activeToasts.shift();
+  }
+
   const el = document.createElement('div');
-  el.className  = 'notif';
+  el.className = 'notif';
   el.style.borderColor = warn ? 'rgba(245,158,11,0.4)' : 'var(--border2)';
   el.textContent = msg;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2900);
+
+  const entry = { el, timer: null };
+  _activeToasts.push(entry);
+  _repositionToasts();
+
+  entry.timer = setTimeout(() => {
+    el.remove();
+    _activeToasts = _activeToasts.filter(t => t !== entry);
+    _repositionToasts();
+  }, _TOAST_DURATION);
 }
 
 // ================================================================

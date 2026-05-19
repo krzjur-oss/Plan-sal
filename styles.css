@@ -1325,7 +1325,7 @@ body {
 /* Notifications */
 .notif {
   position: fixed;
-  bottom: 42px;
+  bottom: 42px; /* wartość startowa — JS nadpisuje przez _repositionToasts() */
   right: 20px;
   background: var(--surface2);
   border: 1px solid var(--border2);
@@ -1338,6 +1338,7 @@ body {
   animation: notifIn 0.2s ease, notifOut 0.3s ease 2.5s forwards;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   display: flex; align-items: center; gap: 8px;
+  transition: bottom 0.2s ease; /* płynne przesuwanie przy pojawieniu się nowego tosta */
 }
 @keyframes notifIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 @keyframes notifOut { to { opacity:0; transform:translateY(8px); } }
