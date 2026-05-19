@@ -283,6 +283,7 @@ function _multiSlotCount(dayData, hours, key) {
   return max;
 }
 let _dndSrcSlot = undefined; // slotIdx dla sal multi
+let _lastFocusEdit = null;   // element fokusowany przed otwarciem editModal — do przywrócenia po zamknięciu
 
 export function dndStart(e, day, hour, key, slotIdx) {
   _dndSrcDay  = day;
@@ -1499,6 +1500,7 @@ function _hideSubjectDropdown() {
 // ================================================================
 
 export function openEditModal(day, hour, key, slotIdx) {
+  _lastFocusEdit = document.activeElement; // zapamiętaj fokus do przywrócenia po zamknięciu
   setMDay(day); setMHour(hour); setMKey(key);
   // Dla sal multi zapamiętujemy indeks slotu w module-level zmiennej
   window._mSlotIdx = (slotIdx !== undefined && slotIdx !== null) ? Number(slotIdx) : undefined;
@@ -1617,6 +1619,9 @@ export function closeEditModal() {
   document.getElementById('qaToggleClass').querySelector('.qa-icon').textContent = '＋';
   document.getElementById('qaToggleTeacher').style.color = '';
   document.getElementById('qaToggleClass').style.color   = '';
+  // Przywróć fokus do elementu który otworzył modal
+  _lastFocusEdit?.focus({ preventScroll: true });
+  _lastFocusEdit = null;
 }
 
 // ================================================================

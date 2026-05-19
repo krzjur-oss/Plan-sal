@@ -301,8 +301,10 @@ export function toggleTheme() {
 // ================================================================
 
 let _hrKey = null;
+let _lastFocusHomeroom = null; // element fokusowany przed otwarciem homeroomModal
 
 export function openHomeroomModal(key) {
+  _lastFocusHomeroom = document.activeElement; // zapamiętaj fokus
   _hrKey = key;
   const cols = flattenColumns(appState.floors);
   const col  = cols.find(c => colKey(c) === key);
@@ -363,6 +365,9 @@ export function openHomeroomModal(key) {
 export function closeHomeroomModal() {
   document.getElementById('homeroomModal').classList.remove('show');
   _hrKey = null;
+  // Przywróć fokus do elementu który otworzył modal
+  _lastFocusHomeroom?.focus({ preventScroll: true });
+  _lastFocusHomeroom = null;
 }
 
 export function saveHomeroom() {

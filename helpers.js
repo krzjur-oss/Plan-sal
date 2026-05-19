@@ -56,6 +56,8 @@ export function notify(msg, warn) {
 //  MODAL POTWIERDZENIA
 // ================================================================
 
+let _lastFocusConfirm = null; // element fokusowany przed otwarciem confirmModal
+
 /**
  * Wyświetla modal z przyciskami Potwierdź / Anuluj.
  * @param {{ message, confirmLabel, cancelLabel, danger, onConfirm, onCancel }} opts
@@ -80,6 +82,8 @@ export function showConfirm({ message, confirmLabel = 'Tak', cancelLabel = 'Anul
     document.addEventListener('keydown', _confirmKeydown);
   }
 
+  _lastFocusConfirm = document.activeElement; // zapamiętaj fokus przed otwarciem
+
   document.getElementById('confirmMsg').innerHTML = message;
   const okBtn     = document.getElementById('confirmOkBtn');
   const cancelBtn = document.getElementById('confirmCancelBtn');
@@ -99,6 +103,9 @@ export function showConfirm({ message, confirmLabel = 'Tak', cancelLabel = 'Anul
 
 function _dismissConfirm() {
   document.getElementById('confirmModal')?.classList.remove('show');
+  // Przywróć fokus do elementu który otworzył modal
+  _lastFocusConfirm?.focus({ preventScroll: true });
+  _lastFocusConfirm = null;
 }
 
 function _confirmKeydown(e) {

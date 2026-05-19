@@ -290,6 +290,7 @@ export function exportJSON() {
 //  IMPORT JSON — modal porównania i scalania
 // ================================================================
 let _importData = null;
+let _lastFocusImport = null; // element fokusowany przed otwarciem importModal
 
 export function handleImportFile(file) {
   if (!file || !file.name.endsWith('.json')) {
@@ -313,6 +314,7 @@ export function handleImportFile(file) {
 }
 
 export function openImportModal(data) {
+  _lastFocusImport = document.activeElement; // zapamiętaj fokus
   _importData = data;
   const modal = document.getElementById('importModal');
   if (!modal) return;
@@ -385,6 +387,9 @@ export function openImportModal(data) {
 export function closeImportModal() {
   document.getElementById('importModal')?.classList.remove('show');
   _importData = null;
+  // Przywróć fokus do elementu który otworzył modal
+  _lastFocusImport?.focus({ preventScroll: true });
+  _lastFocusImport = null;
 }
 
 export function confirmImport() {

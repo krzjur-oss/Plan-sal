@@ -25,9 +25,11 @@ import { focusFirstIn } from './ui.js';
 // ================================================================
 
 let _settingsTab = 'classes';
+let _lastFocusSettings = null; // element fokusowany przed otwarciem panelu ustawień
 
 export function openSettingsPanel(tab) {
   if (!appState) return;
+  _lastFocusSettings = document.activeElement; // zapamiętaj fokus
   _settingsTab = tab || _settingsTab || 'classes';
   document.getElementById('settingsPanelOverlay').classList.add('show');
   document.getElementById('settingsPanel').classList.add('open');
@@ -38,6 +40,9 @@ export function openSettingsPanel(tab) {
 export function closeSettingsPanel() {
   document.getElementById('settingsPanelOverlay').classList.remove('show');
   document.getElementById('settingsPanel').classList.remove('open');
+  // Przywróć fokus do elementu który otworzył panel
+  _lastFocusSettings?.focus({ preventScroll: true });
+  _lastFocusSettings = null;
 }
 
 export function switchSettingsTab(tab) {
