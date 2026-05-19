@@ -83,6 +83,21 @@ const SUBJECTS_PRESET = [
 // _roomLabel → alias do roomLabelShort importowanego z helpers.js
 const _roomLabel = roomLabelShort;
 
+/**
+ * Zamienia wewnętrzny klucz sali (np. "f0_s0_101") na czytelną etykietę
+ * (np. "sala 0A101") przez wyszukanie kolumny w aktualnym planie pięter.
+ * Używane wyłącznie do etykiet undo — nie do logiki biznesowej.
+ * @param {string} key — klucz kolumny z colKey()
+ * @returns {string}
+ */
+function _keyToLabel(key) {
+  if (!key || !appState?.floors) return key || '?';
+  const col = flattenColumns(appState.floors).find(c => colKey(c) === key);
+  if (!col) return key;
+  const label = _roomLabel(col.floorIdx, col.segIdx, col.room?.num || col.room?.sub || '?');
+  return `sala ${label}`;
+}
+
 // Skrót nazwy przedmiotu
 export function subjectAbbr(subject) {
   if (!subject) return '';
@@ -354,7 +369,7 @@ function _doDndMove(dstDay, dstHour, dstKey, dstSlot) {
   const dstFilled = dstEntry && (dstEntry.teacherAbbr || (dstEntry.classes || []).length || dstEntry.className);
 
   function _doDrop() {
-    undoPush(`DnD → ${dstKey}, godz. ${dstHour}, ${appState.days[dstDay]}`);
+    undoPush(`Przeniesienie → ${_keyToLabel(dstKey)}, godz. ${dstHour}, ${appState.days[dstDay]}`);
     _setEntry(yk, dstDay, dstHour, dstKey, structuredClone(srcEntry), dstSlot);
     _clearEntry(yk, _dndSrcDay, _dndSrcHour, _dndSrcKey, _dndSrcSlot);
     persistAll();
@@ -1740,7 +1755,7 @@ export function saveCellData() {
   // Jeśli sala została zmieniona przez select w widoku nauczyciela/klasy,
   // usuwamy wpis ze starego klucza żeby nie zostawić duplikatu.
   const originalKey = document.getElementById('inpRoom')?.dataset?.originalKey;
-  undoPush(`Zapis ${_mKey}, godz. ${_mHour}, ${appState.days[_mDay]}`);
+  undoPush(`Zapis: ${_keyToLabel(_mKey)}, godz. ${_mHour}, ${appState.days[_mDay]}`);
   if (!schedData[yk])           schedData[yk] = {};
   if (!schedData[yk][_mDay])    schedData[yk][_mDay] = {};
   if (!schedData[yk][_mDay][_mHour]) schedData[yk][_mDay][_mHour] = {};
@@ -1796,7 +1811,7 @@ export function clearCellData() {
     confirmLabel: 'Wyczyść',
     danger:       true,
     onConfirm:    () => {
-      undoPush(`Wyczyszczenie ${_mKey}, godz. ${_mHour}, ${appState.days[_mDay]}`);
+      undoPush(`Wyczyszczenie: ${_keyToLabel(_mKey)}, godz. ${_mHour}, ${appState.days[_mDay]}`);
       const yk  = appState.yearKey;
       const _si = window._mSlotIdx;
       _clearEntry(yk, _mDay, _mHour, _mKey, _si);
